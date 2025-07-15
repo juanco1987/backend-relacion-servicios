@@ -1,0 +1,652 @@
+from flask import Blueprint, request, jsonify, send_file
+import pandas as pd
+import os
+from datetime import datetime
+from core import pending_excel_processor, excel_processor, df_pending_report, pdf_generator
+from core.pending_excel_processor import normalize_column_name, find_column_variant
+from config.settings import EXCEL_COLUMNS
+from unidecode import unidecode
+from utils.validation_utils import limpiar_valor_monetario
+import numpy as np
+
+bp_excel = Blueprint('excel', __name__)
+
+def convert_numpy_types(obj):
+    """Convierte tipos de numpy a tipos nativos de Python para serialización JSON"""
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    else:
+        return obj
+
+@bp_excel.route('/procesar_excel', methods=['POST'])
+def procesar_excel():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se envió archivo'}), 400
+    file = request.files['file']
+    filename = file.filename or 'archivo.xlsx'
+    if filename == '':
+        return jsonify({'error': 'Nombre de archivo vacío'}), 400
+    try:
+        # Guardar archivo temporalmente
+        temp_path = os.path.join('temp', filename)
+        os.makedirs('temp', exist_ok=True)
+        file.save(temp_path)
+
+        # Obtener fechas del form-data o usar valores por defecto
+        fecha_inicio_str = request.form.get('fecha_inicio', '2024-01-01')
+        fecha_fin_str = request.form.get('fecha_fin', '2024-12-31')
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
+        except Exception:
+            return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
+
+        df, messages = pending_excel_processor.process_excel_file(temp_path, fecha_inicio, fecha_fin)
+        
+        import time
+        import gc
+        gc.collect()
+        time.sleep(0.1)  # Espera breve para liberar el archivo
+        try:
+            os.remove(temp_path)
+        except Exception as e:
+            print(f"No se pudo borrar el archivo temporal: {e}")
+
+        if df is None:
+            return jsonify({'error': 'No se pudo procesar el archivo', 'messages': messages}), 400
+        # Convertir DataFrame a JSON
+        df = df.replace({np.nan: None})
+        data = df.to_dict(orient='records')
+        return jsonify({'data': data, 'messages': messages})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp_excel.route('/relacion_servicios', methods=['POST'])
+def relacion_servicios():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se envió archivo'}), 400
+    file = request.files['file']
+    filename = file.filename or 'archivo.xlsx'
+    if filename == '':
+        return jsonify({'error': 'Nombre de archivo vacío'}), 400
+    try:
+        # Guardar archivo temporalmente
+        temp_path = os.path.join('temp', filename)
+        os.makedirs('temp', exist_ok=True)
+        file.save(temp_path)
+
+        # Obtener fechas del form-data o usar valores por defecto
+        fecha_inicio_str = request.form.get('fecha_inicio', '2024-01-01')
+        fecha_fin_str = request.form.get('fecha_fin', '2024-12-31')
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
+        except Exception:
+            return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
+
+        # Procesar el archivo para obtener la relación de servicios
+        logs = []
+        def log_callback(msg, level='info'):
+            logs.append({'level': level, 'text': msg})
+        df = excel_processor.extraer_servicios(temp_path, fecha_inicio, fecha_fin, log_callback)
+
+        import time
+        import gc
+        gc.collect()
+        time.sleep(0.1)
+        try:
+            os.remove(temp_path)
+        except Exception as e:
+            print(f"No se pudo borrar el archivo temporal: {e}")
+
+        if df is None or df.empty:
+            return jsonify({'error': 'No se encontraron servicios', 'logs': logs}), 200
+        df = df.replace({np.nan: None})
+        data = df.to_dict(orient='records')
+        return jsonify({'data': data, 'logs': logs})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp_excel.route('/pdf_pendientes', methods=['POST'])
+def pdf_pendientes():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se envió archivo'}), 400
+    file = request.files['file']
+    filename = file.filename or 'archivo.xlsx'
+    if filename == '':
+        return jsonify({'error': 'Nombre de archivo vacío'}), 400
+    try:
+        # Guardar archivo temporalmente
+        temp_path = os.path.join('temp', filename)
+        os.makedirs('temp', exist_ok=True)
+        file.save(temp_path)
+
+        # Obtener fechas del form-data o usar valores por defecto
+        fecha_inicio_str = request.form.get('fecha_inicio', '2024-01-01')
+        fecha_fin_str = request.form.get('fecha_fin', '2024-12-31')
+        notas = request.form.get('notas', '')
+        nombre_pdf = request.form.get('nombre_pdf', '')
+        from datetime import datetime
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
+        except Exception:
+            return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
+
+        # Procesar el archivo para obtener los pendientes
+        df, messages = pending_excel_processor.process_excel_file(temp_path, fecha_inicio, fecha_fin)
+
+        import time
+        import gc
+        gc.collect()
+        time.sleep(0.1)
+        try:
+            os.remove(temp_path)
+        except Exception as e:
+            print(f"No se pudo borrar el archivo temporal: {e}")
+
+        if df is None or df.empty:
+            return jsonify({'error': 'No se encontraron servicios pendientes', 'logs': messages}), 200
+
+        # Generar el PDF con nombre personalizado o automático
+        if nombre_pdf and nombre_pdf.strip():
+            # Usar el nombre enviado desde el frontend
+            nombre_pdf_final = nombre_pdf.strip()
+            if not nombre_pdf_final.endswith('.pdf'):
+                nombre_pdf_final += '.pdf'
+        else:
+            # Generar nombre automático con fecha y hora
+            nombre_pdf_final = f"Servicios_Pendientes_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
+        
+        exito, ruta_pdf, logs_pdf = df_pending_report.generate_pdf_report(df, temp_path, fecha_inicio, fecha_fin, nombre_pdf_final, notas)
+        messages.extend(logs_pdf)
+        if not exito or not ruta_pdf:
+            return jsonify({'error': 'No se pudo generar el PDF', 'logs': messages}), 500
+
+        # Enviar el PDF como archivo descargable
+        return send_file(ruta_pdf, as_attachment=True)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp_excel.route('/analytics', methods=['POST'])
+def analytics():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se envió archivo'}), 400
+    file = request.files['file']
+    filename = file.filename or 'archivo.xlsx'
+    if filename == '':
+        return jsonify({'error': 'Nombre de archivo vacío'}), 400
+    try:
+        temp_path = os.path.join('temp', filename)
+        os.makedirs('temp', exist_ok=True)
+        file.save(temp_path)
+
+        fecha_inicio_str = request.form.get('fecha_inicio', '2024-01-01')
+        fecha_fin_str = request.form.get('fecha_fin', '2024-12-31')
+        work_mode = int(request.form.get('work_mode', 0))
+        from datetime import datetime
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
+        except Exception:
+            return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
+
+        import time
+        import gc
+        import numpy as np
+        import pandas as pd
+        gc.collect()
+        time.sleep(0.1)
+
+        # Leer Excel robusto (todas las hojas)
+        xls = pd.ExcelFile(temp_path, engine='openpyxl')
+        dfs = []
+        for hoja in xls.sheet_names:
+            df_hoja = pd.read_excel(xls, sheet_name=hoja)
+            # Normalizar nombres de columnas
+            df_hoja.columns = [str(col).strip() for col in df_hoja.columns]
+            dfs.append(df_hoja)
+        if not dfs:
+            return jsonify({'error': 'No se encontraron hojas en el archivo Excel.'}), 400
+        df = pd.concat(dfs, ignore_index=True)
+
+        # Buscar columnas robustamente
+        col_estado = find_column_variant(df, ['ESTADO DEL SERVICIO', 'Estado del Servicio', 'estado del servicio', 'ESTADO', 'Estado', 'STATUS', 'Status'])
+        col_xporc = find_column_variant(df, ['X50%/X25%', 'X50%', 'X25%', 'PORCENTAJE', 'PORCENTAJE PAGO'])
+        col_fecha = find_column_variant(df, ['FECHA', 'Fecha', 'fecha', 'FECHA SERVICIO', 'Fecha Servicio'])
+        col_para_jg = find_column_variant(df, ['PARA JG', 'Para JG', 'para jg', 'JG', 'J.G.', 'PARA J.G.'])
+        col_forma_pago = find_column_variant(df, ['FORMA DE PAGO', 'FORMA_PAGO', 'FORMA PAGO'])
+
+        if not col_estado or not col_xporc or not col_fecha or not col_para_jg:
+            return jsonify({'error': f'No se encontraron columnas requeridas. Estado: {col_estado}, X50%/X25%: {col_xporc}, Fecha: {col_fecha}, PARA JG: {col_para_jg}'}), 400
+
+        # Limpiar valores
+        df[col_estado] = df[col_estado].astype(str).str.strip().str.upper().apply(unidecode)
+        df[col_xporc] = df[col_xporc].astype(str).str.strip()
+        df[col_fecha] = pd.to_datetime(df[col_fecha], errors='coerce')
+        df[col_para_jg] = df[col_para_jg].apply(limpiar_valor_monetario)
+        if col_forma_pago:
+            df[col_forma_pago] = df[col_forma_pago].astype(str).str.strip().str.upper().apply(unidecode)
+
+        # Filtrar solo YA RELACIONADO
+        df_filtrado = df[df[col_estado] == 'YA RELACIONADO'].copy()
+        df_filtrado = df_filtrado[df_filtrado[col_fecha].notna()].copy()
+        df_filtrado['MES'] = pd.Series(df_filtrado[col_fecha].dt.to_period('M').astype(str), index=df_filtrado.index)
+        # Filtrar solo EFECTIVO
+        df_efectivo = df[df[col_forma_pago] == 'EFECTIVO'].copy() if col_forma_pago else df.iloc[0:0].copy()
+        df_efectivo = df_efectivo[df_efectivo[col_fecha].notna()].copy()
+        df_efectivo['MES'] = pd.Series(df_efectivo[col_fecha].dt.to_period('M').astype(str), index=df_efectivo.index)
+        # Calcular resumen por mes según condiciones solicitadas
+        df['MES'] = pd.Series(df[col_fecha].dt.to_period('M').astype(str), index=df.index)
+        resumen = {}
+        meses = set(df['MES'][df['MES'].notna()].unique())
+        for mes in meses:
+            grupo_mes = df[df['MES'] == mes]
+            # EFECTIVO: ESTADO YA RELACIONADO o vacío o nulo
+            estado = grupo_mes[col_estado].astype(str).str.strip().str.upper().replace('NAN', '')
+            mask_efectivo = (
+                (grupo_mes[col_forma_pago] == 'EFECTIVO') &
+                (
+                    (estado == 'YA RELACIONADO') |
+                    (estado == '')
+                )
+            )
+            efectivo = grupo_mes[mask_efectivo]
+            efectivo_total = efectivo[col_para_jg].sum() if not efectivo.empty else 0
+            efectivo_cantidad = len(efectivo)
+            # TRANSFERENCIA: ESTADO YA RELACIONADO
+            mask_transfer = (
+                (grupo_mes[col_forma_pago] == 'TRANSFERENCIA') &
+                (grupo_mes[col_estado] == 'YA RELACIONADO')
+            )
+            transferencia = grupo_mes[mask_transfer]
+            transferencia_total = transferencia[col_para_jg].sum() if not transferencia.empty else 0
+            transferencia_cantidad = len(transferencia)
+            # Totales generales
+            total_general = efectivo_total + transferencia_total
+            cantidad_general = efectivo_cantidad + transferencia_cantidad
+            resumen[mes] = {
+                'efectivo_total': efectivo_total,
+                'efectivo_cantidad': efectivo_cantidad,
+                'transferencia_total': transferencia_total,
+                'transferencia_cantidad': transferencia_cantidad,
+                'total_general': total_general,
+                'cantidad_general': cantidad_general
+            }
+        try:
+            os.remove(temp_path)
+        except Exception as e:
+            print(f"No se pudo borrar el archivo temporal: {e}")
+        
+        # Convertir tipos de numpy antes de serializar a JSON
+        resumen_convertido = convert_numpy_types(resumen)
+        return jsonify({'resumen': resumen_convertido, 'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp_excel.route('/pdf_relacion_servicios', methods=['POST'])
+def pdf_relacion_servicios():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se envió archivo'}), 400
+    file = request.files['file']
+    filename = file.filename or 'archivo.xlsx'
+    if filename == '':
+        return jsonify({'error': 'Nombre de archivo vacío'}), 400
+    try:
+        # Guardar archivo temporalmente
+        temp_path = os.path.join('temp', filename)
+        os.makedirs('temp', exist_ok=True)
+        file.save(temp_path)
+
+        # Obtener fechas del form-data o usar valores por defecto
+        fecha_inicio_str = request.form.get('fecha_inicio', '2024-01-01')
+        fecha_fin_str = request.form.get('fecha_fin', '2024-12-31')
+        notas = request.form.get('notas', '')
+        nombre_pdf = request.form.get('nombre_pdf', '')
+        from datetime import datetime
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
+        except Exception:
+            return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
+
+        # Procesar el archivo para obtener la relación de servicios
+        logs = []
+        def log_callback(msg, level='info'):
+            logs.append({'level': level, 'text': msg})
+        df = excel_processor.extraer_servicios(temp_path, fecha_inicio, fecha_fin, log_callback)
+
+        import time
+        import gc
+        gc.collect()
+        time.sleep(0.1)
+        try:
+            os.remove(temp_path)
+        except Exception as e:
+            print(f"No se pudo borrar el archivo temporal: {e}")
+
+        if df is None or df.empty:
+            return jsonify({'error': 'No se encontraron servicios', 'logs': logs}), 200
+
+        # Generar el PDF con nombre personalizado o automático
+        if nombre_pdf and nombre_pdf.strip():
+            # Usar el nombre enviado desde el frontend
+            nombre_pdf_final = nombre_pdf.strip()
+            if not nombre_pdf_final.endswith('.pdf'):
+                nombre_pdf_final += '.pdf'
+        else:
+            # Generar nombre automático con fecha y hora
+            nombre_pdf_final = f"Relacion_Servicios_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
+        
+        exito, mensaje = pdf_generator.generar_pdf_modular(df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback)
+        if not exito:
+            return jsonify({'error': mensaje, 'logs': logs}), 500
+
+        # Ruta donde se guardó el PDF
+        desktop = os.path.expanduser("~/OneDrive/Escritorio")
+        carpeta_pdf = os.path.join(desktop, "pdf-relacion-servicios-en-efectivo")
+        ruta_pdf = os.path.join(carpeta_pdf, nombre_pdf_final)
+
+        # Enviar el PDF como archivo descargable
+        return send_file(ruta_pdf, as_attachment=True)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp_excel.route('/analytics_pendientes_efectivo', methods=['POST'])
+def analytics_pendientes_efectivo():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se envió archivo'}), 400
+    file = request.files['file']
+    filename = file.filename or 'archivo.xlsx'
+    if filename == '':
+        return jsonify({'error': 'Nombre de archivo vacío'}), 400
+    try:
+        temp_path = os.path.join('temp', filename)
+        os.makedirs('temp', exist_ok=True)
+        file.save(temp_path)
+
+        fecha_inicio_str = request.form.get('fecha_inicio', '2024-01-01')
+        fecha_fin_str = request.form.get('fecha_fin', '2024-12-31')
+        from datetime import datetime
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
+        except Exception:
+            return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
+
+        import time
+        import gc
+        import numpy as np
+        import pandas as pd
+        gc.collect()
+        time.sleep(0.1)
+
+        # Leer Excel robusto (todas las hojas)
+        xls = pd.ExcelFile(temp_path, engine='openpyxl')
+        dfs = []
+        for hoja in xls.sheet_names:
+            df_hoja = pd.read_excel(xls, sheet_name=hoja)
+            # Normalizar nombres de columnas
+            df_hoja.columns = [str(col).strip() for col in df_hoja.columns]
+            dfs.append(df_hoja)
+        if not dfs:
+            return jsonify({'error': 'No se encontraron hojas en el archivo Excel.'}), 400
+        df = pd.concat(dfs, ignore_index=True)
+
+        # Buscar columnas robustamente
+        col_estado = find_column_variant(df, ['ESTADO DEL SERVICIO', 'Estado del Servicio', 'estado del servicio', 'ESTADO', 'Estado', 'STATUS', 'Status'])
+        col_xporc = find_column_variant(df, ['X50%/X25%', 'X50%', 'X25%', 'PORCENTAJE', 'PORCENTAJE PAGO'])
+        col_fecha = find_column_variant(df, ['FECHA', 'Fecha', 'fecha', 'FECHA SERVICIO', 'Fecha Servicio'])
+        col_para_jg = find_column_variant(df, ['PARA JG', 'Para JG', 'para jg', 'JG', 'J.G.', 'PARA J.G.'])
+        col_para_abrecar = find_column_variant(df, ['PARA ABRECAR', 'Para Abrecar', 'para abrecar', 'ABRECAR', 'Abrecar'])
+        col_iva = find_column_variant(df, ['IVA 19%', 'IVA', 'Iva', 'iva', 'IVA%', 'IVA %', 'IVA TOTAL', 'TOTAL IVA', 'IMPUESTO', 'Impuesto'])
+        col_forma_pago = find_column_variant(df, ['FORMA DE PAGO', 'FORMA_PAGO', 'FORMA PAGO'])
+        col_servicio = find_column_variant(df, ['SERVICIO REALIZADO', 'Servicio Realizado', 'servicio realizado', 'SERVICIO', 'Servicio', 'DESCRIPCION', 'Descripcion'])
+
+        if not col_estado or not col_xporc or not col_fecha or not col_para_jg or not col_forma_pago:
+            return jsonify({'error': f'No se encontraron columnas requeridas. Estado: {col_estado}, X50%/X25%: {col_xporc}, Fecha: {col_fecha}, PARA JG: {col_para_jg}, Forma Pago: {col_forma_pago}'}), 400
+        
+        # Debug: imprimir las columnas encontradas
+        print(f"Columnas encontradas:")
+        print(f"- Estado: {col_estado}")
+        print(f"- X50%/X25%: {col_xporc}")
+        print(f"- Fecha: {col_fecha}")
+        print(f"- PARA JG: {col_para_jg}")
+        print(f"- PARA ABRECAR: {col_para_abrecar}")
+        print(f"- IVA: {col_iva}")
+        print(f"- Forma Pago: {col_forma_pago}")
+        print(f"- Servicio: {col_servicio}")
+        print(f"Columnas disponibles en el DataFrame: {list(df.columns)}")
+
+        # Limpiar valores
+        df[col_estado] = df[col_estado].astype(str).str.strip().str.upper().apply(unidecode)
+        df[col_xporc] = df[col_xporc].astype(str).str.strip()
+        df[col_fecha] = pd.to_datetime(df[col_fecha], errors='coerce')
+        df[col_para_jg] = df[col_para_jg].apply(limpiar_valor_monetario)
+        if col_para_abrecar:
+            df[col_para_abrecar] = df[col_para_abrecar].apply(limpiar_valor_monetario)
+        if col_iva:
+            df[col_iva] = df[col_iva].apply(limpiar_valor_monetario)
+        df[col_forma_pago] = df[col_forma_pago].astype(str).str.strip().str.upper().apply(unidecode)
+
+        # Filtrar servicios en efectivo que NO tienen estado "YA RELACIONADO"
+        # También incluir servicios con estado vacío, nulo o 'nan'
+        mask_efectivo = df[col_forma_pago] == 'EFECTIVO'
+        mask_fecha = df[col_fecha].notna()
+        mask_rango_fechas = (df[col_fecha] >= fecha_inicio) & (df[col_fecha] <= fecha_fin)
+        mask_estado = (
+            (df[col_estado] != 'YA RELACIONADO') |
+            (df[col_estado].isna()) |
+            (df[col_estado].astype(str).str.strip() == '')
+        )
+        
+        df_filtrado = df[mask_efectivo & mask_fecha & mask_rango_fechas & mask_estado].copy()
+
+        if df_filtrado.empty:
+            return jsonify({
+                'resumen': {
+                    'total_servicios': 0,
+                    'total_valor': 0,
+                    'dias_sin_relacionar': 0,
+                    'tiene_pendientes': False,
+                    'advertencia': 'No hay servicios en efectivo pendientes de relacionar'
+                },
+                'detalle': [],
+                'success': True
+            })
+
+        # Calcular días sin relacionar (diferencia entre fecha actual y fecha del servicio)
+        fecha_actual = datetime.now()
+        df_filtrado['dias_sin_relacionar'] = (fecha_actual - df_filtrado[col_fecha]).dt.days
+
+        # Calcular estadísticas
+        total_servicios = len(df_filtrado)
+        
+        # Usar valores de ABRECAR si están disponibles, sino usar JG
+        if col_para_abrecar:
+            total_valor = df_filtrado[col_para_abrecar].sum()
+        else:
+            total_valor = df_filtrado[col_para_jg].sum()
+            
+        dias_sin_relacionar = df_filtrado['dias_sin_relacionar'].max() if not df_filtrado.empty else 0
+
+        # Determinar si hay advertencia (servicios con más de 30 días sin relacionar)
+        servicios_antiguos = df_filtrado[df_filtrado['dias_sin_relacionar'] > 30]
+        tiene_pendientes = len(servicios_antiguos) > 0
+
+        # Crear mensaje de advertencia
+        if tiene_pendientes:
+            advertencia = f"⚠️ ADVERTENCIA: Hay {len(servicios_antiguos)} servicios en efectivo con más de 30 días sin relacionar"
+        else:
+            advertencia = "✅ Todos los servicios en efectivo están al día"
+
+        # Preparar detalle de servicios para mostrar
+        detalle = []
+        for _, row in df_filtrado.iterrows():
+            # Manejar el estado - cambiar 'nan' por 'Sin Relacionar'
+            estado = row[col_estado]
+            if pd.isna(estado) or str(estado).strip().upper() in ['NAN', 'NONE', '']:
+                estado_display = 'Sin Relacionar'
+            else:
+                estado_display = str(estado).strip()
+            
+            # Manejar el servicio realizado
+            servicio_realizado = row[col_servicio] if col_servicio and pd.notna(row[col_servicio]) else 'No especificado'
+            if pd.isna(servicio_realizado) or str(servicio_realizado).strip() == '':
+                servicio_realizado = 'No especificado'
+            else:
+                servicio_realizado = str(servicio_realizado).strip()
+            
+            # Manejar valores monetarios
+            valor_abrecar = row[col_para_abrecar] if col_para_abrecar and pd.notna(row[col_para_abrecar]) else 0
+            valor_iva = row[col_iva] if col_iva and pd.notna(row[col_iva]) else 0
+            valor_subtotal = valor_abrecar - valor_iva if valor_abrecar > 0 else 0
+            
+            # Debug: imprimir valores para los primeros 3 registros
+            if len(detalle) < 3:
+                print(f"Registro {len(detalle) + 1}:")
+                print(f"  - Valor ABRECAR: {valor_abrecar} (columna: {col_para_abrecar})")
+                print(f"  - Valor IVA: {valor_iva} (columna: {col_iva})")
+                print(f"  - Valor original IVA: {row[col_iva] if col_iva else 'No encontrada'}")
+                print(f"  - Valor original ABRECAR: {row[col_para_abrecar] if col_para_abrecar else 'No encontrada'}")
+            
+            # Si no hay columna ABRECAR, usar JG como fallback
+            if not col_para_abrecar:
+                valor_abrecar = row[col_para_jg] if pd.notna(row[col_para_jg]) else 0
+                valor_subtotal = valor_abrecar
+            
+            detalle.append({
+                'fecha': row[col_fecha].strftime('%Y-%m-%d') if pd.notna(row[col_fecha]) else 'N/A',
+                'estado': estado_display,
+                'servicio_realizado': servicio_realizado,
+                'subtotal': valor_subtotal,
+                'iva': valor_iva,
+                'total_abrecar': valor_abrecar,
+                'dias_sin_relacionar': row['dias_sin_relacionar'],
+                'es_antiguo': row['dias_sin_relacionar'] > 30
+            })
+
+        # Ordenar por días sin relacionar (más antiguos primero)
+        detalle.sort(key=lambda x: x['dias_sin_relacionar'], reverse=True)
+
+        try:
+            os.remove(temp_path)
+        except Exception as e:
+            print(f"No se pudo borrar el archivo temporal: {e}")
+
+        # Convertir tipos de numpy antes de serializar a JSON
+        resumen_data = {
+            'total_servicios': total_servicios,
+            'total_valor': total_valor,
+            'dias_sin_relacionar': dias_sin_relacionar,
+            'tiene_pendientes': tiene_pendientes,
+            'advertencia': advertencia
+        }
+        
+        resumen_convertido = convert_numpy_types(resumen_data)
+        detalle_convertido = convert_numpy_types(detalle)
+
+        return jsonify({
+            'resumen': resumen_convertido,
+            'detalle': detalle_convertido,
+            'success': True
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp_excel.route('/analytics_pendientes_cobrar', methods=['POST'])
+def analytics_pendientes_cobrar():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se envió archivo'}), 400
+    file = request.files['file']
+    filename = file.filename or 'archivo.xlsx'
+    if filename == '':
+        return jsonify({'error': 'Nombre de archivo vacío'}), 400
+    try:
+        temp_path = os.path.join('temp', filename)
+        os.makedirs('temp', exist_ok=True)
+        file.save(temp_path)
+
+        fecha_inicio_str = request.form.get('fecha_inicio', '2024-01-01')
+        fecha_fin_str = request.form.get('fecha_fin', '2024-12-31')
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
+        except Exception:
+            return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
+
+        import time
+        import gc
+        import numpy as np
+        import pandas as pd
+        gc.collect()
+        time.sleep(0.1)
+
+        # Leer Excel robusto (todas las hojas)
+        xls = pd.ExcelFile(temp_path, engine='openpyxl')
+        dfs = []
+        for hoja in xls.sheet_names:
+            df_hoja = pd.read_excel(xls, sheet_name=hoja)
+            df_hoja.columns = [str(col).strip() for col in df_hoja.columns]
+            dfs.append(df_hoja)
+        if not dfs:
+            return jsonify({'error': 'No se encontraron hojas en el archivo Excel.'}), 400
+        df = pd.concat(dfs, ignore_index=True)
+
+        # Buscar columnas
+        col_estado = find_column_variant(df, ['ESTADO DEL SERVICIO', 'Estado del Servicio', 'estado del servicio', 'ESTADO', 'Estado', 'STATUS', 'Status'])
+        col_fecha = find_column_variant(df, ['FECHA', 'Fecha', 'fecha', 'FECHA SERVICIO', 'Fecha Servicio'])
+        col_servicio = find_column_variant(df, ['SERVICIO REALIZADO', 'Servicio Realizado', 'servicio realizado', 'SERVICIO', 'Servicio', 'DESCRIPCION', 'Descripcion'])
+
+        if not col_estado or not col_fecha or not col_servicio:
+            return jsonify({'error': f'No se encontraron columnas requeridas. Estado: {col_estado}, Fecha: {col_fecha}, Servicio: {col_servicio}'}), 400
+
+        # Limpiar valores
+        df[col_estado] = df[col_estado].astype(str).str.strip().str.upper().apply(unidecode)
+        df[col_fecha] = pd.to_datetime(df[col_fecha], errors='coerce')
+
+        # Filtrar por rango de fechas y estado 'PENDIENTE COBRAR'
+        mask_fecha = df[col_fecha].notna()
+        mask_rango_fechas = (df[col_fecha] >= fecha_inicio) & (df[col_fecha] <= fecha_fin)
+        mask_estado = df[col_estado] == 'PENDIENTE COBRAR'
+        df_filtrado = df[mask_fecha & mask_rango_fechas & mask_estado].copy()
+
+        if df_filtrado.empty:
+            return jsonify({'detalle': [], 'success': True})
+
+        # Calcular días de retraso
+        fecha_actual = datetime.now()
+        df_filtrado['dias_de_retraso'] = (fecha_actual - df_filtrado[col_fecha]).dt.days
+
+        # Preparar detalle
+        detalle = []
+        for _, row in df_filtrado.iterrows():
+            dias = row['dias_de_retraso']
+            mensaje = 'PONER AL DÍA COBROS DE ESTE SERVICIO' if dias > 30 else ''
+            detalle.append({
+                'fecha': row[col_fecha].strftime('%Y-%m-%d') if pd.notna(row[col_fecha]) else 'N/A',
+                'estado': row[col_estado],
+                'servicio_realizado': row[col_servicio] if pd.notna(row[col_servicio]) else 'No especificado',
+                'dias_de_retraso': dias,
+                'mensaje': mensaje
+            })
+
+        detalle_convertido = convert_numpy_types(detalle)
+
+        try:
+            os.remove(temp_path)
+        except Exception as e:
+            print(f"No se pudo borrar el archivo temporal: {e}")
+
+        return jsonify({'detalle': detalle_convertido, 'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
