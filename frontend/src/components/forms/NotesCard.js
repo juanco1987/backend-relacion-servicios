@@ -5,11 +5,11 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
 import TextField from '@mui/material/TextField';
-import { APP_MESSAGES } from '../config/appConfig';
-import notesIcon from '../assets/Notepad.png';
-import { useTheme } from '../context/ThemeContext';
+import { APP_MESSAGES } from '../../config/appConfig';
+import notesIcon from '../../assets/Notepad.png';
+import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
-import { ANIMATIONS } from '../config/animations';
+import { ANIMATIONS } from '../../config/animations';
 
 function NotesCard({ value, onChange, addLog, fullHeight }) {
   const { theme } = useTheme();

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 
 function ModeTransitionAnimation({ fromMode, toMode }) {
   const { theme } = useTheme();

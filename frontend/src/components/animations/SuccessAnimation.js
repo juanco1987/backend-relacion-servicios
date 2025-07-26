@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
-import { useTheme } from '../context/ThemeContext';
-import { ANIMATIONS } from '../config/animations';
+import { useTheme } from '../../context/ThemeContext';
+import { ANIMATIONS } from '../../config/animations';
 
-function ErrorAnimation({ message = "Error" }) {
-  const { theme } = useTheme();
+function SuccessAnimation({ message = "¡Completado!" }) {
+  const { theme, modo } = useTheme();
 
   return (
     <Box
@@ -18,17 +18,17 @@ function ErrorAnimation({ message = "Error" }) {
         p: 3,
       }}
     >
-      {/* Círculo de error */}
+      {/* Círculo de éxito */}
       <motion.div
         style={{
           width: 80,
           height: 80,
           borderRadius: '50%',
-          backgroundColor: theme.terminalRojo,
+          backgroundColor: theme.terminalVerde,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: `0 0 20px ${theme.terminalRojo}40`,
+          boxShadow: `0 0 20px ${theme.terminalVerde}40`,
         }}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -39,7 +39,7 @@ function ErrorAnimation({ message = "Error" }) {
           duration: 0.6
         }}
       >
-        {/* Icono X */}
+        {/* Checkmark */}
         <motion.svg
           width="40"
           height="40"
@@ -49,29 +49,20 @@ function ErrorAnimation({ message = "Error" }) {
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{
+            duration: 0.8,
+            delay: 0.3,
+            ease: "easeInOut"
+          }}
         >
-          <motion.line
-            x1="18"
-            y1="6"
-            x2="6"
-            y2="18"
+          <motion.path
+            d="M20 6L9 17l-5-5"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{
-              duration: 0.4,
-              delay: 0.3,
-              ease: "easeInOut"
-            }}
-          />
-          <motion.line
-            x1="6"
-            y1="6"
-            x2="18"
-            y2="18"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{
-              duration: 0.4,
+              duration: 0.6,
               delay: 0.5,
               ease: "easeInOut"
             }}
@@ -79,7 +70,7 @@ function ErrorAnimation({ message = "Error" }) {
         </motion.svg>
       </motion.div>
 
-      {/* Texto de error */}
+      {/* Texto de éxito */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -88,43 +79,50 @@ function ErrorAnimation({ message = "Error" }) {
         <Typography
           variant="h6"
           sx={{
-            color: theme.textoPrincipal,
-            fontWeight: 600,
+            color: theme.terminalVerde,
+            fontWeight: 700,
             textAlign: 'center',
+            textShadow: modo === 'claro' 
+              ? `0 0 12px ${theme.terminalVerde}80, 0 0 20px ${theme.terminalVerde}40` 
+              : `0 0 12px ${theme.terminalVerde}90, 0 0 20px ${theme.terminalVerde}60`,
+            fontSize: '1.4rem',
+            letterSpacing: '0.5px',
           }}
         >
           {message}
         </Typography>
       </motion.div>
 
-      {/* Ondas de error */}
+      {/* Partículas de confeti */}
       <Box sx={{ position: 'relative', height: 40 }}>
-        {[...Array(3)].map((_, index) => (
+        {[...Array(6)].map((_, index) => (
           <motion.div
             key={index}
             style={{
               position: 'absolute',
-              width: 60 + index * 20,
-              height: 60 + index * 20,
+              width: 8,
+              height: 8,
               borderRadius: '50%',
-              border: `2px solid ${theme.error || '#ff4444'}`,
+              backgroundColor: [theme.primario, theme.secundario, theme.accent][index % 3],
               left: '50%',
               top: '50%',
-              transform: 'translate(-50%, -50%)',
             }}
             initial={{ 
+              x: 0, 
+              y: 0, 
               scale: 0,
-              opacity: 0.8 
+              opacity: 0 
             }}
             animate={{ 
-              scale: 2,
-              opacity: 0
+              x: (index - 2.5) * 30, 
+              y: -50, 
+              scale: 1,
+              opacity: [0, 1, 0]
             }}
             transition={{
               duration: 1.5,
-              delay: 1 + index * 0.2,
-              ease: "easeOut",
-              repeat: 2
+              delay: 1 + index * 0.1,
+              ease: "easeOut"
             }}
           />
         ))}
@@ -133,4 +131,4 @@ function ErrorAnimation({ message = "Error" }) {
   );
 }
 
-export default ErrorAnimation; 
+export default SuccessAnimation; 

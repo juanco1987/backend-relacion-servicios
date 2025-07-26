@@ -1,10 +1,10 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import { APP_MESSAGES } from '../config/appConfig';
-import { useTheme } from '../context/ThemeContext';
+import { APP_MESSAGES } from '../../config/appConfig';
+import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
-import { ANIMATIONS } from '../config/animations';
+import { ANIMATIONS } from '../../config/animations';
 
 const tabLabels = [
   APP_MESSAGES.WORK_MODE_SERVICES || 'Relación de Servicios',

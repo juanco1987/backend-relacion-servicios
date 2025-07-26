@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import AnalyticsResumen from '../components/AnalyticsResumen';
-import ServiciosPendientesEfectivo from '../components/ServiciosPendientesEfectivo';
-import ServiciosPendientesCobrar from '../components/ServiciosPendientesCobrar';
+import AnalyticsResumen from '../components/analytics/AnalyticsResumen';
+import ServiciosPendientesEfectivo from '../components/analytics/ServiciosPendientesEfectivo';
+import ServiciosPendientesCobrar from '../components/analytics/ServiciosPendientesCobrar';
 // Si usas recharts para el gráfico de barras:
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 

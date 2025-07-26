@@ -6,11 +6,11 @@ import Box from '@mui/material/Box';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
-import { APP_MESSAGES } from '../config/appConfig';
-import terminalIcon from '../assets/Konsole.png';
-import trashIcon from '../assets/papelera.png';
-import statusIcon from '../assets/punto.png';
-import { useTheme } from '../context/ThemeContext';
+import { APP_MESSAGES } from '../../config/appConfig';
+import terminalIcon from '../../assets/Konsole.png';
+import trashIcon from '../../assets/papelera.png';
+import statusIcon from '../../assets/punto.png';
+import { useTheme } from '../../context/ThemeContext';
 
 function ProcessingConsole({ logs, onClearLogs, workMode = 0 }) {
   const { theme } = useTheme();

@@ -13,16 +13,16 @@ import FormControl from '@mui/material/FormControl';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import { APP_MESSAGES } from '../config/appConfig';
-import calendarIcon from '../assets/calendario.png';
-import { createLogEntry } from '../config/logMessages';
+import { APP_MESSAGES } from '../../config/appConfig';
+import calendarIcon from '../../assets/calendario.png';
+import { createLogEntry } from '../../config/logMessages';
 
 // CAMBIO: Imports añadidos para la nueva estructura
 import Grid from '@mui/material/Grid';
 import Divider from '@mui/material/Divider';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
-import { ANIMATIONS } from '../config/animations';
+import { ANIMATIONS } from '../../config/animations';
 
 const months = APP_MESSAGES.MONTHS_NAMES || [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',

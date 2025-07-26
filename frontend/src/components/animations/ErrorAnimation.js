@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
-import { useTheme } from '../context/ThemeContext';
-import { ANIMATIONS } from '../config/animations';
+import { useTheme } from '../../context/ThemeContext';
+import { ANIMATIONS } from '../../config/animations';
 
-function SuccessAnimation({ message = "¡Completado!" }) {
-  const { theme, modo } = useTheme();
+function ErrorAnimation({ message = "Error" }) {
+  const { theme } = useTheme();
 
   return (
     <Box
@@ -18,17 +18,17 @@ function SuccessAnimation({ message = "¡Completado!" }) {
         p: 3,
       }}
     >
-      {/* Círculo de éxito */}
+      {/* Círculo de error */}
       <motion.div
         style={{
           width: 80,
           height: 80,
           borderRadius: '50%',
-          backgroundColor: theme.terminalVerde,
+          backgroundColor: theme.terminalRojo,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: `0 0 20px ${theme.terminalVerde}40`,
+          boxShadow: `0 0 20px ${theme.terminalRojo}40`,
         }}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -39,7 +39,7 @@ function SuccessAnimation({ message = "¡Completado!" }) {
           duration: 0.6
         }}
       >
-        {/* Checkmark */}
+        {/* Icono X */}
         <motion.svg
           width="40"
           height="40"
@@ -49,20 +49,29 @@ function SuccessAnimation({ message = "¡Completado!" }) {
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{
-            duration: 0.8,
-            delay: 0.3,
-            ease: "easeInOut"
-          }}
         >
-          <motion.path
-            d="M20 6L9 17l-5-5"
+          <motion.line
+            x1="18"
+            y1="6"
+            x2="6"
+            y2="18"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{
-              duration: 0.6,
+              duration: 0.4,
+              delay: 0.3,
+              ease: "easeInOut"
+            }}
+          />
+          <motion.line
+            x1="6"
+            y1="6"
+            x2="18"
+            y2="18"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{
+              duration: 0.4,
               delay: 0.5,
               ease: "easeInOut"
             }}
@@ -70,7 +79,7 @@ function SuccessAnimation({ message = "¡Completado!" }) {
         </motion.svg>
       </motion.div>
 
-      {/* Texto de éxito */}
+      {/* Texto de error */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -79,50 +88,43 @@ function SuccessAnimation({ message = "¡Completado!" }) {
         <Typography
           variant="h6"
           sx={{
-            color: theme.terminalVerde,
-            fontWeight: 700,
+            color: theme.textoPrincipal,
+            fontWeight: 600,
             textAlign: 'center',
-            textShadow: modo === 'claro' 
-              ? `0 0 12px ${theme.terminalVerde}80, 0 0 20px ${theme.terminalVerde}40` 
-              : `0 0 12px ${theme.terminalVerde}90, 0 0 20px ${theme.terminalVerde}60`,
-            fontSize: '1.4rem',
-            letterSpacing: '0.5px',
           }}
         >
           {message}
         </Typography>
       </motion.div>
 
-      {/* Partículas de confeti */}
+      {/* Ondas de error */}
       <Box sx={{ position: 'relative', height: 40 }}>
-        {[...Array(6)].map((_, index) => (
+        {[...Array(3)].map((_, index) => (
           <motion.div
             key={index}
             style={{
               position: 'absolute',
-              width: 8,
-              height: 8,
+              width: 60 + index * 20,
+              height: 60 + index * 20,
               borderRadius: '50%',
-              backgroundColor: [theme.primario, theme.secundario, theme.accent][index % 3],
+              border: `2px solid ${theme.error || '#ff4444'}`,
               left: '50%',
               top: '50%',
+              transform: 'translate(-50%, -50%)',
             }}
             initial={{ 
-              x: 0, 
-              y: 0, 
               scale: 0,
-              opacity: 0 
+              opacity: 0.8 
             }}
             animate={{ 
-              x: (index - 2.5) * 30, 
-              y: -50, 
-              scale: 1,
-              opacity: [0, 1, 0]
+              scale: 2,
+              opacity: 0
             }}
             transition={{
               duration: 1.5,
-              delay: 1 + index * 0.1,
-              ease: "easeOut"
+              delay: 1 + index * 0.2,
+              ease: "easeOut",
+              repeat: 2
             }}
           />
         ))}
@@ -131,4 +133,4 @@ function SuccessAnimation({ message = "¡Completado!" }) {
   );
 }
 
-export default SuccessAnimation; 
+export default ErrorAnimation; 

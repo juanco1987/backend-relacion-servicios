@@ -3,11 +3,11 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
 import IconButton from '@mui/material/IconButton';
-import logo from '../assets/mi_logo.ico';
-import { APP_MESSAGES } from '../config/appConfig';
-import { useTheme } from '../context/ThemeContext';
+import logo from '../../assets/mi_logo.ico';
+import { APP_MESSAGES } from '../../config/appConfig';
+import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
-import { ANIMATIONS } from '../config/animations';
+import { ANIMATIONS } from '../../config/animations';
 
 function Header({ workMode = 0 }) {
   const { theme, modo, alternarTema } = useTheme();

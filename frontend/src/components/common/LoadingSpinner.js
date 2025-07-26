@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
-import { useTheme } from '../context/ThemeContext';
-import { ANIMATIONS } from '../config/animations';
+import { useTheme } from '../../context/ThemeContext';
+import { ANIMATIONS } from '../../config/animations';
 
 function LoadingSpinner({ message = "Procesando...", fileName }) {
   const { theme } = useTheme();

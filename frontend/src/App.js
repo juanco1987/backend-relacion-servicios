@@ -1,25 +1,27 @@
 // App.js Modificado
 
-import Header from './components/Header';
-import WorkModeTabs from './components/WorkModeTabs';
-import ExcelUploader from './components/ExcelUploader';
-import DateRangeSelector from './components/DateRangeSelector';
-import NotesCard from './components/NotesCard';
-import ActionCenterCard from './components/ActionCenterCard';
-import ProcessingConsole from './components/ProcessingConsole';
-import Analytics from './components/Analytics';
-import ServiciosPendientesEfectivo from './components/ServiciosPendientesEfectivo';
-import ServiciosPendientesCobrar from './components/ServiciosPendientesCobrar';
+import Header from './components/common/Header';
+import WorkModeTabs from './components/layout/WorkModeTabs';
+import ExcelUploader from './components/forms/ExcelUploader';
+import DateRangeSelector from './components/forms/DateRangeSelector';
+import NotesCard from './components/forms/NotesCard';
+import ActionCenterCard from './components/layout/ActionCenterCard';
+import ProcessingConsole from './components/common/ProcessingConsole';
+import ServiciosPendientesEfectivo from './components/analytics/ServiciosPendientesEfectivo';
+import ServiciosPendientesCobrar from './components/analytics/ServiciosPendientesCobrar';
+import Analytics from './components/analytics/Analytics';
 import './App.css';
 import { useTheme } from './context/ThemeContext';
 import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 import { createLogEntry, LOG_MESSAGES } from './config/logMessages';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '@mui/material';
 import { motion } from 'framer-motion';
 import { ANIMATIONS, STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from './config/animations';
-import ModeTransitionAnimation from './components/ModeTransitionAnimation';
+import ModeTransitionAnimation from './components/animations/ModeTransitionAnimation';
 
 function App() {
   // Función para obtener fechas por defecto del mes actual

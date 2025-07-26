@@ -8,26 +8,25 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
-import { APP_MESSAGES } from '../config/appConfig';
-import actionIcon from '../assets/flechas_circulo.png';
-import pdfIcon from '../assets/icono_pdf.png';
-import openIcon from '../assets/OJO.png';
-import processIcon from '../assets/Engrenages.png'
-import { generarPDFServiciosEfectivo, generarPDFPendientes } from '../services/pdfService';
-import { createLogEntry } from '../config/logMessages';
+import { APP_MESSAGES } from '../../config/appConfig';
+import actionIcon from '../../assets/flechas_circulo.png';
+import pdfIcon from '../../assets/icono_pdf.png';
+import processIcon from '../../assets/Engrenages.png'
+import { generarPDFServiciosEfectivo, generarPDFPendientes } from '../../services/pdfService';
+import { createLogEntry } from '../../config/logMessages';
 import IconButton from '@mui/material/IconButton';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { motion } from 'framer-motion';
-import { ANIMATIONS } from '../config/animations';
-import LoadingSpinner from './LoadingSpinner';
-import SuccessAnimation from './SuccessAnimation';
-import ErrorAnimation from './ErrorAnimation';
-import ModeTransitionAnimation from './ModeTransitionAnimation';
+import { ANIMATIONS } from '../../config/animations';
+import LoadingSpinner from '../common/LoadingSpinner';
+import SuccessAnimation from '../animations/SuccessAnimation';
+import ErrorAnimation from '../animations/ErrorAnimation';
+import ModeTransitionAnimation from '../animations/ModeTransitionAnimation';
 
 function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, fullHeight, workMode = 0, onProcessData, onToggleAnalytics, showAnalytics }) {
   const { theme } = useTheme();
@@ -47,7 +46,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
   };
   const [reportName, setReportName] = useState('');
   const [canGeneratePDF, setCanGeneratePDF] = useState(false);
-  const [canOpenPDF, setCanOpenPDF] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [lastGeneratedPDF, setLastGeneratedPDF] = useState(null);
@@ -76,7 +74,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
   // Agrega este useEffect para resetear los botones al cambiar archivo, fechas o modo
   useEffect(() => {
     setCanGeneratePDF(false);
-    setCanOpenPDF(false);
     setPdfUrl(null);
     setLastGeneratedPDF(null); // Limpiar el estado de duplicado al cambiar datos
   }, [archivoExcel, fechaInicio, fechaFin, workMode]);
@@ -178,7 +175,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
       // Crear URL del blob para poder abrirlo después
       const url = window.URL.createObjectURL(blob);
       setPdfUrl(url);
-      setCanOpenPDF(true);
       
       // Actualizar el estado del último PDF generado
       const pdfData = {
@@ -216,16 +212,14 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
         setTimeout(() => setAnimationState('idle'), 3000);
         alert('Debes seleccionar un archivo y un rango de fechas.');
         setCanGeneratePDF(false);
-        setCanOpenPDF(false);
         return;
       }
 
       // Mostrar animación de carga
       setAnimationState('loading');
 
-      // Limpiar PDF anterior y deshabilitar abrir PDF
+      // Limpiar PDF anterior
       setPdfUrl(null);
-      setCanOpenPDF(false);
 
       // Actualizar el nombre del PDF automáticamente al procesar
       setReportName(generateDefaultName());
@@ -235,7 +229,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
 
       setProcessing(true);
       setCanGeneratePDF(false);
-      setCanOpenPDF(false);
       
       if (workMode === 0) {
         // Modo: Relación de Servicios
@@ -258,26 +251,23 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           const result = await response.json();
           console.log('Respuesta del backend:', result);
           if (result.error) {
-            addLog(createLogEntry('NO_DATA_IN_RANGE'));
-            setCanGeneratePDF(false);
-            setCanOpenPDF(false);
-            setProcessing(false);
-            setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
-            alert('No se encontraron datos en el rango de fechas seleccionado.');
-            return;
-          }
-          if (!result.data || result.data.length === 0) {
-            addLog(createLogEntry('NO_DATA_IN_RANGE'));
-            setCanGeneratePDF(false);
-            setCanOpenPDF(false);
-            setProcessing(false);
-            setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
-            alert('No se encontraron datos en el rango de fechas seleccionado.');
-            return;
-          }
-          addLog(createLogEntry('DATA_FOUND', `${result.data.length} registros encontrados`));
-          setCanGeneratePDF(true);
-          setCanOpenPDF(false);
+                      addLog(createLogEntry('NO_DATA_IN_RANGE'));
+          setCanGeneratePDF(false);
+          setProcessing(false);
+          setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
+          alert('No se encontraron datos en el rango de fechas seleccionado.');
+          return;
+        }
+        if (!result.data || result.data.length === 0) {
+          addLog(createLogEntry('NO_DATA_IN_RANGE'));
+          setCanGeneratePDF(false);
+          setProcessing(false);
+          setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
+          alert('No se encontraron datos en el rango de fechas seleccionado.');
+          return;
+        }
+        addLog(createLogEntry('DATA_FOUND', `${result.data.length} registros encontrados`));
+        setCanGeneratePDF(true);
           // Mostrar animación de éxito
           setAnimationState('success');
           setTimeout(() => setAnimationState('idle'), 2000);
@@ -285,7 +275,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           console.error('Error en handleProcess:', error, typeof error, error?.message);
           addLog(createLogEntry('ERROR_VALIDATION', error.message || JSON.stringify(error)));
           setCanGeneratePDF(false);
-          setCanOpenPDF(false);
           setProcessing(false);
           // Mostrar animación de error
           setAnimationState('error');
@@ -316,7 +305,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           if (result.error) {
             addLog(createLogEntry('PENDIENTES_NO_DATA'));
             setCanGeneratePDF(false);
-            setCanOpenPDF(false);
             setProcessing(false);
             setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
             alert('No se encontraron servicios pendientes en el rango de fechas seleccionado.');
@@ -325,15 +313,13 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           if (!result.data || result.data.length === 0) {
             addLog(createLogEntry('PENDIENTES_NO_DATA'));
             setCanGeneratePDF(false);
-            setCanOpenPDF(false);
             setProcessing(false);
             setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
             alert('No se encontraron servicios pendientes en el rango de fechas seleccionado.');
             return;
           }
           addLog(createLogEntry('PENDIENTES_DATA_FILTERED', `${result.data.length} pendientes encontrados`));
-          setCanGeneratePDF(true);
-          setCanOpenPDF(false);
+                  setCanGeneratePDF(true);
           // Mostrar animación de éxito
           setAnimationState('success');
           setTimeout(() => setAnimationState('idle'), 2000);
@@ -341,7 +327,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           console.error('Error en handleProcess:', error, typeof error, error?.message);
           addLog(createLogEntry('ERROR_VALIDATION', error.message || JSON.stringify(error)));
           setCanGeneratePDF(false);
-          setCanOpenPDF(false);
           setProcessing(false);
           // Mostrar animación de error
           setAnimationState('error');
@@ -354,7 +339,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
       addLog(createLogEntry('PROCESSING_ERROR', error.message));
       alert(error.message);
       setCanGeneratePDF(false);
-      setCanOpenPDF(false);
     } finally {
       setProcessing(false);
     }
@@ -369,13 +353,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
     
     // Si no hay confirmación necesaria, generar directamente
     await generatePDF();
-  };
-
-  const handleOpenPDF = () => {
-    if (pdfUrl) {
-      window.open(pdfUrl, '_blank');
-      addLog(createLogEntry('PDF_OPENED'));
-    }
   };
 
   return (
@@ -606,51 +583,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
                   }}
                 >
                   {APP_MESSAGES.BUTTON_GENERATE_PDF_TEXT}
-                </Button>
-              </motion.div>
-              <motion.div
-                whileHover={ANIMATIONS.buttonHover}
-                whileTap={ANIMATIONS.buttonClick}
-                animate={canOpenPDF ? ANIMATIONS.buttonActive.animate : {}}
-              >
-                <Button
-                  variant="contained"
-                  disabled={!canOpenPDF}
-                  onClick={handleOpenPDF}
-                  startIcon={<Avatar src={openIcon} alt="Abrir PDF" sx={{ width: 28, height: 28, bgcolor: 'transparent' }} />}
-                  sx={{
-                    background: theme.modo === 'claro' 
-                      ? 'linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)' 
-                      : 'linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%)',
-                    borderRadius: '14px',
-                    boxShadow: theme.modo === 'claro' 
-                      ? '0 4px 12px rgba(46,125,50,0.3)' 
-                      : '0 4px 12px rgba(46,125,50,0.5)',
-                    color: theme.modo === 'claro' ? '#1b5e20' : '#ffffff',
-                    fontWeight: 'bold',
-                    fontSize: 18,
-                    px: 3,
-                    minWidth: 140,
-                    height: 48,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      background: theme.modo === 'claro' 
-                        ? 'linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%)' 
-                        : 'linear-gradient(135deg, #1b5e20 0%, #0d4f14 100%)',
-                      boxShadow: theme.modo === 'claro' 
-                        ? '0 6px 16px rgba(46,125,50,0.4)' 
-                        : '0 6px 16px rgba(46,125,50,0.6)',
-                      transform: 'translateY(-2px)',
-                    },
-                    '&:disabled': {
-                      background: theme.fondoOverlay,
-                      color: theme.textoDeshabilitado,
-                      boxShadow: 'none',
-                      transform: 'none',
-                    },
-                  }}
-                >
-                  {APP_MESSAGES.BUTTON_OPEN_PDF_TEXT}
                 </Button>
               </motion.div>
             </Box>
