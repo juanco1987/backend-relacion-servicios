@@ -23,12 +23,12 @@ function FileProcessingAnimation({ fileName = "archivo.xlsx" }) {
         style={{
           width: 60,
           height: 75,
-          background: `linear-gradient(135deg, ${theme.primario}, ${theme.secundario})`,
+          background: theme.gradientes.servicios,
           borderRadius: '6px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: `0 0 15px ${theme.primario}40`,
+          boxShadow: `0 0 15px ${theme.textoInfo}40`,
           position: 'relative',
         }}
         animate={{
@@ -45,7 +45,7 @@ function FileProcessingAnimation({ fileName = "archivo.xlsx" }) {
         <motion.div
           style={{
             fontSize: '1.5rem',
-            color: theme.textoContraste,
+            color: theme.textoPrincipal,
           }}
           animate={{
             scale: [1, 1.2, 1],
@@ -67,7 +67,7 @@ function FileProcessingAnimation({ fileName = "archivo.xlsx" }) {
               style={{
                 width: 2,
                 height: 12,
-                background: theme.primario,
+                background: theme.textoInfo,
                 borderRadius: 1,
                 marginBottom: 4,
                 opacity: 0.7,
@@ -96,7 +96,7 @@ function FileProcessingAnimation({ fileName = "archivo.xlsx" }) {
         <Typography
           variant="h6"
           sx={{
-            color: theme.modo === 'claro' ? '#1a1a1a' : theme.textoPrincipal,
+            color: theme.textoPrincipal,
             fontWeight: 600,
             textAlign: 'center',
             mb: 1,
@@ -108,7 +108,7 @@ function FileProcessingAnimation({ fileName = "archivo.xlsx" }) {
         <Typography
           variant="body2"
           sx={{
-            color: theme.modo === 'claro' ? '#333333' : theme.textoSecundario,
+            color: theme.textoSecundario,
             textAlign: 'center',
             fontFamily: 'monospace',
             textShadow: theme.modo === 'claro' ? '0 0 6px rgba(255,255,255,0.5)' : 'none',

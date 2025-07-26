@@ -33,15 +33,15 @@ function WorkModeTabs({ value, onChange, workMode = 0 }) {
         };
       case 2:
         return {
-          colorBg: '#ff9800', // Naranja para servicios pendientes en efectivo
-          colorMain: '#ff9800',
-          neonShadow: '0 0 20px rgba(255, 152, 0, 0.5)'
+          colorBg: theme.terminalAmarillo,
+          colorMain: theme.terminalAmarillo,
+          neonShadow: `0 0 20px ${theme.terminalAmarillo}80`
         };
       case 3:
         return {
-          colorBg: '#00bcd4', // Celeste para pendientes por cobrar
-          colorMain: '#00bcd4',
-          neonShadow: '0 0 20px rgba(0, 188, 212, 0.5)'
+          colorBg: theme.textoInfo,
+          colorMain: theme.textoInfo,
+          neonShadow: `0 0 20px ${theme.textoInfo}80`
         };
       default:
         return {

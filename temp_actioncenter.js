@@ -98,21 +98,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
     );
   };
 
-  // Función para verificar si el nombre del PDF es automático o personalizado
-  const isCustomName = () => {
-    const currentName = reportName.trim();
-    const autoName = generateDefaultName();
-    return currentName !== autoName;
-  };
-
-  // Función para verificar si debe mostrar confirmación de duplicado
-  const shouldShowDuplicateDialog = () => {
-    // Solo mostrar confirmación si:
-    // 1. Los datos son duplicados Y
-    // 2. El nombre es personalizado (no automático)
-    return isDuplicateData() && isCustomName();
-  };
-
   // Función para manejar la confirmación de generar PDF duplicado
   const handleDuplicateConfirm = () => {
     setShowDuplicateDialog(false);
@@ -125,84 +110,12 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
       notas
     };
     setLastGeneratedPDF(pdfData);
-    // Continuar con la generación del PDF
-    generatePDF();
+    onProcessData();
   };
 
   // Función para cancelar la generación duplicada
   const handleDuplicateCancel = () => {
     setShowDuplicateDialog(false);
-  };
-
-  // Función separada para generar el PDF
-  const generatePDF = async () => {
-    try {
-      if (!archivoExcel || !fechaInicio || !fechaFin) {
-        addLog(createLogEntry('ERROR_FILE_REQUIRED'));
-        alert('Debes seleccionar un archivo y un rango de fechas.');
-        return;
-      }
-
-      // Usar el nombre personalizado o generar uno por defecto
-      const pdfName = reportName.trim() || generateDefaultName();
-      let blob;
-      if (notas && notas.trim() !== '') {
-        addLog(createLogEntry('NOTAS_CARGADAS', notas));
-      }
-      if (workMode === 0) {
-        // Modo: Relación de Servicios
-        addLog(createLogEntry('PDF_GENERATION_STARTED'));
-        blob = await generarPDFServiciosEfectivo({
-          archivo: archivoExcel,
-          fechaInicio,
-          fechaFin,
-          notas,
-          nombrePDF: pdfName,
-        });
-        addLog(createLogEntry('PDF_GENERATED_SUCCESS'));
-        addLog(createLogEntry('PDF_DOWNLOADED', pdfName));
-      } else {
-        // Modo: Pendientes de Pago
-        addLog(createLogEntry('PDF_PENDIENTES_GENERATION_STARTED'));
-        blob = await generarPDFPendientes({
-          archivo: archivoExcel,
-          fechaInicio,
-          fechaFin,
-          notas,
-          nombrePDF: pdfName,
-        });
-        addLog(createLogEntry('PDF_PENDIENTES_GENERATED_SUCCESS'));
-        addLog(createLogEntry('PDF_PENDIENTES_DOWNLOADED', pdfName));
-      }
-      
-      // Crear URL del blob para poder abrirlo después
-      const url = window.URL.createObjectURL(blob);
-      setPdfUrl(url);
-      setCanOpenPDF(true);
-      
-      // Actualizar el estado del último PDF generado
-      const pdfData = {
-        archivo: archivoExcel?.name,
-        fechaInicio,
-        fechaFin,
-        workMode,
-        notas
-      };
-      setLastGeneratedPDF(pdfData);
-      
-      // Descargar el PDF
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = pdfName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-    } catch (error) {
-      console.error('Error generando PDF:', error);
-      addLog(createLogEntry('PDF_GENERATION_ERROR', error.message));
-      alert(`Error al generar el PDF: ${error.message}`);
-    }
   };
 
   const handleProcess = async () => {
@@ -259,20 +172,18 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           console.log('Respuesta del backend:', result);
           if (result.error) {
             addLog(createLogEntry('NO_DATA_IN_RANGE'));
+            alert('No se encontraron datos en el rango de fechas seleccionado.');
             setCanGeneratePDF(false);
             setCanOpenPDF(false);
             setProcessing(false);
-            setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
-            alert('No se encontraron datos en el rango de fechas seleccionado.');
             return;
           }
           if (!result.data || result.data.length === 0) {
             addLog(createLogEntry('NO_DATA_IN_RANGE'));
+            alert('No se encontraron datos en el rango de fechas seleccionado.');
             setCanGeneratePDF(false);
             setCanOpenPDF(false);
             setProcessing(false);
-            setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
-            alert('No se encontraron datos en el rango de fechas seleccionado.');
             return;
           }
           addLog(createLogEntry('DATA_FOUND', `${result.data.length} registros encontrados`));
@@ -315,20 +226,18 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           console.log('Respuesta del backend:', result);
           if (result.error) {
             addLog(createLogEntry('PENDIENTES_NO_DATA'));
+            alert('No se encontraron servicios pendientes en el rango de fechas seleccionado.');
             setCanGeneratePDF(false);
             setCanOpenPDF(false);
             setProcessing(false);
-            setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
-            alert('No se encontraron servicios pendientes en el rango de fechas seleccionado.');
             return;
           }
           if (!result.data || result.data.length === 0) {
             addLog(createLogEntry('PENDIENTES_NO_DATA'));
+            alert('No se encontraron servicios pendientes en el rango de fechas seleccionado.');
             setCanGeneratePDF(false);
             setCanOpenPDF(false);
             setProcessing(false);
-            setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
-            alert('No se encontraron servicios pendientes en el rango de fechas seleccionado.');
             return;
           }
           addLog(createLogEntry('PENDIENTES_DATA_FILTERED', `${result.data.length} pendientes encontrados`));
@@ -361,14 +270,79 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
   };
 
   const handleGeneratePDF = async () => {
-    // Verificar si debe mostrar confirmación de duplicado
-    if (shouldShowDuplicateDialog()) {
-      setShowDuplicateDialog(true);
-      return;
+    try {
+      if (!archivoExcel || !fechaInicio || !fechaFin) {
+        addLog(createLogEntry('ERROR_FILE_REQUIRED'));
+        alert('Debes seleccionar un archivo y un rango de fechas.');
+        return;
+      }
+
+      // Verificar si es un duplicado
+      if (isDuplicateData()) {
+        setShowDuplicateDialog(true);
+        return;
+      }
+      // Usar el nombre personalizado o generar uno por defecto
+      const pdfName = reportName.trim() || generateDefaultName();
+      let blob;
+      if (notas && notas.trim() !== '') {
+        addLog(createLogEntry('NOTAS_CARGADAS', notas));
+      }
+      if (workMode === 0) {
+        // Modo: Relación de Servicios
+        addLog(createLogEntry('PDF_GENERATION_STARTED'));
+        blob = await generarPDFServiciosEfectivo({
+          archivo: archivoExcel,
+          fechaInicio,
+          fechaFin,
+          notas,
+          nombrePDF: pdfName,
+        });
+        addLog(createLogEntry('PDF_GENERATED_SUCCESS'));
+        addLog(createLogEntry('PDF_DOWNLOADED', pdfName));
+      } else {
+        // Modo: Pendientes de Pago
+        addLog(createLogEntry('PDF_PENDIENTES_GENERATION_STARTED'));
+        blob = await generarPDFPendientes({
+          archivo: archivoExcel,
+          fechaInicio,
+          fechaFin,
+          notas,
+          nombrePDF: pdfName,
+        });
+        addLog(createLogEntry('PDF_PENDIENTES_GENERATED_SUCCESS'));
+        addLog(createLogEntry('PDF_PENDIENTES_DOWNLOADED', pdfName));
+      }
+      
+      // Crear URL del blob para poder abrirlo después
+      const url = window.URL.createObjectURL(blob);
+      setPdfUrl(url);
+      
+      // Descargar el PDF con el nombre personalizado
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = pdfName;
+      a.click();
+      
+      // Guardar el estado del PDF generado para evitar duplicados
+      const pdfData = {
+        archivo: archivoExcel.name,
+        fechaInicio,
+        fechaFin,
+        workMode,
+        notas
+      };
+      setLastGeneratedPDF(pdfData);
+      
+      setCanOpenPDF(true);
+    } catch (error) {
+      if (workMode === 0) {
+        addLog(createLogEntry('ERROR_PDF_GENERATION', error.message));
+      } else {
+        addLog(createLogEntry('ERROR_PDF_PENDIENTES_GENERATION', error.message));
+      }
+      alert(error.message);
     }
-    
-    // Si no hay confirmación necesaria, generar directamente
-    await generatePDF();
   };
 
   const handleOpenPDF = () => {
@@ -441,7 +415,7 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
                     transition: 'all 0.3s ease'
                   },
                   '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: theme.bordePrincipal,
+                    borderColor: theme.bordeTerminal,
                     borderWidth: '1.5px',
                     transition: 'all 0.3s ease'
                   },
@@ -454,7 +428,9 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
                   },
                   '&:hover': {
                     transform: 'translateY(-2px)',
-                    boxShadow: theme.sombraHover,
+                    boxShadow: theme.modo === 'claro' 
+                      ? '0 8px 25px rgba(0,0,0,0.15)' 
+                      : '0 8px 25px rgba(0,0,0,0.4)',
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
                     borderColor: theme.bordeHover,
@@ -462,7 +438,9 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
                   },
                   '&.Mui-focused': {
                     transform: 'translateY(-3px)',
-                    boxShadow: theme.sombraFocus,
+                    boxShadow: theme.modo === 'claro' 
+                      ? '0 12px 35px rgba(0,0,0,0.2)' 
+                      : '0 12px 35px rgba(0,0,0,0.5)',
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                     borderColor: theme.bordeFocus,

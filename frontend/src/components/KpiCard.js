@@ -3,21 +3,29 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import { useTheme } from '../context/ThemeContext';
 
 const KpiCard = ({ title, value, color = '#1976d2', icon, children }) => {
+  const { theme } = useTheme();
+  
   return (
     <Card
       sx={{
         minWidth: 180,
-        borderRadius: 3,
-        boxShadow: '0 2px 12px 0 rgba(25, 118, 210, 0.08)',
-        background: '#fff',
+        borderRadius: 5,
+        boxShadow: theme.sombraComponente,
+        background: theme.fondoContenedor,
         borderLeft: `6px solid ${color}`,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'flex-start',
         p: 0,
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: theme.sombraHover,
+        },
+        transition: 'all 0.3s ease'
       }}
       elevation={0}
     >

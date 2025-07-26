@@ -177,15 +177,11 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
                         transition: 'all 0.3s ease',
                         '&:hover': {
                           transform: 'translateY(-2px)',
-                          boxShadow: theme.modo === 'claro' 
-                            ? '0 8px 25px rgba(0,0,0,0.15)' 
-                            : '0 8px 25px rgba(0,0,0,0.4)',
+                          boxShadow: theme.sombraHover,
                         },
                         '&.Mui-focused': {
                           transform: 'translateY(-3px)',
-                          boxShadow: theme.modo === 'claro' 
-                            ? '0 12px 35px rgba(0,0,0,0.2)' 
-                            : '0 12px 35px rgba(0,0,0,0.5)',
+                          boxShadow: theme.sombraFocus,
                         }
                       }}
                     >
@@ -221,15 +217,11 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
                          transition: 'all 0.3s ease',
                          '&:hover': {
                            transform: 'translateY(-2px)',
-                           boxShadow: theme.modo === 'claro' 
-                             ? '0 8px 25px rgba(0,0,0,0.15)' 
-                             : '0 8px 25px rgba(0,0,0,0.4)',
+                           boxShadow: theme.sombraHover,
                          },
                          '&.Mui-focused': {
                            transform: 'translateY(-3px)',
-                           boxShadow: theme.modo === 'claro' 
-                             ? '0 12px 35px rgba(0,0,0,0.2)' 
-                             : '0 12px 35px rgba(0,0,0,0.5)',
+                           boxShadow: theme.sombraFocus,
                          }
                        }}
                      >
@@ -274,15 +266,11 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
                         transition: 'all 0.3s ease',
                         '&:hover': {
                           transform: 'translateY(-2px)',
-                          boxShadow: theme.modo === 'claro' 
-                            ? '0 8px 25px rgba(0,0,0,0.15)' 
-                            : '0 8px 25px rgba(0,0,0,0.4)',
+                          boxShadow: theme.sombraHover,
                         },
                         '&.Mui-focused': {
                           transform: 'translateY(-3px)',
-                          boxShadow: theme.modo === 'claro' 
-                            ? '0 12px 35px rgba(0,0,0,0.2)' 
-                            : '0 12px 35px rgba(0,0,0,0.5)',
+                          boxShadow: theme.sombraFocus,
                         }
                       },
                       size: "small",
@@ -313,15 +301,11 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
                         transition: 'all 0.3s ease',
                         '&:hover': {
                           transform: 'translateY(-2px)',
-                          boxShadow: theme.modo === 'claro' 
-                            ? '0 8px 25px rgba(0,0,0,0.15)' 
-                            : '0 8px 25px rgba(0,0,0,0.4)',
+                          boxShadow: theme.sombraHover,
                         },
                         '&.Mui-focused': {
                           transform: 'translateY(-3px)',
-                          boxShadow: theme.modo === 'claro' 
-                            ? '0 12px 35px rgba(0,0,0,0.2)' 
-                            : '0 12px 35px rgba(0,0,0,0.5)',
+                          boxShadow: theme.sombraFocus,
                         }
                       },
                       size: "small",

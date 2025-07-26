@@ -69,12 +69,20 @@ class PDF(FPDF):
         fill = False
 
         for _, fila in datos.iterrows():
+            # Preparar cada campo para evitar mostrar 'NaN' o 'nan'
+            fecha = fila['FECHA']
+            fecha_str = fecha.strftime('%d/%m/%Y') if not pd.isna(fecha) and str(fecha).lower() != 'nan' and fecha != '' else '-'
+            direccion = str(fila['DIRECCION']) if not pd.isna(fila['DIRECCION']) and str(fila['DIRECCION']).lower() != 'nan' and str(fila['DIRECCION']) != '' else '-'
+            cliente = str(fila['NOMBRE CLIENTE']) if not pd.isna(fila['NOMBRE CLIENTE']) and str(fila['NOMBRE CLIENTE']).lower() != 'nan' and str(fila['NOMBRE CLIENTE']) != '' else '-'
+            servicio = str(fila['SERVICIO REALIZADO']) if not pd.isna(fila['SERVICIO REALIZADO']) and str(fila['SERVICIO REALIZADO']).lower() != 'nan' and str(fila['SERVICIO REALIZADO']) != '' else '-'
+            dias_retraso = str(int(fila['DIAS_RETRASO'])) if not pd.isna(fila['DIAS_RETRASO']) and str(fila['DIAS_RETRASO']).lower() != 'nan' and str(fila['DIAS_RETRASO']) != '' else '-'
+
             datos_fila = [
-                fila['FECHA'].strftime('%d/%m/%Y') if not pd.isna(fila['FECHA']) else 'N/A',
-                str(fila['DIRECCION']) if not pd.isna(fila['DIRECCION']) else '',
-                str(fila['NOMBRE CLIENTE']) if not pd.isna(fila['NOMBRE CLIENTE']) else '',
-                str(fila['SERVICIO REALIZADO']) if not pd.isna(fila['SERVICIO REALIZADO']) else '',
-                str(int(fila['DIAS_RETRASO'])) if not pd.isna(fila['DIAS_RETRASO']) else '0'
+                fecha_str,
+                direccion,
+                cliente,
+                servicio,
+                dias_retraso
             ]
             
             # Cálculo de altura y posicionamiento optimizado

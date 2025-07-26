@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
+    const { theme } = useTheme();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -43,7 +45,14 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
 
     if (loading) {
         return (
-            <div style={{ padding: '1rem', border: '1px solid #ddd', borderRadius: '8px', margin: '1rem 0' }}>
+            <div style={{ 
+                padding: '1rem', 
+                border: `1px solid ${theme.bordePrincipal}`, 
+                borderRadius: '8px', 
+                margin: '1rem 0',
+                background: theme.fondoContenedor,
+                color: theme.textoPrincipal
+            }}>
                 <p>Cargando servicios pendientes por cobrar...</p>
             </div>
         );
@@ -53,11 +62,11 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
         return (
             <div style={{ 
                 padding: '1rem', 
-                backgroundColor: '#ffebee', 
-                border: '1px solid #f44336', 
+                backgroundColor: theme.terminalRojo + '20', 
+                border: `1px solid ${theme.terminalRojo}`, 
                 borderRadius: '8px', 
                 margin: '1rem 0',
-                color: '#d32f2f'
+                color: theme.terminalRojo
             }}>
                 <strong>Error:</strong> {error}
             </div>
@@ -78,7 +87,7 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
 
     return (
         <div style={{ marginTop: '2rem' }}>
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1976d2' }}>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: theme.textoPrincipal }}>
                 💸 Servicios Pendientes por Cobrar
             </h2>
 
@@ -91,52 +100,56 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
                 justifyContent: 'flex-start',
             }}>
                 <div style={{
-                    background: '#e3f2fd',
-                    border: '2px solid #1976d2',
+                    background: theme.fondoContenedor,
+                    border: `2px solid ${theme.textoInfo}`,
                     borderRadius: '16px',
                     padding: '1.2rem 2.2rem',
                     minWidth: 180,
                     textAlign: 'center',
-                    boxShadow: '0 2px 8px #1976d233',
+                    boxShadow: theme.sombraComponente,
+                    color: theme.textoPrincipal
                 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#1976d2', marginBottom: 4 }}>Total Servicios</div>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: '#1976d2' }}>{totalServicios}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoInfo, marginBottom: 4 }}>Total Servicios</div>
+                    <div style={{ fontSize: 32, fontWeight: 900, color: theme.textoInfo }}>{totalServicios}</div>
                 </div>
                 <div style={{
-                    background: '#fff3e0',
-                    border: '2px solid #ff9800',
+                    background: theme.fondoContenedor,
+                    border: `2px solid ${theme.textoAdvertencia}`,
                     borderRadius: '16px',
                     padding: '1.2rem 2.2rem',
                     minWidth: 180,
                     textAlign: 'center',
-                    boxShadow: '0 2px 8px #ff980033',
+                    boxShadow: theme.sombraComponente,
+                    color: theme.textoAdvertencia
                 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#ff9800', marginBottom: 4 }}>Con +30 días de retraso</div>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: '#ff9800' }}>{serviciosRetraso}</div>
+                                         <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoAdvertencia, marginBottom: 4 }}>Con +30 días de retraso</div>
+                     <div style={{ fontSize: 32, fontWeight: 900, color: theme.textoAdvertencia }}>{serviciosRetraso}</div>
                 </div>
                 <div style={{
-                    background: '#ffebee',
-                    border: '2px solid #f44336',
+                    background: theme.fondoContenedor,
+                                         border: `2px solid ${theme.terminalRojo}`,
                     borderRadius: '16px',
                     padding: '1.2rem 2.2rem',
                     minWidth: 180,
                     textAlign: 'center',
-                    boxShadow: '0 2px 8px #f4433622',
+                    boxShadow: theme.sombraComponente,
+                                         color: theme.terminalRojo
                 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#f44336', marginBottom: 4 }}>Días Máximos de Retraso</div>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: '#f44336' }}>{maxDiasRetraso}</div>
+                                         <div style={{ fontSize: 15, fontWeight: 700, color: theme.terminalRojo, marginBottom: 4 }}>Días Máximos de Retraso</div>
+                     <div style={{ fontSize: 32, fontWeight: 900, color: theme.terminalRojo }}>{maxDiasRetraso}</div>
                 </div>
                 <div style={{
-                    background: '#e8f5e9',
-                    border: '2px solid #388e3c',
+                    background: theme.fondoContenedor,
+                    border: `2px solid ${theme.textoInfo}`,
                     borderRadius: '16px',
                     padding: '1.2rem 2.2rem',
                     minWidth: 180,
                     textAlign: 'center',
-                    boxShadow: '0 2px 8px #388e3c22',
+                    boxShadow: theme.sombraComponente,
+                    color: theme.textoInfo
                 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#388e3c', marginBottom: 4 }}>Servicio más antiguo</div>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: '#388e3c' }}>{fechaMasAntigua}</div>
+                                         <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoInfo, marginBottom: 4 }}>Servicio más antiguo</div>
+                     <div style={{ fontSize: 20, fontWeight: 900, color: theme.textoInfo }}>{fechaMasAntigua}</div>
                 </div>
             </div>
 
@@ -144,14 +157,14 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
             {detalle.length > 0 ? (
                 <div style={{ 
                     padding: '1rem', 
-                    border: '1px solid #ddd', 
+                    border: `1px solid ${theme.bordePrincipal}`, 
                     borderRadius: '8px', 
-                    backgroundColor: '#f5f5f5',
+                    backgroundColor: theme.fondoContenedor,
                     maxWidth: '900px',
                     width: '100%',
                     margin: '0 auto'
                 }}>
-                    <h3 style={{ margin: '0 0 1rem 0' }}>Detalle de Servicios Pendientes por Cobrar</h3>
+                    <h3 style={{ margin: '0 0 1rem 0', color: theme.textoPrincipal }}>Detalle de Servicios Pendientes por Cobrar</h3>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ 
                             width: '100%', 
@@ -161,26 +174,26 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
                             overflow: 'hidden'
                         }}>
                             <thead>
-                                <tr style={{ backgroundColor: '#f0f0f0' }}>
-                                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Fecha</th>
-                                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Estado</th>
-                                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Servicio Realizado</th>
-                                    <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #ddd', minWidth: '100px' }}>Días de Retraso</th>
-                                    <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #ddd', minWidth: '220px' }}>Mensaje</th>
+                                <tr style={{ backgroundColor: theme.fondoContenedor }}>
+                                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Fecha</th>
+                                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Estado</th>
+                                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Servicio Realizado</th>
+                                    <th style={{ padding: '12px', textAlign: 'center', borderBottom: `1px solid ${theme.bordePrincipal}`, minWidth: '100px' }}>Días de Retraso</th>
+                                    <th style={{ padding: '12px', textAlign: 'center', borderBottom: `1px solid ${theme.bordePrincipal}`, minWidth: '220px' }}>Mensaje</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {detalle.map((servicio, index) => (
                                     <tr key={index} style={{ 
-                                        backgroundColor: servicio.dias_de_retraso > 30 ? 'rgba(244, 67, 54, 0.1)' : 'inherit' 
+                                                                                 backgroundColor: servicio.dias_de_retraso > 30 ? theme.terminalRojo + '10' : 'inherit' 
                                     }}>
-                                        <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>{servicio.fecha}</td>
-                                        <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>{servicio.estado}</td>
-                                        <td style={{ padding: '12px', borderBottom: '1px solid #eee' }}>{servicio.servicio_realizado}</td>
-                                        <td style={{ padding: '12px', borderBottom: '1px solid #eee', textAlign: 'center', fontWeight: servicio.dias_de_retraso > 30 ? 'bold' : 'normal', color: servicio.dias_de_retraso > 30 ? '#f44336' : 'inherit' }}>
+                                        <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.fecha}</td>
+                                        <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.estado}</td>
+                                        <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.servicio_realizado}</td>
+                                        <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}`, textAlign: 'center', fontWeight: servicio.dias_de_retraso > 30 ? 'bold' : 'normal', color: servicio.dias_de_retraso > 30 ? theme.textoError : 'inherit' }}>
                                             {servicio.dias_de_retraso}
                                         </td>
-                                        <td style={{ padding: '12px', borderBottom: '1px solid #eee', textAlign: 'center', color: servicio.dias_de_retraso > 30 ? '#f44336' : '#1976d2', fontWeight: servicio.dias_de_retraso > 30 ? 'bold' : 'normal' }}>
+                                        <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}`, textAlign: 'center', color: servicio.dias_de_retraso > 30 ? theme.textoError : theme.textoInfo, fontWeight: servicio.dias_de_retraso > 30 ? 'bold' : 'normal' }}>
                                             {servicio.mensaje}
                                         </td>
                                     </tr>
@@ -190,7 +203,7 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
                     </div>
                 </div>
             ) : (
-                <div style={{ padding: '1rem', backgroundColor: '#e3f2fd', border: '1px solid #90caf9', borderRadius: '8px', color: '#1976d2', marginTop: '1rem' }}>
+                                 <div style={{ padding: '1rem', backgroundColor: theme.fondoContenedor, border: `1px solid ${theme.bordePrincipal}`, borderRadius: '8px', color: theme.textoInfo, marginTop: '1rem' }}>
                     No hay servicios pendientes por cobrar en el rango de fechas seleccionado.
                 </div>
             )}

@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { ANIMATIONS } from '../config/animations';
 
 function SuccessAnimation({ message = "¡Completado!" }) {
-  const { theme } = useTheme();
+  const { theme, modo } = useTheme();
 
   return (
     <Box
@@ -24,11 +24,11 @@ function SuccessAnimation({ message = "¡Completado!" }) {
           width: 80,
           height: 80,
           borderRadius: '50%',
-          backgroundColor: theme.primario,
+          backgroundColor: theme.terminalVerde,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: `0 0 20px ${theme.primario}40`,
+          boxShadow: `0 0 20px ${theme.terminalVerde}40`,
         }}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -45,7 +45,7 @@ function SuccessAnimation({ message = "¡Completado!" }) {
           height="40"
           viewBox="0 0 24 24"
           fill="none"
-          stroke={theme.textoContraste}
+          stroke={theme.textoPrincipal}
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -79,12 +79,12 @@ function SuccessAnimation({ message = "¡Completado!" }) {
         <Typography
           variant="h6"
           sx={{
-            color: theme.terminalVerde, // Verde de éxito del tema
+            color: theme.terminalVerde,
             fontWeight: 700,
             textAlign: 'center',
-            textShadow: theme.modo === 'claro' 
-              ? '0 0 12px rgba(39,201,63,0.8), 0 0 20px rgba(39,201,63,0.4)' 
-              : '0 0 12px rgba(39,201,63,0.9), 0 0 20px rgba(39,201,63,0.6)',
+            textShadow: modo === 'claro' 
+              ? `0 0 12px ${theme.terminalVerde}80, 0 0 20px ${theme.terminalVerde}40` 
+              : `0 0 12px ${theme.terminalVerde}90, 0 0 20px ${theme.terminalVerde}60`,
             fontSize: '1.4rem',
             letterSpacing: '0.5px',
           }}

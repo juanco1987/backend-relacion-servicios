@@ -77,9 +77,7 @@ function NotesCard({ value, onChange, addLog, fullHeight }) {
           },
           '&:hover': {
             transform: 'translateY(-2px)',
-            boxShadow: theme.modo === 'claro' 
-              ? '0 8px 25px rgba(0,0,0,0.15)' 
-              : '0 8px 25px rgba(0,0,0,0.4)',
+            boxShadow: theme.sombraHover,
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.bordeHover,
@@ -87,9 +85,7 @@ function NotesCard({ value, onChange, addLog, fullHeight }) {
           },
           '&.Mui-focused': {
             transform: 'translateY(-3px)',
-            boxShadow: theme.modo === 'claro' 
-              ? '0 12px 35px rgba(0,0,0,0.2)' 
-              : '0 12px 35px rgba(0,0,0,0.5)',
+            boxShadow: theme.sombraFocus,
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.bordeFocus,

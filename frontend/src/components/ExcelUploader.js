@@ -102,7 +102,6 @@ function ExcelUploader({ onFileChange, addLog, workMode = 0 }) {
               const file = e.dataTransfer.files[0];
               setFileName(file.name);
               if (onFileChange) onFileChange(file);
-              // Puedes agregar logs aquí si lo deseas
             }
           }}
         >
@@ -137,36 +136,22 @@ function ExcelUploader({ onFileChange, addLog, workMode = 0 }) {
                     transition: 'all 0.3s ease'
                   },
                   '& .MuiInputBase-root': {
-                    height: 48,
+                    height: 50,
                     borderRadius: '18px',
                     background: 'transparent',
                     alignItems: 'center',
-                    paddingTop: '2px',
-                    marginTop: '2px',
                     transition: 'all 0.3s ease'
                   },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderRadius: '18px',
-                    borderColor: theme.bordePrincipal,
-                    borderWidth: '1.5px',
-                    transition: 'all 0.3s ease'
-                  },
+                  
                   '&:hover': {
                     transform: 'translateY(-2px)',
-                    boxShadow: theme.modo === 'claro' 
-                      ? '0 8px 25px rgba(0,0,0,0.15)' 
-                      : '0 8px 25px rgba(0,0,0,0.4)',
+                    boxShadow: theme.sombraHover,
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
                     borderColor: theme.bordeHover,
                     borderWidth: '2px'
                   },
-                  '&.Mui-focused': {
-                    transform: 'translateY(-3px)',
-                    boxShadow: theme.modo === 'claro' 
-                      ? '0 12px 35px rgba(0,0,0,0.2)' 
-                      : '0 12px 35px rgba(0,0,0,0.5)',
-                  },
+                  
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                     borderColor: theme.bordeFocus,
                     borderWidth: '2.5px'

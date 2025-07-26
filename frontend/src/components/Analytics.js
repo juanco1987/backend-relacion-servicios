@@ -12,7 +12,9 @@ import {
   Alert,
   CircularProgress,
   Select,
-  MenuItem
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import { 
   BarChart, 
@@ -108,7 +110,10 @@ const Analytics = ({ excelData, workMode = 0 }) => {
       const result = await response.json();
       if (result && result.resumen) {
         setAnalyticsData(result.resumen);
-        const mesesOrdenados = Object.keys(result.resumen).sort();
+        // Al procesar los datos del backend, filtra los meses inválidos
+        const mesesOrdenados = Object.keys(result.resumen)
+          .filter(mes => mes && mes !== 'NaT' && mes !== 'Invalid date' && mes !== null && mes !== undefined)
+          .sort();
         setMeses(mesesOrdenados);
         setMesSeleccionado(mesesOrdenados[mesesOrdenados.length - 1] || null);
       } else {
@@ -131,11 +136,41 @@ const Analytics = ({ excelData, workMode = 0 }) => {
     efectivo: Number(analyticsData?.[mes]?.efectivo_total ?? 0),
     transferencia: Number(analyticsData?.[mes]?.transferencia_total ?? 0),
     total: Number(analyticsData?.[mes]?.total_general ?? 0),
-    servicios: Number(analyticsData?.[mes]?.cantidad_general ?? 0)
+    servicios: Number(analyticsData?.[mes]?.cantidad_general ?? 0),
+    efectivo_cantidad: Number(analyticsData?.[mes]?.efectivo_cantidad ?? 0),
+    transferencia_cantidad: Number(analyticsData?.[mes]?.transferencia_cantidad ?? 0)
   }));
 
-  // KPIs del mes seleccionado con los nuevos campos
-  const kpi = mesSeleccionado && analyticsData ? analyticsData[mesSeleccionado] : null;
+  // Calcular el total global sumando todos los meses, incluyendo cantidades
+  const totalGlobal = dataGrafica.reduce(
+    (acc, curr) => ({
+      efectivo: acc.efectivo + curr.efectivo,
+      transferencia: acc.transferencia + curr.transferencia,
+      total: acc.total + curr.total,
+      servicios: acc.servicios + curr.servicios,
+      efectivo_cantidad: (acc.efectivo_cantidad || 0) + (curr.efectivo_cantidad || 0),
+      transferencia_cantidad: (acc.transferencia_cantidad || 0) + (curr.transferencia_cantidad || 0)
+    }),
+    { efectivo: 0, transferencia: 0, total: 0, servicios: 0, efectivo_cantidad: 0, transferencia_cantidad: 0 }
+  );
+
+  // Agregar 'Total Global' como opción extra en el menú de meses
+  const mesesConTotal = [...meses, 'Total Global'];
+
+  // KPIs del mes seleccionado o del total global
+  const kpi =
+    mesSeleccionado === 'Total Global'
+      ? {
+          efectivo_total: totalGlobal.efectivo,
+          transferencia_total: totalGlobal.transferencia,
+          total_general: totalGlobal.total,
+          cantidad_general: totalGlobal.servicios,
+          efectivo_cantidad: totalGlobal.efectivo_cantidad,
+          transferencia_cantidad: totalGlobal.transferencia_cantidad
+        }
+      : mesSeleccionado && analyticsData
+      ? analyticsData[mesSeleccionado]
+      : null;
 
   if (isLoading) {
     return (
@@ -162,6 +197,25 @@ const Analytics = ({ excelData, workMode = 0 }) => {
     );
   }
 
+  // Tooltip personalizado para formatear valores con símbolo de pesos y separador de miles colombiano
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <Box sx={{ background: '#fff', border: '1px solid #ccc', borderRadius: 2, p: 2 }}>
+          <Typography variant="subtitle2">{label}</Typography>
+          {payload.map((entry, i) => (
+            <Typography key={i} variant="body2" sx={{ color: entry.color }}>
+              {entry.name}: {typeof entry.value === 'number' && (entry.name === 'Efectivo' || entry.name === 'Transferencia' || entry.name === 'Total General')
+                ? `$${entry.value.toLocaleString('es-CO', { minimumFractionDigits: 0 })}`
+                : entry.value}
+            </Typography>
+          ))}
+        </Box>
+      );
+    }
+    return null;
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
       <Box sx={{ width: '100%', background: theme.fondoContenedor, borderRadius: '28px', boxShadow: theme.sombraContenedor, p: { xs: 3, md: 4 }, mb: 4 }}>
@@ -182,16 +236,21 @@ const Analytics = ({ excelData, workMode = 0 }) => {
           </Box>
           {/* Selector de mes */}
           <Box>
-            <Select
-              value={mesSeleccionado || ''}
-              onChange={e => setMesSeleccionado(e.target.value)}
-              displayEmpty
-              sx={{ minWidth: 120, background: theme.gradientes.botonInactivo, borderRadius: '12px', color: theme.textoPrincipal }}
-            >
-              {meses.map(mes => (
-                <MenuItem key={mes} value={mes}>{mes}</MenuItem>
-              ))}
-            </Select>
+            <FormControl sx={{ minWidth: 180, mb: 2 }} size="small">
+              <InputLabel id="mes-label">Mes</InputLabel>
+              <Select
+                labelId="mes-label"
+                value={mesSeleccionado || ''}
+                label="Mes"
+                onChange={e => setMesSeleccionado(e.target.value)}
+              >
+                {mesesConTotal.map(mes => (
+                  <MenuItem key={mes} value={mes}>
+                    {mes}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
         </Box>
 
@@ -286,7 +345,7 @@ const Analytics = ({ excelData, workMode = 0 }) => {
               <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
               <XAxis dataKey="mes" stroke={theme.textoSecundario} fontSize={12} />
               <YAxis stroke={theme.textoSecundario} fontSize={12} />
-              <RechartsTooltip contentStyle={{ background: theme.fondoContenedor, border: `1px solid ${theme.bordePrincipal}`, borderRadius: '12px', color: theme.textoPrincipal }} />
+              <RechartsTooltip content={<CustomTooltip />} />
               <Legend />
               <Bar dataKey="efectivo" fill="#4caf50" name="Efectivo" radius={[4, 4, 0, 0]} />
               <Bar dataKey="transferencia" fill="#2196f3" name="Transferencia" radius={[4, 4, 0, 0]} />

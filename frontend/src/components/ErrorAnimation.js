@@ -24,11 +24,11 @@ function ErrorAnimation({ message = "Error" }) {
           width: 80,
           height: 80,
           borderRadius: '50%',
-          backgroundColor: theme.error || '#ff4444',
+          backgroundColor: theme.terminalRojo,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: `0 0 20px ${theme.error || '#ff4444'}40`,
+          boxShadow: `0 0 20px ${theme.terminalRojo}40`,
         }}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -45,7 +45,7 @@ function ErrorAnimation({ message = "Error" }) {
           height="40"
           viewBox="0 0 24 24"
           fill="none"
-          stroke={theme.textoContraste}
+          stroke={theme.textoPrincipal}
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
