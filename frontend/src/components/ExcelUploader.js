@@ -126,13 +126,13 @@ function ExcelUploader({ onFileChange, addLog, workMode = 0 }) {
                   background: theme.gradientes.botonInactivo,
                   borderRadius: '18px',
                   boxShadow: theme.sombraExcelUploader,
-                  input: { 
-                    color: theme.textoPrincipal, 
+                  '& .MuiInputBase-root': {
+                    color: `${theme.textoPrincipal} !important`,
                     fontWeight: 500,
                     transition: 'all 0.3s ease'
                   },
-                  label: { 
-                    color: theme.textoSecundario,
+                  '& .MuiInputLabel-root': {
+                    color: `${theme.textoSecundario} !important`,
                     transition: 'all 0.3s ease'
                   },
                   '& .MuiInputBase-root': {
@@ -142,23 +142,33 @@ function ExcelUploader({ onFileChange, addLog, workMode = 0 }) {
                     alignItems: 'center',
                     transition: 'all 0.3s ease'
                   },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: `${theme.bordePrincipal} !important`,
+                    borderWidth: '1.5px !important',
+                    transition: 'all 0.3s ease'
+                  },
                   
                   '&:hover': {
                     transform: 'translateY(-2px)',
                     boxShadow: theme.sombraHover,
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: theme.bordeHover,
-                    borderWidth: '2px'
+                    borderColor: `${theme.bordeHover} !important`,
+                   
                   },
                   
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: theme.bordeFocus,
-                    borderWidth: '2.5px'
+                    borderColor: `${theme.bordeFocus} !important`,
+                    borderWidth: '2.5px !important'
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
-                    color: theme.textoPrincipal,
+                    color: `${theme.textoPrincipal} !important`,
                     fontWeight: 600
+                  },
+                  '& .MuiInputBase-input': {
+                    color: `${theme.textoPrincipal} !important`,
+                    fontWeight: 500,
+                    transition: 'all 0.3s ease'
                   },
                   transition: 'all 0.3s ease'
                 }}

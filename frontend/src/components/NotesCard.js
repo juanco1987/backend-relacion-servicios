@@ -56,23 +56,25 @@ function NotesCard({ value, onChange, addLog, fullHeight }) {
           background: theme.fondoContenedor,
           borderRadius: '18px',
           boxShadow: theme.sombraComponente,
-          color: theme.textoPrincipal,
-          textarea: { 
-            color: theme.textoPrincipal, 
-            fontWeight: 500, 
-            background: 'transparent',
-            transition: 'all 0.3s ease'
-          },
-          '& .MuiOutlinedInput-root': {
+          '& .MuiInputBase-root': {
+            color: `${theme.textoPrincipal} !important`,
             borderRadius: '18px',
-            color: theme.textoPrincipal,
-            '& textarea': { color: theme.textoPrincipal },
             transition: 'all 0.3s ease'
           },
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.bordePrincipal,
+            borderColor: `${theme.bordePrincipal} !important`,
             borderRadius: '18px',
-            borderWidth: '1.5px',
+            borderWidth: '1.5px !important',
+            transition: 'all 0.3s ease'
+          },
+          '& .MuiInputBase-input': {
+            color: `${theme.textoPrincipal} !important`,
+            fontWeight: 500,
+            background: 'transparent',
+            transition: 'all 0.3s ease'
+          },
+          '& .MuiInputLabel-root': {
+            color: `${theme.textoSecundario} !important`,
             transition: 'all 0.3s ease'
           },
           '&:hover': {
@@ -80,28 +82,24 @@ function NotesCard({ value, onChange, addLog, fullHeight }) {
             boxShadow: theme.sombraHover,
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.bordeHover,
-            borderWidth: '2px'
+            borderColor: `${theme.bordeHover} !important`,
+           
           },
           '&.Mui-focused': {
             transform: 'translateY(-3px)',
             boxShadow: theme.sombraFocus,
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.bordeFocus,
-            borderWidth: '2.5px'
+            borderColor: `${theme.bordeFocus} !important`,
+            borderWidth: '2.5px !important'
           },
           '& .MuiInputBase-input::placeholder': {
             color: theme.textoPlaceholder,
             opacity: 1,
             transition: 'all 0.3s ease'
           },
-          '& .MuiInputLabel-root': {
-            color: theme.textoSecundario,
-            transition: 'all 0.3s ease'
-          },
           '& label.Mui-focused': {
-            color: theme.textoPrincipal,
+            color: `${theme.textoPrincipal} !important`,
             fontWeight: 600
           },
           transition: 'all 0.3s ease'

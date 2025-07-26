@@ -441,8 +441,8 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
                     transition: 'all 0.3s ease'
                   },
                   '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: theme.bordePrincipal,
-                    borderWidth: '1.5px',
+                    borderColor: `${theme.bordePrincipal} !important`,
+                    borderWidth: '1.5px !important',
                     transition: 'all 0.3s ease'
                   },
                   '& .MuiInputLabel-root': {
@@ -457,22 +457,23 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
                     boxShadow: theme.sombraHover,
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: theme.bordeHover,
-                    borderWidth: '2px'
+                    borderColor: `${theme.bordeHover} !important`,
+                    
                   },
                   '&.Mui-focused': {
                     transform: 'translateY(-3px)',
                     boxShadow: theme.sombraFocus,
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: theme.bordeFocus,
-                    borderWidth: '2.5px'
+                    borderColor: `${theme.bordeFocus} !important`,
+                    borderWidth: '2.5px !important'
                   },
                   '& .MuiInputBase-input': {
+                    color: `${theme.textoPrincipal} !important`,
                     transition: 'all 0.3s ease'
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
-                    color: theme.textoPrincipal,
+                    color: `${theme.textoPrincipal} !important`,
                     fontWeight: 600
                   },
                   transition: 'all 0.3s ease'
