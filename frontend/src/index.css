@@ -17,3 +17,23 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Scrollbar global para toda la app */
+html, body, * {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #00eaff #e3f0fa; /* thumb y track, usa color de acento */
+}
+
+/* Webkit browsers (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #00eaff;
+  border-radius: 6px;
+  transition: background 0.3s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #009ec3;
+}

@@ -6,6 +6,8 @@ const TEMA_OSCURO = {
   fondoContenedor: "linear-gradient(135deg, #162447 80%, #1f4068 100%)",
   fondoOverlay: "rgba(44, 54, 80, 0.7)",
   fondoInputDeshabilitado: "#2a3441",
+  fondoMenu: "#162447",
+  fondoMenuActivo: "rgba(0,234,255,0.12)",
   
   // Texto
   textoPrincipal: "#ffffff",
@@ -64,6 +66,8 @@ const TEMA_CLARO = {
   fondoContenedor: "linear-gradient(135deg,rgb(206, 234, 255) 80%, #f7fbff 100%)",
   fondoOverlay: "rgba(227, 240, 250, 0.85)",
   fondoInputDeshabilitado: "#f3f6fa",
+  fondoMenu: "#e3f0fa",
+  fondoMenuActivo: "rgba(0,234,255,0.12)",
   
   // Texto
   textoPrincipal: "#162447",

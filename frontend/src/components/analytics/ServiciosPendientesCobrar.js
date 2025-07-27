@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Box, Typography, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 
-const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
+const ServiciosPendientesCobrar = ({ file }) => {
     const { theme } = useTheme();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [mesSeleccionado, setMesSeleccionado] = useState('Total Global');
 
     useEffect(() => {
         if (!file) return;
@@ -16,8 +18,6 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
 
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('fecha_inicio', fechaInicio);
-            formData.append('fecha_fin', fechaFin);
 
             try {
                 const response = await fetch('http://localhost:5000/api/analytics_pendientes_cobrar', {
@@ -41,7 +41,7 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
         };
 
         fetchData();
-    }, [file, fechaInicio, fechaFin]);
+    }, [file]);
 
     if (loading) {
         return (
@@ -77,19 +77,98 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
         return null;
     }
 
-    const { detalle } = data;
+    const { resumen, detalle } = data;
 
-    // KPIs
-    const totalServicios = detalle.length;
-    const serviciosRetraso = detalle.filter(s => s.dias_de_retraso > 30).length;
-    const maxDiasRetraso = detalle.length > 0 ? Math.max(...detalle.map(s => s.dias_de_retraso)) : 0;
-    const fechaMasAntigua = detalle.length > 0 ? detalle.reduce((min, s) => (s.fecha < min ? s.fecha : min), detalle[0].fecha) : 'N/A';
+    // Filtrar meses válidos y ordenarlos
+    const mesesOrdenados = Object.keys(resumen || {})
+        .filter(mes => {
+            if (!mes) return false;
+            const normalizado = mes.trim().toLowerCase();
+            return normalizado &&
+                normalizado !== 'null' &&
+                normalizado !== 'undefined' &&
+                normalizado !== 'invalid date' &&
+                !/^nat$/i.test(normalizado);
+        })
+        .sort((a, b) => {
+            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const añoA = a.split(' ')[1];
+            const añoB = b.split(' ')[1];
+            const mesA = meses.indexOf(a.split(' ')[0]);
+            const mesB = meses.indexOf(b.split(' ')[0]);
+            if (añoA !== añoB) return añoA - añoB;
+            return mesA - mesB;
+        });
+
+    // Calcular total global
+    const totalGlobal = mesesOrdenados.reduce((acc, mes) => {
+        const datosMes = resumen[mes] || {};
+        return {
+            total_servicios: acc.total_servicios + (datosMes.total_servicios || 0),
+            servicios_retraso: acc.servicios_retraso + (datosMes.servicios_retraso || 0),
+            max_dias_retraso: Math.max(acc.max_dias_retraso, datosMes.max_dias_retraso || 0),
+            fecha_mas_antigua: datosMes.fecha_mas_antigua && datosMes.fecha_mas_antigua < acc.fecha_mas_antigua ? datosMes.fecha_mas_antigua : acc.fecha_mas_antigua
+        };
+    }, {
+        total_servicios: 0,
+        servicios_retraso: 0,
+        max_dias_retraso: 0,
+        fecha_mas_antigua: '9999-12-31'
+    });
+
+    // Determinar datos a mostrar
+    const datosSeleccionados = mesSeleccionado === 'Total Global' 
+        ? totalGlobal 
+        : resumen[mesSeleccionado] || {};
+
+    // Filtrar los datos del detalle según el mes seleccionado
+    const detalleFiltrado = detalle ? detalle.filter(servicio => {
+        if (mesSeleccionado === 'Total Global') return true;
+        
+        const fechaServicio = new Date(servicio.fecha);
+        if (isNaN(fechaServicio.getTime())) return false;
+        
+        // Convertir a formato YYYY-MM como en el backend
+        const año = fechaServicio.getFullYear();
+        const mes = String(fechaServicio.getMonth() + 1).padStart(2, '0');
+        const mesFormatoBackend = `${año}-${mes}`;
+        
+        return mesFormatoBackend === mesSeleccionado;
+    }) : [];
 
     return (
         <div style={{ marginTop: '2rem' }}>
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: theme.textoPrincipal }}>
                 💸 Servicios Pendientes por Cobrar
             </h2>
+
+            {/* Selector de mes */}
+            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+                <FormControl sx={{ minWidth: 200 }}>
+                    <InputLabel sx={{ color: theme.textoSecundario }}>Seleccionar Mes</InputLabel>
+                    <Select
+                        value={mesSeleccionado}
+                        onChange={(e) => setMesSeleccionado(e.target.value)}
+                        sx={{
+                            color: theme.textoPrincipal,
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.bordePrincipal,
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.bordeHover,
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.bordeFocus,
+                            },
+                        }}
+                    >
+                        <MenuItem value="Total Global">Total Global</MenuItem>
+                        {mesesOrdenados.map((mes) => (
+                            <MenuItem key={mes} value={mes}>{mes}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            </Box>
 
             {/* Tarjetas de KPIs */}
             <div style={{
@@ -110,7 +189,7 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
                     color: theme.textoPrincipal
                 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoInfo, marginBottom: 4 }}>Total Servicios</div>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: theme.textoInfo }}>{totalServicios}</div>
+                    <div style={{ fontSize: 32, fontWeight: 900, color: theme.textoInfo }}>{datosSeleccionados.total_servicios}</div>
                 </div>
                 <div style={{
                     background: theme.fondoContenedor,
@@ -122,21 +201,21 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
                     boxShadow: theme.sombraComponente,
                     color: theme.textoAdvertencia
                 }}>
-                                         <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoAdvertencia, marginBottom: 4 }}>Con +30 días de retraso</div>
-                     <div style={{ fontSize: 32, fontWeight: 900, color: theme.textoAdvertencia }}>{serviciosRetraso}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoAdvertencia, marginBottom: 4 }}>Con +30 días de retraso</div>
+                    <div style={{ fontSize: 32, fontWeight: 900, color: theme.textoAdvertencia }}>{datosSeleccionados.servicios_retraso}</div>
                 </div>
                 <div style={{
                     background: theme.fondoContenedor,
-                                         border: `2px solid ${theme.terminalRojo}`,
+                    border: `2px solid ${theme.terminalRojo}`,
                     borderRadius: '16px',
                     padding: '1.2rem 2.2rem',
                     minWidth: 180,
                     textAlign: 'center',
                     boxShadow: theme.sombraComponente,
-                                         color: theme.terminalRojo
+                    color: theme.terminalRojo
                 }}>
-                                         <div style={{ fontSize: 15, fontWeight: 700, color: theme.terminalRojo, marginBottom: 4 }}>Días Máximos de Retraso</div>
-                     <div style={{ fontSize: 32, fontWeight: 900, color: theme.terminalRojo }}>{maxDiasRetraso}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: theme.terminalRojo, marginBottom: 4 }}>Días Máximos de Retraso</div>
+                    <div style={{ fontSize: 32, fontWeight: 900, color: theme.terminalRojo }}>{datosSeleccionados.max_dias_retraso}</div>
                 </div>
                 <div style={{
                     background: theme.fondoContenedor,
@@ -148,13 +227,13 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
                     boxShadow: theme.sombraComponente,
                     color: theme.textoInfo
                 }}>
-                                         <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoInfo, marginBottom: 4 }}>Servicio más antiguo</div>
-                     <div style={{ fontSize: 20, fontWeight: 900, color: theme.textoInfo }}>{fechaMasAntigua}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoInfo, marginBottom: 4 }}>Servicio más antiguo</div>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: theme.textoInfo }}>{datosSeleccionados.fecha_mas_antigua}</div>
                 </div>
             </div>
 
             {/* Tabla de detalle */}
-            {detalle.length > 0 ? (
+            {detalleFiltrado && detalleFiltrado.length > 0 ? (
                 <div style={{ 
                     padding: '1rem', 
                     border: `1px solid ${theme.bordePrincipal}`, 
@@ -165,6 +244,10 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
                     margin: '0 auto'
                 }}>
                     <h3 style={{ margin: '0 0 1rem 0', color: theme.textoPrincipal }}>Detalle de Servicios Pendientes por Cobrar</h3>
+                    
+                    {/* Debug info */}
+                    {/* The debug info block is now moved outside the table */}
+                    
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ 
                             width: '100%', 
@@ -183,9 +266,10 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {detalle.map((servicio, index) => (
+                                {detalleFiltrado
+                                    .map((servicio, index) => (
                                     <tr key={index} style={{ 
-                                                                                 backgroundColor: servicio.dias_de_retraso > 30 ? theme.terminalRojo + '10' : 'inherit' 
+                                        backgroundColor: servicio.dias_de_retraso > 30 ? theme.terminalRojo + '10' : 'inherit' 
                                     }}>
                                         <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.fecha}</td>
                                         <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.estado}</td>
@@ -201,10 +285,40 @@ const ServiciosPendientesCobrar = ({ file, fechaInicio, fechaFin }) => {
                             </tbody>
                         </table>
                     </div>
+                    
+                    {/* Mensaje cuando no hay datos filtrados */}
+                    {detalleFiltrado.length === 0 && mesSeleccionado !== 'Total Global' && (
+                        <div style={{ 
+                            padding: '1rem', 
+                            backgroundColor: theme.fondoContenedor, 
+                            border: `1px solid ${theme.bordePrincipal}`, 
+                            borderRadius: '8px', 
+                            color: theme.textoInfo, 
+                            marginTop: '1rem',
+                            textAlign: 'center'
+                        }}>
+                            No hay servicios pendientes por cobrar para el mes de <strong>{mesSeleccionado}</strong>.
+                        </div>
+                    )}
                 </div>
             ) : (
-                                 <div style={{ padding: '1rem', backgroundColor: theme.fondoContenedor, border: `1px solid ${theme.bordePrincipal}`, borderRadius: '8px', color: theme.textoInfo, marginTop: '1rem' }}>
+                <div style={{ padding: '1rem', backgroundColor: theme.fondoContenedor, border: `1px solid ${theme.bordePrincipal}`, borderRadius: '8px', color: theme.textoInfo, marginTop: '1rem' }}>
                     No hay servicios pendientes por cobrar en el rango de fechas seleccionado.
+                </div>
+            )}
+            
+            {/* Mensaje cuando no hay datos filtrados para el mes seleccionado */}
+            {detalleFiltrado.length === 0 && mesSeleccionado !== 'Total Global' && detalle && detalle.length > 0 && (
+                <div style={{ 
+                    padding: '1rem', 
+                    backgroundColor: theme.fondoContenedor, 
+                    border: `1px solid ${theme.bordePrincipal}`, 
+                    borderRadius: '8px', 
+                    color: theme.textoInfo, 
+                    marginTop: '1rem',
+                    textAlign: 'center'
+                }}>
+                    No hay servicios pendientes por cobrar para el mes de <strong>{mesSeleccionado}</strong>.
                 </div>
             )}
         </div>

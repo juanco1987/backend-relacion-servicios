@@ -15,7 +15,7 @@ function NotesCard({ value, onChange, addLog, fullHeight }) {
   const { theme } = useTheme();
   
   const handleNoteChange = (e) => {
-    onChange(e);
+    onChange(e.target.value);
   };
 
   return (

@@ -28,7 +28,7 @@ import SuccessAnimation from '../animations/SuccessAnimation';
 import ErrorAnimation from '../animations/ErrorAnimation';
 import ModeTransitionAnimation from '../animations/ModeTransitionAnimation';
 
-function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, fullHeight, workMode = 0, onProcessData, onToggleAnalytics, showAnalytics }) {
+function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, fullHeight, workMode = 0, onProcessData }) {
   const { theme } = useTheme();
   
   const neumorphicBox = {
@@ -88,8 +88,8 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
     
     return (
       lastGeneratedPDF.archivo === archivoExcel?.name &&
-      lastGeneratedPDF.fechaInicio === fechaInicio &&
-      lastGeneratedPDF.fechaFin === fechaFin &&
+      lastGeneratedPDF.fechaInicio === fechaInicio.format('YYYY-MM-DD') &&
+      lastGeneratedPDF.fechaFin === fechaFin.format('YYYY-MM-DD') &&
       lastGeneratedPDF.workMode === workMode &&
       lastGeneratedPDF.notas === notas
     );
@@ -116,8 +116,8 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
     // Proceder con la generación del PDF
     const pdfData = {
       archivo: archivoExcel?.name,
-      fechaInicio,
-      fechaFin,
+      fechaInicio: fechaInicio.format('YYYY-MM-DD'),
+      fechaFin: fechaFin.format('YYYY-MM-DD'),
       workMode,
       notas
     };
@@ -140,37 +140,50 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
         return;
       }
 
+      // Verificar que las fechas sean objetos dayjs válidos
+      if (!fechaInicio || !fechaInicio.isValid || !fechaInicio.isValid()) {
+        addLog(createLogEntry('ERROR_INVALID_DATE', 'Fecha de inicio inválida'));
+        alert('Error: Fecha de inicio inválida');
+        return;
+      }
+
+      if (!fechaFin || !fechaFin.isValid || !fechaFin.isValid()) {
+        addLog(createLogEntry('ERROR_INVALID_DATE', 'Fecha de fin inválida'));
+        alert('Error: Fecha de fin inválida');
+        return;
+      }
+
       // Usar el nombre personalizado o generar uno por defecto
       const pdfName = reportName.trim() || generateDefaultName();
       let blob;
       if (notas && notas.trim() !== '') {
         addLog(createLogEntry('NOTAS_CARGADAS', notas));
       }
-      if (workMode === 0) {
-        // Modo: Relación de Servicios
-        addLog(createLogEntry('PDF_GENERATION_STARTED'));
-        blob = await generarPDFServiciosEfectivo({
-          archivo: archivoExcel,
-          fechaInicio,
-          fechaFin,
-          notas,
-          nombrePDF: pdfName,
-        });
-        addLog(createLogEntry('PDF_GENERATED_SUCCESS'));
-        addLog(createLogEntry('PDF_DOWNLOADED', pdfName));
-      } else {
-        // Modo: Pendientes de Pago
-        addLog(createLogEntry('PDF_PENDIENTES_GENERATION_STARTED'));
-        blob = await generarPDFPendientes({
-          archivo: archivoExcel,
-          fechaInicio,
-          fechaFin,
-          notas,
-          nombrePDF: pdfName,
-        });
-        addLog(createLogEntry('PDF_PENDIENTES_GENERATED_SUCCESS'));
-        addLog(createLogEntry('PDF_PENDIENTES_DOWNLOADED', pdfName));
-      }
+             if (workMode === 0) {
+         // Modo: Relación de Servicios
+         addLog(createLogEntry('PDF_GENERATION_STARTED'));
+         blob = await generarPDFServiciosEfectivo({
+           archivo: archivoExcel,
+           fechaInicio: fechaInicio.format('YYYY-MM-DD'),
+           fechaFin: fechaFin.format('YYYY-MM-DD'),
+           notas,
+           nombrePDF: pdfName,
+         });
+         addLog(createLogEntry('PDF_GENERATED_SUCCESS'));
+         addLog(createLogEntry('PDF_DOWNLOADED', pdfName));
+       } else {
+         // Modo: Pendientes de Pago
+         addLog(createLogEntry('PDF_PENDIENTES_GENERATION_STARTED'));
+         blob = await generarPDFPendientes({
+           archivo: archivoExcel,
+           fechaInicio: fechaInicio.format('YYYY-MM-DD'),
+           fechaFin: fechaFin.format('YYYY-MM-DD'),
+           notas,
+           nombrePDF: pdfName,
+         });
+         addLog(createLogEntry('PDF_PENDIENTES_GENERATED_SUCCESS'));
+         addLog(createLogEntry('PDF_PENDIENTES_DOWNLOADED', pdfName));
+       }
       
       // Crear URL del blob para poder abrirlo después
       const url = window.URL.createObjectURL(blob);
@@ -179,8 +192,8 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
       // Actualizar el estado del último PDF generado
       const pdfData = {
         archivo: archivoExcel?.name,
-        fechaInicio,
-        fechaFin,
+        fechaInicio: fechaInicio.format('YYYY-MM-DD'),
+        fechaFin: fechaFin.format('YYYY-MM-DD'),
         workMode,
         notas
       };
@@ -224,6 +237,27 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
       // Actualizar el nombre del PDF automáticamente al procesar
       setReportName(generateDefaultName());
 
+      // Verificar que las fechas sean objetos dayjs válidos
+      if (!fechaInicio || !fechaInicio.isValid || !fechaInicio.isValid()) {
+        addLog(createLogEntry('ERROR_INVALID_DATE', 'Fecha de inicio inválida'));
+        setAnimationState('error');
+        setTimeout(() => setAnimationState('idle'), 3000);
+        alert('Error: Fecha de inicio inválida');
+        setCanGeneratePDF(false);
+        setProcessing(false);
+        return;
+      }
+
+      if (!fechaFin || !fechaFin.isValid || !fechaFin.isValid()) {
+        addLog(createLogEntry('ERROR_INVALID_DATE', 'Fecha de fin inválida'));
+        setAnimationState('error');
+        setTimeout(() => setAnimationState('idle'), 3000);
+        alert('Error: Fecha de fin inválida');
+        setCanGeneratePDF(false);
+        setProcessing(false);
+        return;
+      }
+
       // LOG para depuración: mostrar fechas justo antes de enviar al backend
       console.log('Enviando al backend: fechaInicio =', fechaInicio, ', fechaFin =', fechaFin);
 
@@ -236,9 +270,18 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
         try {
           const formData = new FormData();
           formData.append('file', archivoExcel);
-          // Convertir fechas a formato YYYY-MM-DD
-          const fechaInicioISO = new Date(fechaInicio).toISOString().slice(0, 10);
-          const fechaFinISO = new Date(fechaFin).toISOString().slice(0, 10);
+          // Convertir fechas dayjs a formato YYYY-MM-DD
+          const fechaInicioISO = fechaInicio.format('YYYY-MM-DD');
+          const fechaFinISO = fechaFin.format('YYYY-MM-DD');
+          
+          // DEBUG: Log para verificar el formato exacto de las fechas
+          console.log('DEBUG - Fechas formateadas para backend (workMode 0):', {
+            fechaInicioISO,
+            fechaFinISO,
+            tipoFechaInicio: typeof fechaInicioISO,
+            tipoFechaFin: typeof fechaFinISO
+          });
+          
           formData.append('fecha_inicio', fechaInicioISO);
           formData.append('fecha_fin', fechaFinISO);
           const response = await fetch('http://localhost:5000/api/relacion_servicios', {
@@ -288,9 +331,18 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
         try {
           const formData = new FormData();
           formData.append('file', archivoExcel);
-          // Convertir fechas a formato YYYY-MM-DD
-          const fechaInicioISO = new Date(fechaInicio).toISOString().slice(0, 10);
-          const fechaFinISO = new Date(fechaFin).toISOString().slice(0, 10);
+          // Convertir fechas dayjs a formato YYYY-MM-DD
+          const fechaInicioISO = fechaInicio.format('YYYY-MM-DD');
+          const fechaFinISO = fechaFin.format('YYYY-MM-DD');
+          
+          // DEBUG: Log para verificar el formato exacto de las fechas
+          console.log('DEBUG - Fechas formateadas para backend (workMode 1):', {
+            fechaInicioISO,
+            fechaFinISO,
+            tipoFechaInicio: typeof fechaInicioISO,
+            tipoFechaFin: typeof fechaFinISO
+          });
+          
           formData.append('fecha_inicio', fechaInicioISO);
           formData.append('fecha_fin', fechaFinISO);
           const response = await fetch('http://localhost:5000/api/procesar_excel', {
@@ -386,7 +438,7 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
         {/* Columna izquierda: icono, título, chip */}
         <Grid item xs={12} md={6}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Avatar src={actionIcon} alt="Acciones" sx={{ width: 32, height: 32, mr: 2, bgcolor: 'transparent', boxShadow: theme.sombraComponente }} />
+            <Box component="img" src={actionIcon} alt="Acciones" sx={{ width: 32, height: 32, mr: 2, bgcolor: 'transparent', boxShadow: theme.sombraComponente }} />
             <Typography variant="h6" sx={{ fontWeight: 'bold', color: theme.textoPrincipal, letterSpacing: 2, fontSize: '1.8rem' }}>
               {APP_MESSAGES.ACTION_CARD_TITLE}
             </Typography>
@@ -461,7 +513,7 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
                       whileHover={{ rotate: 5, scale: 1.1 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Avatar src={pdfIcon} alt="PDF" sx={{ width: 32, height: 32, bgcolor: 'transparent', mr: 1 }} />
+                      <Box component="img" src={pdfIcon} alt="PDF" sx={{ width: 32, height: 32, bgcolor: 'transparent', mr: 1 }} />
                     </motion.div>
                   ),
                   endAdornment: (
@@ -506,7 +558,7 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
                 variant="contained"
                 disabled={!archivoExcel || !fechaInicio || !fechaFin || processing}
                 onClick={handleProcess}
-                startIcon={<Avatar src={processIcon} alt="Procesar" sx={{ width: 28, height: 28, bgcolor: 'transparent' }} />}
+                startIcon={<Box component="img" src={processIcon} alt="Procesar" sx={{ width: 28, height: 28, bgcolor: 'transparent' }} />}
                 sx={{
                   background: theme.gradientes.botonInactivo,
                   borderRadius: '18px',
@@ -549,7 +601,7 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
                   variant="contained"
                   disabled={!canGeneratePDF}
                   onClick={handleGeneratePDF}
-                  startIcon={<Avatar src={pdfIcon} alt="PDF" sx={{ width: 28, height: 28, bgcolor: 'transparent' }} />}
+                  startIcon={<Box component="img" src={pdfIcon} alt="PDF" sx={{ width: 28, height: 28, bgcolor: 'transparent' }} />}
                   sx={{
                     background: theme.modo === 'claro' 
                       ? 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' 
@@ -588,64 +640,7 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
             </Box>
             </motion.div>
 
-            {/* Botón Analytics */}
-            <motion.div
-              whileHover={ANIMATIONS.buttonHover}
-              whileTap={ANIMATIONS.buttonClick}
-              animate={showAnalytics ? ANIMATIONS.buttonActive.animate : {}}
-            >
-              <Button
-                variant="contained"
-                onClick={onToggleAnalytics}
-                startIcon={
-                  <motion.div
-                    whileHover={{ rotate: 5, scale: 1.1 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Avatar 
-                      sx={{ 
-                        width: 28, 
-                        height: 28, 
-                        bgcolor: 'transparent',
-                        background: `linear-gradient(135deg, ${theme.primario}, ${theme.secundario})`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }} 
-                    >
-                      📊
-                    </Avatar>
-                  </motion.div>
-                }
-                sx={{
-                  background: showAnalytics 
-                    ? `linear-gradient(135deg, ${theme.primario}, ${theme.secundario})`
-                    : theme.gradientes.botonInactivo,
-                  borderRadius: '14px',
-                  boxShadow: showAnalytics 
-                    ? `0 4px 12px ${theme.primario}40`
-                    : theme.sombraComponente,
-                  color: showAnalytics ? theme.textoContraste : theme.textoPrincipal,
-                  fontWeight: 'bold',
-                  fontSize: 18,
-                  px: 2,
-                  minWidth: 140,
-                  height: 48,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    background: showAnalytics 
-                      ? `linear-gradient(135deg, ${theme.secundario}, ${theme.primario})`
-                      : theme.gradientes.botonHover,
-                    boxShadow: showAnalytics 
-                      ? `0 6px 16px ${theme.primario}60`
-                      : theme.sombraComponente,
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                {showAnalytics ? 'Ocultar Analytics' : 'Ver Analytics'}
-              </Button>
-            </motion.div>
+
           </Box>
         </Grid>
       </Grid>

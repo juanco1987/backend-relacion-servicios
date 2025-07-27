@@ -65,14 +65,15 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
   const [fromDate, setFromDate] = useState(fechaInicio ? dayjs(fechaInicio) : dayjs().startOf('month'));
   const [toDate, setToDate] = useState(fechaFin ? dayjs(fechaFin) : dayjs().endOf('month'));
 
-  useEffect(() => {
-    if (onFechaInicioChange) onFechaInicioChange(fromDate.format('YYYY-MM-DD'));
-    // eslint-disable-next-line
-  }, [fromDate]);
-  useEffect(() => {
-    if (onFechaFinChange) onFechaFinChange(toDate.format('YYYY-MM-DD'));
-    // eslint-disable-next-line
-  }, [toDate]);
+  // Remover los useEffect que causan el error
+  // useEffect(() => {
+  //   if (onFechaInicioChange) onFechaInicioChange(fromDate.format('YYYY-MM-DD'));
+  //   // eslint-disable-next-line
+  // }, [fromDate]);
+  // useEffect(() => {
+  //   if (onFechaFinChange) onFechaFinChange(toDate.format('YYYY-MM-DD'));
+  //   // eslint-disable-next-line
+  // }, [toDate]);
 
   const handleMonthChange = (e) => {
     const newMonth = e.target.value;
@@ -88,6 +89,10 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
     const newTo = dayjs().year(year).month(newMonth).endOf('month');
     setFromDate(newFrom);
     setToDate(newTo);
+    
+    // Llamar a los handlers con las nuevas fechas (ya son objetos dayjs)
+    if (onFechaInicioChange) onFechaInicioChange(newFrom);
+    if (onFechaFinChange) onFechaFinChange(newTo);
   };
 
   const handleYearChange = (e) => {
@@ -103,11 +108,18 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
     const newTo = dayjs().year(newYear).month(month).endOf('month');
     setFromDate(newFrom);
     setToDate(newTo);
+    
+    // Llamar a los handlers con las nuevas fechas (ya son objetos dayjs)
+    if (onFechaInicioChange) onFechaInicioChange(newFrom);
+    if (onFechaFinChange) onFechaFinChange(newTo);
   };
 
   const handleFromDateChange = (newDate) => {
     if (newDate && newDate.isValid()) {
       setFromDate(newDate);
+      // Llamar al handler con la nueva fecha
+      if (onFechaInicioChange) onFechaInicioChange(newDate);
+      
       // Solo loguear si realmente cambió la fecha
       if (addLog && !newDate.isSame(fromDate, 'day')) {
         const day = newDate.date();
@@ -121,6 +133,9 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
   const handleToDateChange = (newDate) => {
     if (newDate && newDate.isValid()) {
       setToDate(newDate);
+      // Llamar al handler con la nueva fecha
+      if (onFechaFinChange) onFechaFinChange(newDate);
+      
       // Solo loguear si realmente cambió la fecha
       if (addLog && !newDate.isSame(toDate, 'day')) {
         const day = newDate.date();

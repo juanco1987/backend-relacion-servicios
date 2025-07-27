@@ -56,11 +56,11 @@ function ProcessingConsole({ logs, onClearLogs, workMode = 0 }) {
         ) : (
           logs.map((log, idx) => {
             // Detectar si es un mensaje de éxito (contiene ✅ o palabras clave de éxito)
-            const isSuccessMessage = log.includes('✅') || 
-                                   log.includes('exitosamente') || 
-                                   log.includes('completado') ||
-                                   log.includes('generado exitosamente') ||
-                                   log.includes('procesado exitosamente');
+            const isSuccessMessage = log.message.includes('✅') || 
+                                   log.message.includes('exitosamente') || 
+                                   log.message.includes('completado') ||
+                                   log.message.includes('generado exitosamente') ||
+                                   log.message.includes('procesado exitosamente');
             
             return (
               <div 
@@ -76,7 +76,7 @@ function ProcessingConsole({ logs, onClearLogs, workMode = 0 }) {
                   fontSize: isSuccessMessage ? '18px' : '17px'
                 }}
               >
-                {log}
+                {log.message}
               </div>
             );
           })

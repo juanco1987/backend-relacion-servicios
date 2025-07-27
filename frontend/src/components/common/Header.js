@@ -7,15 +7,14 @@ import logo from '../../assets/mi_logo.ico';
 import { APP_MESSAGES } from '../../config/appConfig';
 import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
-import { ANIMATIONS } from '../../config/animations';
 
-function Header({ workMode = 0 }) {
+function Header() {
   const { theme, modo, alternarTema } = useTheme();
-  const colorMain = workMode === 0 ? theme.gradientes.servicios : theme.gradientes.pendientes;
+  
   return (
     <Box
       sx={{
-        background: 'none', // El fondo lo da el contenedor principal
+        background: 'none',
         borderRadius: 0,
         boxShadow: 'none',
         p: { xs: 1, md: 2 },

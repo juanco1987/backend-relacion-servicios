@@ -1,346 +1,227 @@
 // App.js Modificado
 
-import Header from './components/common/Header';
-import WorkModeTabs from './components/layout/WorkModeTabs';
-import ExcelUploader from './components/forms/ExcelUploader';
-import DateRangeSelector from './components/forms/DateRangeSelector';
-import NotesCard from './components/forms/NotesCard';
-import ActionCenterCard from './components/layout/ActionCenterCard';
-import ProcessingConsole from './components/common/ProcessingConsole';
-import ServiciosPendientesEfectivo from './components/analytics/ServiciosPendientesEfectivo';
-import ServiciosPendientesCobrar from './components/analytics/ServiciosPendientesCobrar';
-import Analytics from './components/analytics/Analytics';
-import './App.css';
-import { useTheme } from './context/ThemeContext';
 import React, { useState, useEffect } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-
-import { createLogEntry, LOG_MESSAGES } from './config/logMessages';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '@mui/material';
+import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '@mui/material';
 import { motion } from 'framer-motion';
-import { ANIMATIONS, STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from './config/animations';
+import { useTheme } from './context/ThemeContext';
+import Header from './components/common/Header';
+import DashboardLayout from './components/layout/DashboardLayout';
+import ContentArea from './components/layout/ContentArea';
 import ModeTransitionAnimation from './components/animations/ModeTransitionAnimation';
+import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from './config/animations';
+import dayjs from 'dayjs';
 
 function App() {
-  // Función para obtener fechas por defecto del mes actual
-  const getDefaultDates = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const format = (date) => date.toISOString().split('T')[0];
-    return {
-      inicio: format(firstDay),
-      fin: format(lastDay),
-    };
-  };
-
-  const { inicio, fin } = getDefaultDates();
-  const [tab, setTab] = useState(0);
-  const [note, setNote] = useState("");
-  const [archivoExcel, setArchivoExcel] = useState(null);
-  const [fechaInicio, setFechaInicio] = useState(inicio);
-  const [fechaFin, setFechaFin] = useState(fin);
+  const { theme } = useTheme();
+  
+  // Estado para la navegación
+  const [currentRoute, setCurrentRoute] = useState('/dashboard');
+  
+  // Estados existentes
+  const [excelData, setExcelData] = useState(null);
+  const [fechaInicio, setFechaInicio] = useState(dayjs().startOf('month'));
+  const [fechaFin, setFechaFin] = useState(dayjs().endOf('month'));
+  const [note, setNote] = useState('');
   const [logs, setLogs] = useState([]);
+  const [processing, setProcessing] = useState(false);
+  const [animationState, setAnimationState] = useState('idle');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
   const [showNoteDialog, setShowNoteDialog] = useState(false);
-  const [pendingFecha, setPendingFecha] = useState({ inicio: '', fin: '' });
   const [showModeTransition, setShowModeTransition] = useState(false);
-  const [modeTransitionData, setModeTransitionData] = useState({ from: 0, to: 0 });
-  const [showAnalytics, setShowAnalytics] = useState(false);
-  const {theme} = useTheme();
+  const [modeTransitionData, setModeTransitionData] = useState({ from: '', to: '' });
+
 
   // Inicializar logs de bienvenida
   useEffect(() => {
     const welcomeLogs = [
-      createLogEntry('WELCOME_MESSAGE_1'),
-      createLogEntry('WELCOME_MESSAGE_2'),
-      createLogEntry('WELCOME_MESSAGE_3'),
-      createLogEntry('WELCOME_MESSAGE_4'),
-      createLogEntry('WELCOME_MESSAGE_5'),
-      createLogEntry('WELCOME_MESSAGE_6'),
-      createLogEntry('SYSTEM_READY'),
+      { message: '¡Bienvenido al Sistema de Reportes!', type: 'success', timestamp: new Date().toLocaleTimeString() },
+      { message: 'Carga un archivo Excel para comenzar', type: 'info', timestamp: new Date().toLocaleTimeString() },
+      { message: 'Selecciona el rango de fechas deseado', type: 'info', timestamp: new Date().toLocaleTimeString() },
+      { message: 'Usa el menú lateral para navegar entre funciones', type: 'info', timestamp: new Date().toLocaleTimeString() },
+      { message: 'Sistema listo para procesar datos', type: 'success', timestamp: new Date().toLocaleTimeString() },
     ];
     setLogs(welcomeLogs);
   }, []);
 
-  const handleTabChange = (event, newValue) => {
-    // Mostrar animación de transición de modo
-    setModeTransitionData({ from: tab, to: newValue });
-    setShowModeTransition(true);
-    
-    setTimeout(() => {
-      setTab(newValue);
-      setShowModeTransition(false);
-      const modeNames = ['Relación de Servicios', 'Pendientes de Pago', 'Servicios Pendientes en Efectivo'];
-      addLog(createLogEntry('INFO_UPDATING', `Modo de trabajo cambiado a: ${modeNames[newValue]}`));
-      setNote(""); // Limpiar nota al cambiar modo
-    }, 4500); // Aumentado a 4.5 segundos para que el usuario pueda leer el modo final
+  // Handlers existentes
+  const handleFileChange = (data) => {
+    setExcelData(data);
+    addLog('Archivo Excel cargado correctamente', 'success');
   };
 
-  const handleNoteChange = (e) => {
-    const newNote = e.target.value;
+  const handleFechaInicioChange = (date) => {
+    console.log('handleFechaInicioChange recibió:', date, 'tipo:', typeof date, 'es dayjs:', date && date.isValid);
+    setFechaInicio(date);
+    if (date && date.isValid && date.isValid()) {
+      addLog(`Fecha de inicio establecida: ${date.format('DD/MM/YYYY')}`, 'info');
+    } else {
+      addLog('Error: Fecha de inicio inválida recibida', 'error');
+    }
+  };
+
+  const handleFechaFinChange = (date) => {
+    console.log('handleFechaFinChange recibió:', date, 'tipo:', typeof date, 'es dayjs:', date && date.isValid);
+    setFechaFin(date);
+    if (date && date.isValid && date.isValid()) {
+      addLog(`Fecha de fin establecida: ${date.format('DD/MM/YYYY')}`, 'info');
+    } else {
+      addLog('Error: Fecha de fin inválida recibida', 'error');
+    }
+  };
+
+  const handleNoteChange = (newNote) => {
     setNote(newNote);
-    // Eliminado el log automático para evitar spam
+    if (newNote.trim()) {
+      addLog('Nota agregada al reporte', 'info');
+    }
   };
 
-  // Función para agregar logs
-  const addLog = (logEntry) => {
-    setLogs(prevLogs => [...prevLogs, logEntry]);
+  const addLog = (message, type = 'info') => {
+    const timestamp = new Date().toLocaleTimeString();
+    const newLog = { message, type, timestamp };
+    setLogs(prev => [...prev, newLog]);
   };
 
-  // Función para limpiar logs
   const clearLogs = () => {
     setLogs([]);
-    addLog(createLogEntry('LOG_CLEARED'));
   };
 
-  // Función para manejar cambios de archivo
-  const handleFileChange = (file) => {
-    setArchivoExcel(file);
-    setNote(""); // Limpiar nota al cambiar archivo
-    // El log se maneja en ExcelUploader, no aquí
-  };
-
-  // Función para manejar cambios de fecha
-  const handleFechaInicioChange = (fecha) => {
-    // Si solo cambia la fecha y hay nota, preguntar si conservar
-    if (note && (fecha !== fechaInicio)) {
-      setPendingFecha({ inicio: fecha, fin: fechaFin });
-      setShowNoteDialog(true);
-    } else {
-      setFechaInicio(fecha);
+  const handleProcessData = async (data) => {
+    // Lógica de procesamiento existente
+    setProcessing(true);
+    setAnimationState('loading');
+    
+    try {
+      // Simular procesamiento
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setShowSuccess(true);
+      addLog('Datos procesados exitosamente', 'success');
+    } catch (error) {
+      setShowError(true);
+      addLog('Error al procesar datos', 'error');
+    } finally {
+      setProcessing(false);
+      setAnimationState('idle');
     }
   };
 
-  const handleFechaFinChange = (fecha) => {
-    // Si solo cambia la fecha y hay nota, preguntar si conservar
-    if (note && (fecha !== fechaFin)) {
-      setPendingFecha({ inicio: fechaInicio, fin: fecha });
-      setShowNoteDialog(true);
-    } else {
-      setFechaFin(fecha);
-    }
-  };
-
-  // Limpiar nota al procesar datos (se pasa como prop a ActionCenterCard)
-  const handleProcessData = () => {
-    // No limpiar la nota aquí
-  };
-
-  // Funciones para el diálogo de confirmación de nota
   const handleKeepNote = () => {
-    setFechaInicio(pendingFecha.inicio);
-    setFechaFin(pendingFecha.fin);
     setShowNoteDialog(false);
   };
+
   const handleClearNote = () => {
-    setFechaInicio(pendingFecha.inicio);
-    setFechaFin(pendingFecha.fin);
-    setNote("");
+    setNote('');
     setShowNoteDialog(false);
+    addLog('Nota limpiada', 'info');
   };
 
-  // Función para mostrar/ocultar Analytics
-  const handleToggleAnalytics = () => {
-    setShowAnalytics(!showAnalytics);
-    addLog(createLogEntry('INFO_UPDATING', `Analytics ${showAnalytics ? 'ocultado' : 'mostrado'}`));
-  };
 
-  // Función para renderizar el contenido según la pestaña seleccionada
-  const renderTabContent = () => {
-    switch(tab) {
-      case 0: // Relación de Servicios
-      case 1: // Pendientes de Pago
-        return (
-          <>
-            {/* Tarjeta Centro de Acciones */}
-            <motion.div variants={STAGGER_ITEM_VARIANTS}>
-              <Box sx={{ width: '100%', mb: 4 }}>
-                <ActionCenterCard 
-                  archivoExcel={archivoExcel} 
-                  fechaInicio={fechaInicio} 
-                  fechaFin={fechaFin} 
-                  notas={note}
-                  addLog={addLog}
-                  workMode={tab}
-                  onProcessData={handleProcessData}
-                  onToggleAnalytics={handleToggleAnalytics}
-                  showAnalytics={showAnalytics}
-                />
-              </Box>
-            </motion.div>
 
-            {/* Componente Analytics */}
-            {showAnalytics && (
-              <motion.div variants={STAGGER_ITEM_VARIANTS}>
-                <Analytics excelData={archivoExcel} workMode={tab} />
-              </motion.div>
-            )}
-          </>
-        );
-      case 2: // Servicios Pendientes en Efectivo
-        return (
-          <motion.div variants={STAGGER_ITEM_VARIANTS}>
-            <Box sx={{ width: '100%', mb: 4 }}>
-              <ServiciosPendientesEfectivo 
-                file={archivoExcel}
-                fechaInicio={fechaInicio}
-                fechaFin={fechaFin}
-              />
-            </Box>
-          </motion.div>
-        );
-      case 3: // Servicios Pendientes por Cobrar (nuevo)
-        return (
-          <motion.div variants={STAGGER_ITEM_VARIANTS}>
-            <Box sx={{ width: '100%', mb: 4 }}>
-              <ServiciosPendientesCobrar
-                file={archivoExcel}
-                fechaInicio={fechaInicio}
-                fechaFin={fechaFin}
-              />
-            </Box>
-          </motion.div>
-        );
-      default:
-        return null;
-    }
+  // Handler para navegación
+  const handleNavigation = (route) => {
+    setCurrentRoute(route);
+    addLog(`Navegando a: ${route}`, 'info');
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-    >
-      <Box sx={{ 
-        maxWidth: 900, 
-        mx: 'auto', 
-        p: { xs: 1, md: 4 },
-        minHeight: '100vh',
-        background: theme.fondoCuerpo,
-        transition: 'background 0.3s ease'
-      }}>
-        <motion.div
-          variants={STAGGER_VARIANTS}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Tarjeta grande: Header + Botones */}
-          <motion.div variants={STAGGER_ITEM_VARIANTS}>
+    <DashboardLayout onNavigation={handleNavigation} currentRoute={currentRoute}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <Box sx={{ 
+          maxWidth: 900, 
+          mx: 'auto', 
+          p: { xs: 1, md: 4 },
+          minHeight: '100vh',
+          background: theme.fondoCuerpo,
+          transition: 'background 0.3s ease'
+        }}>
+          <motion.div
+            variants={STAGGER_VARIANTS}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Tarjeta grande: Header */}
+            <motion.div variants={STAGGER_ITEM_VARIANTS}>
+              <Box
+                sx={{
+                  background: theme.fondoContenedor,
+                  borderRadius: '28px',
+                  boxShadow: theme.sombraContenedor,
+                  mb: 5,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  position: 'relative',
+                }}
+              >
+                <Header />
+              </Box>
+            </motion.div>
+
+            {/* Área de contenido dinámico */}
+            <ContentArea
+              currentRoute={currentRoute}
+              excelData={excelData}
+              fechaInicio={fechaInicio}
+              fechaFin={fechaFin}
+              note={note}
+              logs={logs}
+              onFileChange={handleFileChange}
+              onFechaInicioChange={handleFechaInicioChange}
+              onFechaFinChange={handleFechaFinChange}
+              onNoteChange={handleNoteChange}
+              addLog={addLog}
+              clearLogs={clearLogs}
+              onProcessData={handleProcessData}
+              processing={processing}
+              animationState={animationState}
+              setAnimationState={setAnimationState}
+              showSuccess={showSuccess}
+              showError={showError}
+              setShowSuccess={setShowSuccess}
+              setShowError={setShowError}
+
+            />
+          </motion.div>
+
+          {/* Overlay de transición de modo */}
+          {showModeTransition && (
             <Box
               sx={{
-                background: theme.fondoContenedor,
-                borderRadius: '28px',
-                boxShadow: theme.sombraContenedor,
-                mb: 5,
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                zIndex: 9999,
+                background: 'rgba(0,0,0,0.8)',
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'stretch',
-                position: 'relative',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Header />
-              <WorkModeTabs value={tab} onChange={handleTabChange} />
+              <ModeTransitionAnimation fromMode={modeTransitionData.from} toMode={modeTransitionData.to} />
             </Box>
-          </motion.div>
+          )}
 
-          {/* Selector de archivo Excel */}
-          <motion.div variants={STAGGER_ITEM_VARIANTS}>
-            <Box sx={{ width: '100%', mb: 1 }}>
-              <ExcelUploader onFileChange={handleFileChange} addLog={addLog} workMode={tab} />
-            </Box>
-          </motion.div>
-
-          {/* Fila de Rango de Fechas y Notas */}
-          <motion.div variants={STAGGER_ITEM_VARIANTS}>
-            <Box sx={{ width: '100%', display: 'flex', gap: 3, mb: 4 }}>
-              <Box
-                sx={{
-                  flex: 1,
-                  background: theme.fondoContenedor,
-                  borderRadius: '28px',
-                  boxShadow: theme.sombraContenedor,
-                  p: { xs: 3, md: 4 },
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  minHeight: 220,
-                }}
-              >
-                <DateRangeSelector
-                  fechaInicio={fechaInicio}
-                  fechaFin={fechaFin}
-                  onFechaInicioChange={handleFechaInicioChange}
-                  onFechaFinChange={handleFechaFinChange}
-                  addLog={addLog}
-                />
-              </Box>
-              <Box
-                sx={{
-                  flex: 1,
-                  background: theme.fondoContenedor,
-                  borderRadius: '28px',
-                  boxShadow: theme.sombraContenedor,
-                  p: { xs: 3, md: 4 },
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  minHeight: 220,
-                }}
-              >
-                <NotesCard value={note} onChange={handleNoteChange} addLog={addLog} />
-              </Box>
-            </Box>
-          </motion.div>
-
-          {/* Contenido específico según la pestaña */}
-          {renderTabContent()}
-
-          {/* Tarjeta Consola de Procesamiento */}
-          <motion.div variants={STAGGER_ITEM_VARIANTS}>
-            <Box sx={{ width: '100%' }}>
-              <ProcessingConsole logs={logs} onClearLogs={clearLogs} />
-            </Box>
-          </motion.div>
-        </motion.div>
-
-        {/* Overlay de transición de modo */}
-        {showModeTransition && (
-          <Box
-            sx={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100vw',
-              height: '100vh',
-              zIndex: 9999,
-              background: 'rgba(0,0,0,0.8)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <ModeTransitionAnimation fromMode={modeTransitionData.from} toMode={modeTransitionData.to} />
-          </Box>
-        )}
-
-        {/* Diálogo de confirmación para conservar nota */}
-        <Dialog open={showNoteDialog} onClose={handleKeepNote}>
-          <DialogTitle>¿Deseas conservar la nota anterior?</DialogTitle>
-          <DialogContent>
-            Has cambiado el rango de fechas. ¿Quieres mantener la nota escrita o empezar con una nota vacía?
-          </DialogContent>
-          <DialogActions>
-            <MuiButton onClick={handleClearNote} color="error">Limpiar nota</MuiButton>
-            <MuiButton onClick={handleKeepNote} color="primary" autoFocus>Mantener nota</MuiButton>
-          </DialogActions>
-        </Dialog>
-      </Box>
-    </motion.div>
+          {/* Diálogo de confirmación para conservar nota */}
+          <Dialog open={showNoteDialog} onClose={handleKeepNote}>
+            <DialogTitle>¿Deseas conservar la nota anterior?</DialogTitle>
+            <DialogContent>
+              Has cambiado el rango de fechas. ¿Quieres mantener la nota escrita o empezar con una nota vacía?
+            </DialogContent>
+            <DialogActions>
+              <MuiButton onClick={handleClearNote} color="error">Limpiar nota</MuiButton>
+              <MuiButton onClick={handleKeepNote} color="primary" autoFocus>Mantener nota</MuiButton>
+            </DialogActions>
+          </Dialog>
+        </Box>
+      </motion.div>
+    </DashboardLayout>
   );
 }
 

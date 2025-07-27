@@ -373,15 +373,6 @@ def analytics_pendientes_efectivo():
         os.makedirs('temp', exist_ok=True)
         file.save(temp_path)
 
-        fecha_inicio_str = request.form.get('fecha_inicio', '2024-01-01')
-        fecha_fin_str = request.form.get('fecha_fin', '2024-12-31')
-        from datetime import datetime
-        try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
-            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
-        except Exception:
-            return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
-
         import time
         import gc
         import numpy as np
@@ -413,18 +404,6 @@ def analytics_pendientes_efectivo():
 
         if not col_estado or not col_xporc or not col_fecha or not col_para_jg or not col_forma_pago:
             return jsonify({'error': f'No se encontraron columnas requeridas. Estado: {col_estado}, X50%/X25%: {col_xporc}, Fecha: {col_fecha}, PARA JG: {col_para_jg}, Forma Pago: {col_forma_pago}'}), 400
-        
-        # Debug: imprimir las columnas encontradas
-        print(f"Columnas encontradas:")
-        print(f"- Estado: {col_estado}")
-        print(f"- X50%/X25%: {col_xporc}")
-        print(f"- Fecha: {col_fecha}")
-        print(f"- PARA JG: {col_para_jg}")
-        print(f"- PARA ABRECAR: {col_para_abrecar}")
-        print(f"- IVA: {col_iva}")
-        print(f"- Forma Pago: {col_forma_pago}")
-        print(f"- Servicio: {col_servicio}")
-        print(f"Columnas disponibles en el DataFrame: {list(df.columns)}")
 
         # Limpiar valores
         df[col_estado] = df[col_estado].astype(str).str.strip().str.upper().apply(unidecode)
@@ -441,24 +420,17 @@ def analytics_pendientes_efectivo():
         # También incluir servicios con estado vacío, nulo o 'nan'
         mask_efectivo = df[col_forma_pago] == 'EFECTIVO'
         mask_fecha = df[col_fecha].notna()
-        mask_rango_fechas = (df[col_fecha] >= fecha_inicio) & (df[col_fecha] <= fecha_fin)
         mask_estado = (
             (df[col_estado] != 'YA RELACIONADO') |
             (df[col_estado].isna()) |
             (df[col_estado].astype(str).str.strip() == '')
         )
         
-        df_filtrado = df[mask_efectivo & mask_fecha & mask_rango_fechas & mask_estado].copy()
+        df_filtrado = df[mask_efectivo & mask_fecha & mask_estado].copy()
 
         if df_filtrado.empty:
             return jsonify({
-                'resumen': {
-                    'total_servicios': 0,
-                    'total_valor': 0,
-                    'dias_sin_relacionar': 0,
-                    'tiene_pendientes': False,
-                    'advertencia': 'No hay servicios en efectivo pendientes de relacionar'
-                },
+                'resumen': {},
                 'detalle': [],
                 'success': True
             })
@@ -467,28 +439,43 @@ def analytics_pendientes_efectivo():
         fecha_actual = datetime.now()
         df_filtrado['dias_sin_relacionar'] = (fecha_actual - df_filtrado[col_fecha]).dt.days
 
-        # Calcular estadísticas
-        total_servicios = len(df_filtrado)
-        
-        # Usar valores de ABRECAR si están disponibles, sino usar JG
-        if col_para_abrecar:
-            total_valor = df_filtrado[col_para_abrecar].sum()
-        else:
-            total_valor = df_filtrado[col_para_jg].sum()
-            
-        dias_sin_relacionar = df_filtrado['dias_sin_relacionar'].max() if not df_filtrado.empty else 0
+        # Agregar columna de mes para agrupar
+        df_filtrado['MES'] = pd.Series(df_filtrado[col_fecha].dt.to_period('M').astype(str), index=df_filtrado.index)
 
-        # Determinar si hay advertencia (servicios con más de 30 días sin relacionar)
-        servicios_antiguos = df_filtrado[df_filtrado['dias_sin_relacionar'] > 30]
-        tiene_pendientes = len(servicios_antiguos) > 0
+        # Calcular resumen por mes
+        resumen = {}
+        meses = set(df_filtrado['MES'][df_filtrado['MES'].notna()].unique())
 
-        # Crear mensaje de advertencia
-        if tiene_pendientes:
-            advertencia = f"⚠️ ADVERTENCIA: Hay {len(servicios_antiguos)} servicios en efectivo con más de 30 días sin relacionar"
-        else:
-            advertencia = "✅ Todos los servicios en efectivo están al día"
+        for mes in meses:
+            grupo_mes = df_filtrado[df_filtrado['MES'] == mes]
 
-        # Preparar detalle de servicios para mostrar
+            # Usar valores de ABRECAR si están disponibles, sino usar JG
+            if col_para_abrecar:
+                total_valor = grupo_mes[col_para_abrecar].sum()
+            else:
+                total_valor = grupo_mes[col_para_jg].sum()
+
+            dias_sin_relacionar = grupo_mes['dias_sin_relacionar'].max() if not grupo_mes.empty else 0
+
+            # Determinar si hay advertencia para este mes
+            servicios_antiguos = grupo_mes[grupo_mes['dias_sin_relacionar'] > 30]
+            tiene_pendientes = len(servicios_antiguos) > 0
+
+            # Crear mensaje de advertencia para este mes
+            if tiene_pendientes:
+                advertencia = f"⚠️ ADVERTENCIA: Hay {len(servicios_antiguos)} servicios en efectivo con más de 30 días sin relacionar"
+            else:
+                advertencia = "✅ Todos los servicios en efectivo están al día"
+
+            resumen[mes] = {
+                'total_servicios': len(grupo_mes),
+                'total_valor': total_valor,
+                'dias_sin_relacionar': dias_sin_relacionar,
+                'tiene_pendientes': tiene_pendientes,
+                'advertencia': advertencia
+            }
+
+        # Preparar detalle de servicios para mostrar (todos los datos filtrados)
         detalle = []
         for _, row in df_filtrado.iterrows():
             # Manejar el estado - cambiar 'nan' por 'Sin Relacionar'
@@ -509,14 +496,6 @@ def analytics_pendientes_efectivo():
             valor_abrecar = row[col_para_abrecar] if col_para_abrecar and pd.notna(row[col_para_abrecar]) else 0
             valor_iva = row[col_iva] if col_iva and pd.notna(row[col_iva]) else 0
             valor_subtotal = valor_abrecar - valor_iva if valor_abrecar > 0 else 0
-            
-            # Debug: imprimir valores para los primeros 3 registros
-            if len(detalle) < 3:
-                print(f"Registro {len(detalle) + 1}:")
-                print(f"  - Valor ABRECAR: {valor_abrecar} (columna: {col_para_abrecar})")
-                print(f"  - Valor IVA: {valor_iva} (columna: {col_iva})")
-                print(f"  - Valor original IVA: {row[col_iva] if col_iva else 'No encontrada'}")
-                print(f"  - Valor original ABRECAR: {row[col_para_abrecar] if col_para_abrecar else 'No encontrada'}")
             
             # Si no hay columna ABRECAR, usar JG como fallback
             if not col_para_abrecar:
@@ -543,15 +522,7 @@ def analytics_pendientes_efectivo():
             print(f"No se pudo borrar el archivo temporal: {e}")
 
         # Convertir tipos de numpy antes de serializar a JSON
-        resumen_data = {
-            'total_servicios': total_servicios,
-            'total_valor': total_valor,
-            'dias_sin_relacionar': dias_sin_relacionar,
-            'tiene_pendientes': tiene_pendientes,
-            'advertencia': advertencia
-        }
-        
-        resumen_convertido = convert_numpy_types(resumen_data)
+        resumen_convertido = convert_numpy_types(resumen)
         detalle_convertido = convert_numpy_types(detalle)
 
         return jsonify({
@@ -575,14 +546,6 @@ def analytics_pendientes_cobrar():
         temp_path = os.path.join('temp', filename)
         os.makedirs('temp', exist_ok=True)
         file.save(temp_path)
-
-        fecha_inicio_str = request.form.get('fecha_inicio', '2024-01-01')
-        fecha_fin_str = request.form.get('fecha_fin', '2024-12-31')
-        try:
-            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
-            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
-        except Exception:
-            return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
 
         import time
         import gc
@@ -614,18 +577,43 @@ def analytics_pendientes_cobrar():
         df[col_estado] = df[col_estado].astype(str).str.strip().str.upper().apply(unidecode)
         df[col_fecha] = pd.to_datetime(df[col_fecha], errors='coerce')
 
-        # Filtrar por rango de fechas y estado 'PENDIENTE COBRAR'
+        # Filtrar por estado 'PENDIENTE COBRAR' (sin rango de fechas)
         mask_fecha = df[col_fecha].notna()
-        mask_rango_fechas = (df[col_fecha] >= fecha_inicio) & (df[col_fecha] <= fecha_fin)
         mask_estado = df[col_estado] == 'PENDIENTE COBRAR'
-        df_filtrado = df[mask_fecha & mask_rango_fechas & mask_estado].copy()
+        df_filtrado = df[mask_fecha & mask_estado].copy()
 
         if df_filtrado.empty:
-            return jsonify({'detalle': [], 'success': True})
+            return jsonify({
+                'resumen': {},
+                'detalle': [],
+                'success': True
+            })
 
         # Calcular días de retraso
         fecha_actual = datetime.now()
         df_filtrado['dias_de_retraso'] = (fecha_actual - df_filtrado[col_fecha]).dt.days
+
+        # Agregar columna de mes para agrupar
+        df_filtrado['MES'] = pd.Series(df_filtrado[col_fecha].dt.to_period('M').astype(str), index=df_filtrado.index)
+
+        # Calcular resumen por mes
+        resumen = {}
+        meses = set(df_filtrado['MES'][df_filtrado['MES'].notna()].unique())
+
+        for mes in meses:
+            grupo_mes = df_filtrado[df_filtrado['MES'] == mes]
+
+            total_servicios = len(grupo_mes)
+            servicios_retraso = len(grupo_mes[grupo_mes['dias_de_retraso'] > 30])
+            max_dias_retraso = grupo_mes['dias_de_retraso'].max() if not grupo_mes.empty else 0
+            fecha_mas_antigua = grupo_mes[col_fecha].min().strftime('%Y-%m-%d') if not grupo_mes.empty else 'N/A'
+
+            resumen[mes] = {
+                'total_servicios': total_servicios,
+                'servicios_retraso': servicios_retraso,
+                'max_dias_retraso': max_dias_retraso,
+                'fecha_mas_antigua': fecha_mas_antigua
+            }
 
         # Preparar detalle
         detalle = []
@@ -640,13 +628,19 @@ def analytics_pendientes_cobrar():
                 'mensaje': mensaje
             })
 
-        detalle_convertido = convert_numpy_types(detalle)
-
         try:
             os.remove(temp_path)
         except Exception as e:
             print(f"No se pudo borrar el archivo temporal: {e}")
 
-        return jsonify({'detalle': detalle_convertido, 'success': True})
+        # Convertir tipos de numpy antes de serializar a JSON
+        resumen_convertido = convert_numpy_types(resumen)
+        detalle_convertido = convert_numpy_types(detalle)
+
+        return jsonify({
+            'resumen': resumen_convertido,
+            'detalle': detalle_convertido,
+            'success': True
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
