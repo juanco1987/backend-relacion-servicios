@@ -27,37 +27,55 @@ function Header() {
       }}
     >
       {/* Botón de alternancia de tema - esquina superior derecha */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: { xs: 8, md: 12 },
+          right: { xs: 8, md: 12 },
+          width: 40,
+          height: 40,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10,
+        }}
       >
-        <IconButton
-          onClick={alternarTema}
-          sx={{
-            position: 'absolute',
-            top: { xs: 8, md: 12 },
-            right: { xs: 8, md: 12 },
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            background: theme.fondoOverlay,
-            color: theme.textoPrincipal,
-            border: `2px solid ${theme.bordePrincipal}`,
-            boxShadow: theme.sombraHeader,
-            '&:hover': {
-              background: theme.fondoOverlay,
-              borderColor: theme.bordeHover,
-            },
-            transition: 'all 0.2s ease',
+        <motion.div
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          style={{
+            transformOrigin: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-          title={`Cambiar a tema ${modo === 'oscuro' ? 'claro' : 'oscuro'}`}
         >
-          {modo === 'oscuro' ? '☀️' : '🌙'}
-        </IconButton>
-      </motion.div>
+          <IconButton
+            onClick={alternarTema}
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              background: theme.fondoOverlay,
+              color: theme.textoPrincipal,
+              border: `2px solid ${theme.bordePrincipal}`,
+              boxShadow: theme.sombraHeader,
+              '&:hover': {
+                background: theme.fondoOverlay,
+                borderColor: theme.bordeHover,
+              },
+              transition: 'all 0.2s ease',
+              transform: 'none',
+            }}
+            title={`Cambiar a tema ${modo === 'oscuro' ? 'claro' : 'oscuro'}`}
+          >
+            {modo === 'oscuro' ? '☀️' : '🌙'}
+          </IconButton>
+        </motion.div>
+      </Box>
 
       {/* Logo con animación de rotación */}
       <motion.div

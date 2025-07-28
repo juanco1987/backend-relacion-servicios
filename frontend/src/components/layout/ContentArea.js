@@ -1,11 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box } from '@mui/material';
 import { motion } from 'framer-motion';
 import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from '../../config/animations';
-import ExcelUploader from '../forms/ExcelUploader';
-import DateRangeSelector from '../forms/DateRangeSelector';
-import NotesCard from '../forms/NotesCard';
-import ActionCenterCard from './ActionCenterCard';
+import UnifiedWorkflowCard from './UnifiedWorkflowCard';
 import ServiciosPendientesEfectivo from '../analytics/ServiciosPendientesEfectivo';
 import ServiciosPendientesCobrar from '../analytics/ServiciosPendientesCobrar';
 import Analytics from '../analytics/Analytics';
@@ -24,6 +21,7 @@ function ContentArea({
   onFechaFinChange,
   onNoteChange,
   onProcessData,
+  onGeneratePDF,
   processing,
   animationState,
   setAnimationState,
@@ -33,6 +31,23 @@ function ContentArea({
   setShowError,
 }) {
   const { theme } = useTheme();
+
+  // Debug log para excelData
+  useEffect(() => {
+    console.log('ContentArea excelData:', excelData);
+  }, [excelData]);
+
+  // Debug log para handlers
+  useEffect(() => {
+    console.log('ContentArea handlers:', {
+      onFileChange: !!onFileChange,
+      onFechaInicioChange: !!onFechaInicioChange,
+      onFechaFinChange: !!onFechaFinChange,
+      onNoteChange: !!onNoteChange,
+      onProcessData: !!onProcessData,
+      onGeneratePDF: !!onGeneratePDF
+    });
+  }, [onFileChange, onFechaInicioChange, onFechaFinChange, onNoteChange, onProcessData, onGeneratePDF]);
 
   // Determinar el modo de trabajo basado en la ruta
   const getWorkMode = (route) => {
@@ -55,7 +70,6 @@ function ContentArea({
   // Verificar si estamos en el Dashboard o en Analytics
   const isDashboard = currentRoute === '/' || currentRoute === '/dashboard';
   const isAnalytics = currentRoute === '/analytics/efectivo' || currentRoute === '/analytics/cobrar';
-  const shouldShowFormComponents = !isDashboard && !isAnalytics;
 
   // Renderizar contenido específico según la ruta
   const renderRouteContent = () => {
@@ -69,23 +83,21 @@ function ContentArea({
       case '/reportes/servicios':
       case '/reportes/pendientes':
         return (
-          <>
-            <ActionCenterCard
-              archivoExcel={excelData}
-              fechaInicio={fechaInicio}
-              fechaFin={fechaFin}
-              notas={note}
-              workMode={workMode}
-              onProcessData={onProcessData}
-              processing={processing}
-              animationState={animationState}
-              setAnimationState={setAnimationState}
-              showSuccess={showSuccess}
-              showError={showError}
-              setShowSuccess={setShowSuccess}
-              setShowError={setShowError}
-            />
-          </>
+          <UnifiedWorkflowCard
+            archivoExcel={excelData}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            notas={note}
+            onFileChange={onFileChange}
+            onFechaInicioChange={onFechaInicioChange}
+            onFechaFinChange={onFechaFinChange}
+            onNoteChange={onNoteChange}
+            onProcessData={onProcessData}
+            onGeneratePDF={onGeneratePDF}
+            processing={processing}
+            animationState={animationState}
+            workMode={workMode}
+          />
         );
       
       case '/analytics/efectivo':
@@ -128,58 +140,7 @@ function ContentArea({
       initial="hidden"
       animate="visible"
     >
-      {/* Solo mostrar componentes de formulario si NO estamos en el Dashboard */}
-      {shouldShowFormComponents && (
-        <>
-          {/* Selector de archivo Excel */}
-          <motion.div variants={STAGGER_ITEM_VARIANTS}>
-            <Box sx={{ width: '100%', mb: 1 }}>
-              <ExcelUploader onFileChange={onFileChange} workMode={workMode} />
-            </Box>
-          </motion.div>
 
-          {/* Fila de Rango de Fechas y Notas */}
-          <motion.div variants={STAGGER_ITEM_VARIANTS}>
-            <Box sx={{ width: '100%', display: 'flex', gap: 3, mb: 4 }}>
-              <Box
-                sx={{
-                  flex: 1,
-                  background: theme.fondoContenedor,
-                  borderRadius: '28px',
-                  boxShadow: theme.sombraContenedor,
-                  p: { xs: 3, md: 4 },
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  minHeight: 220,
-                }}
-              >
-                <DateRangeSelector
-                  fechaInicio={fechaInicio}
-                  fechaFin={fechaFin}
-                  onFechaInicioChange={onFechaInicioChange}
-                  onFechaFinChange={onFechaFinChange}
-                />
-              </Box>
-              <Box
-                sx={{
-                  flex: 1,
-                  background: theme.fondoContenedor,
-                  borderRadius: '28px',
-                  boxShadow: theme.sombraContenedor,
-                  p: { xs: 3, md: 4 },
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  minHeight: 220,
-                }}
-              >
-                <NotesCard value={note} onChange={onNoteChange} />
-              </Box>
-            </Box>
-          </motion.div>
-        </>
-      )}
 
       {/* Contenido específico según la ruta */}
       <motion.div variants={STAGGER_ITEM_VARIANTS}>

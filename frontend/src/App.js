@@ -10,6 +10,7 @@ import ContentArea from './components/layout/ContentArea';
 import ModeTransitionAnimation from './components/animations/ModeTransitionAnimation';
 import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from './config/animations';
 import dayjs from 'dayjs';
+import { generarPDFServiciosEfectivo, generarPDFPendientes } from './services/pdfService';
 
 function App() {
   const { theme } = useTheme();
@@ -31,8 +32,16 @@ function App() {
   const [modeTransitionData, setModeTransitionData] = useState({ from: '', to: '' });
 
   // Handlers existentes
-  const handleFileChange = (data) => {
-    setExcelData(data);
+  const handleFileChange = (event) => {
+    console.log('handleFileChange recibió:', event);
+    const file = event.target.files[0];
+    if (file) {
+      console.log('Archivo seleccionado:', file.name, file.size, file.type);
+      setExcelData(file);
+    } else {
+      console.log('No se seleccionó ningún archivo');
+      setExcelData(null);
+    }
   };
 
   const handleFechaInicioChange = (date) => {
@@ -46,6 +55,7 @@ function App() {
   };
 
   const handleNoteChange = (newNote) => {
+    console.log('handleNoteChange recibió:', newNote);
     setNote(newNote);
   };
 
@@ -63,6 +73,77 @@ function App() {
     } finally {
       setProcessing(false);
       setAnimationState('idle');
+    }
+  };
+
+  const handleGeneratePDF = async (pdfName, workMode) => {
+    try {
+      if (!excelData || !fechaInicio || !fechaFin) {
+        alert('Debes seleccionar un archivo y un rango de fechas.');
+        return;
+      }
+
+      // Verificar que las fechas sean objetos dayjs válidos
+      if (!fechaInicio || !fechaInicio.isValid || !fechaInicio.isValid()) {
+        alert('Error: Fecha de inicio inválida');
+        return;
+      }
+
+      if (!fechaFin || !fechaFin.isValid || !fechaFin.isValid()) {
+        alert('Error: Fecha de fin inválida');
+        return;
+      }
+
+      // Usar el nombre personalizado o generar uno por defecto
+      const finalPdfName = pdfName?.trim() || generateDefaultPDFName(workMode);
+      let blob;
+
+      if (workMode === 0) {
+        // Modo: Relación de Servicios
+        blob = await generarPDFServiciosEfectivo({
+          archivo: excelData,
+          fechaInicio: fechaInicio.format('YYYY-MM-DD'),
+          fechaFin: fechaFin.format('YYYY-MM-DD'),
+          notas: note,
+          nombrePDF: finalPdfName,
+        });
+      } else {
+        // Modo: Pendientes de Pago
+        blob = await generarPDFPendientes({
+          archivo: excelData,
+          fechaInicio: fechaInicio.format('YYYY-MM-DD'),
+          fechaFin: fechaFin.format('YYYY-MM-DD'),
+          notas: note,
+          nombrePDF: finalPdfName,
+        });
+      }
+      
+      // Descargar el PDF
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = finalPdfName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Limpiar la URL del blob
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      alert(`Error al generar el PDF: ${error.message}`);
+    }
+  };
+
+  const generateDefaultPDFName = (workMode) => {
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '-');
+    const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-');
+    if (workMode === 0) {
+      return `Relacion_Servicios_${dateStr}_${timeStr}.pdf`;
+    } else {
+      return `Pendientes_de_Pago_${dateStr}_${timeStr}.pdf`;
     }
   };
 
@@ -132,6 +213,7 @@ function App() {
               onFechaFinChange={handleFechaFinChange}
               onNoteChange={handleNoteChange}
               onProcessData={handleProcessData}
+              onGeneratePDF={handleGeneratePDF}
               processing={processing}
               animationState={animationState}
               setAnimationState={setAnimationState}

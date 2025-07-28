@@ -406,216 +406,274 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, fullHeig
           {animationState === 'error' && <ErrorAnimation message="Ocurrió un error" />}
         </Box>
       )}
-      <Grid container alignItems="flex-start" spacing={6} sx={{ opacity: (animationState !== 'idle' || showModeTransition) ? 0.3 : 1, pointerEvents: (animationState !== 'idle' || showModeTransition) ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
-        {/* Columna izquierda: icono, título, chip */}
-        <Grid item xs={12} md={6}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Box component="img" src={actionIcon} alt="Acciones" sx={{ width: 32, height: 32, mr: 2, bgcolor: 'transparent', boxShadow: theme.sombraComponente }} />
-            <Typography variant="h6" sx={{ fontWeight: 'bold', color: theme.textoPrincipal, letterSpacing: 2, fontSize: '1.8rem' }}>
-              {APP_MESSAGES.ACTION_CARD_TITLE}
-            </Typography>
-          </Box>
-          <motion.div
-            whileHover={ANIMATIONS.formFieldHover}
-            whileFocus={ANIMATIONS.formFieldFocus}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: { xs: 2, md: 0 } }}>
-              <TextField
-                label="Nombre del PDF"
-                value={reportName}
-                onChange={handleReportNameChange}
-                variant="outlined"
-                size="small"
-                sx={{
-                  background: theme.gradientes.botonInactivo,
-                  borderRadius: '14px',
-                  boxShadow: theme.sombraComponente,
-                  color: theme.textoPrincipal,
-                  minWidth: 420,
-                  maxWidth: 420,
-                  '& .MuiInputBase-root': {
-                    color: theme.textoPrincipal,
-                    borderRadius: '14px',
-                    height: 54,
-                    transition: 'all 0.3s ease'
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: `${theme.bordePrincipal} !important`,
-                    borderWidth: '1.5px !important',
-                    transition: 'all 0.3s ease'
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: theme.textoSecundario,
-                    transition: 'all 0.3s ease'
-                  },
-                  '& .MuiInputLabel-shrink': {
-                    color: theme.textoSecundario,
-                  },
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: theme.sombraHover,
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: `${theme.bordeHover} !important`,
-                    
-                  },
-                  '&.Mui-focused': {
-                    transform: 'translateY(-3px)',
-                    boxShadow: theme.sombraFocus,
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: `${theme.bordeFocus} !important`,
-                    borderWidth: '2.5px !important'
-                  },
-                  '& .MuiInputBase-input': {
-                    color: `${theme.textoPrincipal} !important`,
-                    transition: 'all 0.3s ease'
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: `${theme.textoPrincipal} !important`,
-                    fontWeight: 600
-                  },
-                  transition: 'all 0.3s ease'
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <motion.div
-                      whileHover={{ rotate: 5, scale: 1.1 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Box component="img" src={pdfIcon} alt="PDF" sx={{ width: 32, height: 32, bgcolor: 'transparent', mr: 1 }} />
-                    </motion.div>
-                  ),
-                  endAdornment: (
-                    <motion.div
-                      whileHover={{ rotate: 180, scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <IconButton
-                        onClick={() => setReportName(generateDefaultName())}
-                        sx={{ 
-                          color: theme.textoSecundario, 
-                          mr: 1,
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            color: theme.textoPrincipal,
-                            backgroundColor: theme.modo === 'claro' 
-                              ? 'rgba(0,0,0,0.1)' 
-                              : 'rgba(255,255,255,0.1)'
-                          }
-                        }}
-                        title="Generar nombre automático"
-                      >
-                        <RefreshIcon />
-                      </IconButton>
-                    </motion.div>
-                  ),
-                }}
-                disabled={!canGeneratePDF}
-              />
-            </Box>
-          </motion.div>
-        </Grid>
-        {/* Columna derecha: botones */}
-        <Grid item xs={12} md={6}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', height: '100%' }}>
-            <motion.div
-              whileHover={ANIMATIONS.buttonHover}
-              whileTap={ANIMATIONS.buttonTap}
-            >
-              <Button
-                variant="contained"
-                disabled={!archivoExcel || !fechaInicio || !fechaFin || processing}
-                onClick={handleProcess}
-                startIcon={<Box component="img" src={processIcon} alt="Procesar" sx={{ width: 28, height: 28, bgcolor: 'transparent' }} />}
-                sx={{
-                  background: theme.gradientes.botonInactivo,
-                  borderRadius: '18px',
-                  boxShadow: theme.sombraComponente,
-                  color: theme.textoPrincipal,
-                  fontWeight: 'bold',
-                  fontSize: 22,
-                  px: 9,
-                  minWidth: 280,
-                  py: 1.2,
-                  mb: 2,
-                  height: 48,
-                  '&:disabled': {
-                    background: theme.fondoOverlay,
-                    color: theme.textoDeshabilitado,
-                    boxShadow: 'none',
-                  },
-                }}
-              >
-                {processing 
-                  ? APP_MESSAGES.BUTTON_PROCESSING_TEXT 
-                  : workMode === 0 
-                    ? APP_MESSAGES.BUTTON_PROCESS_TEXT 
-                    : APP_MESSAGES.BUTTON_PROCESS_TEXT
-                }
-              </Button>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <Box sx={{ display: 'flex', gap: 3, mb: 2 }}>
-                <motion.div
-                  whileHover={ANIMATIONS.buttonHover}
-                  whileTap={ANIMATIONS.buttonClick}
-                  animate={canGeneratePDF ? ANIMATIONS.buttonActive.animate : {}}
-                >
-                <Button
-                  variant="contained"
-                  disabled={!canGeneratePDF}
-                  onClick={handleGeneratePDF}
-                  startIcon={<Box component="img" src={pdfIcon} alt="PDF" sx={{ width: 28, height: 28, bgcolor: 'transparent' }} />}
-                  sx={{
-                    background: theme.modo === 'claro' 
-                      ? 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' 
-                      : 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                    borderRadius: '14px',
-                    boxShadow: theme.modo === 'claro' 
-                      ? '0 4px 12px rgba(25,118,210,0.3)' 
-                      : '0 4px 12px rgba(25,118,210,0.5)',
-                    color: theme.modo === 'claro' ? '#1565c0' : '#ffffff',
-                    fontWeight: 'bold',
-                    fontSize: 18,
-                    px: 2,
-                    minWidth: 140,
-                    height: 48,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      background: theme.modo === 'claro' 
-                        ? 'linear-gradient(135deg, #bbdefb 0%, #90caf9 100%)' 
-                        : 'linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)',
-                      boxShadow: theme.modo === 'claro' 
-                        ? '0 6px 16px rgba(25,118,210,0.4)' 
-                        : '0 6px 16px rgba(25,118,210,0.6)',
-                      transform: 'translateY(-2px)',
-                    },
-                    '&:disabled': {
-                      background: theme.fondoOverlay,
-                      color: theme.textoDeshabilitado,
-                      boxShadow: 'none',
-                      transform: 'none',
-                    },
-                  }}
-                >
-                  {APP_MESSAGES.BUTTON_GENERATE_PDF_TEXT}
-                </Button>
-              </motion.div>
-            </Box>
-            </motion.div>
+             {/* Header con título y flujo de trabajo */}
+       <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+         <Box component="img" src={actionIcon} alt="Acciones" sx={{ width: 32, height: 32, mr: 2, bgcolor: 'transparent', boxShadow: theme.sombraComponente }} />
+         <Typography variant="h6" sx={{ fontWeight: 'bold', color: theme.textoPrincipal, letterSpacing: 2, fontSize: '1.8rem' }}>
+           {APP_MESSAGES.ACTION_CARD_TITLE}
+         </Typography>
+       </Box>
 
+       {/* Flujo de trabajo secuencial */}
+       <Box sx={{ opacity: (animationState !== 'idle' || showModeTransition) ? 0.3 : 1, pointerEvents: (animationState !== 'idle' || showModeTransition) ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
+         
+         {/* Paso 1: Configurar nombre del PDF */}
+         <Box sx={{ mb: 3 }}>
+           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+             <Box sx={{ 
+               width: 32, 
+               height: 32, 
+               borderRadius: '50%', 
+               background: theme.modo === 'claro' ? '#e3f2fd' : '#1976d2',
+               display: 'flex', 
+               alignItems: 'center', 
+               justifyContent: 'center',
+               mr: 2,
+               color: theme.modo === 'claro' ? '#1565c0' : '#ffffff',
+               fontWeight: 'bold',
+               fontSize: '1.2rem'
+             }}>
+               1
+             </Box>
+             <Typography variant="h6" sx={{ color: theme.textoPrincipal, fontWeight: 600 }}>
+               Configurar nombre del reporte
+             </Typography>
+           </Box>
+           <motion.div
+             whileHover={ANIMATIONS.formFieldHover}
+             whileFocus={ANIMATIONS.formFieldFocus}
+             whileTap={{ scale: 0.98 }}
+             transition={{ duration: 0.2 }}
+           >
+             <TextField
+               label="Nombre del PDF"
+               value={reportName}
+               onChange={handleReportNameChange}
+               variant="outlined"
+               size="small"
+               sx={{
+                 background: theme.gradientes.botonInactivo,
+                 borderRadius: '14px',
+                 boxShadow: theme.sombraComponente,
+                 color: theme.textoPrincipal,
+                 width: '100%',
+                 '& .MuiInputBase-root': {
+                   color: theme.textoPrincipal,
+                   borderRadius: '14px',
+                   height: 54,
+                   transition: 'all 0.3s ease'
+                 },
+                 '& .MuiOutlinedInput-notchedOutline': {
+                   borderColor: `${theme.bordePrincipal} !important`,
+                   borderWidth: '1.5px !important',
+                   transition: 'all 0.3s ease'
+                 },
+                 '& .MuiInputLabel-root': {
+                   color: theme.textoSecundario,
+                   transition: 'all 0.3s ease'
+                 },
+                 '& .MuiInputLabel-shrink': {
+                   color: theme.textoSecundario,
+                 },
+                 '&:hover': {
+                   transform: 'translateY(-2px)',
+                   boxShadow: theme.sombraHover,
+                 },
+                 '&:hover .MuiOutlinedInput-notchedOutline': {
+                   borderColor: `${theme.bordeHover} !important`,
+                 },
+                 '&.Mui-focused': {
+                   transform: 'translateY(-3px)',
+                   boxShadow: theme.sombraFocus,
+                 },
+                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                   borderColor: `${theme.bordeFocus} !important`,
+                   borderWidth: '2.5px !important'
+                 },
+                 '& .MuiInputBase-input': {
+                   color: `${theme.textoPrincipal} !important`,
+                   transition: 'all 0.3s ease'
+                 },
+                 '& .MuiInputLabel-root.Mui-focused': {
+                   color: `${theme.textoPrincipal} !important`,
+                   fontWeight: 600
+                 },
+                 transition: 'all 0.3s ease'
+               }}
+               InputProps={{
+                 startAdornment: (
+                   <motion.div
+                     whileHover={{ rotate: 5, scale: 1.1 }}
+                     transition={{ duration: 0.2 }}
+                   >
+                     <Box component="img" src={pdfIcon} alt="PDF" sx={{ width: 32, height: 32, bgcolor: 'transparent', mr: 1 }} />
+                   </motion.div>
+                 ),
+                 endAdornment: (
+                   <motion.div
+                     whileHover={{ rotate: 180, scale: 1.1 }}
+                     whileTap={{ scale: 0.9 }}
+                     transition={{ duration: 0.3 }}
+                   >
+                     <IconButton
+                       onClick={() => setReportName(generateDefaultName())}
+                       sx={{ 
+                         color: theme.textoSecundario, 
+                         mr: 1,
+                         transition: 'all 0.3s ease',
+                         '&:hover': {
+                           color: theme.textoPrincipal,
+                           backgroundColor: theme.modo === 'claro' 
+                             ? 'rgba(0,0,0,0.1)' 
+                             : 'rgba(255,255,255,0.1)'
+                         }
+                       }}
+                       title="Generar nombre automático"
+                     >
+                       <RefreshIcon />
+                     </IconButton>
+                   </motion.div>
+                 ),
+               }}
+               disabled={!canGeneratePDF}
+             />
+           </motion.div>
+         </Box>
 
-          </Box>
-        </Grid>
-      </Grid>
+         {/* Paso 2: Procesar datos */}
+         <Box sx={{ mb: 3 }}>
+           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+             <Box sx={{ 
+               width: 32, 
+               height: 32, 
+               borderRadius: '50%', 
+               background: theme.modo === 'claro' ? '#fff3e0' : '#f57c00',
+               display: 'flex', 
+               alignItems: 'center', 
+               justifyContent: 'center',
+               mr: 2,
+               color: theme.modo === 'claro' ? '#e65100' : '#ffffff',
+               fontWeight: 'bold',
+               fontSize: '1.2rem'
+             }}>
+               2
+             </Box>
+             <Typography variant="h6" sx={{ color: theme.textoPrincipal, fontWeight: 600 }}>
+               Procesar datos del archivo
+             </Typography>
+           </Box>
+           <motion.div
+             whileHover={ANIMATIONS.buttonHover}
+             whileTap={ANIMATIONS.buttonTap}
+           >
+             <Button
+               variant="contained"
+               disabled={!archivoExcel || !fechaInicio || !fechaFin || processing}
+               onClick={handleProcess}
+               startIcon={<Box component="img" src={processIcon} alt="Procesar" sx={{ width: 28, height: 28, bgcolor: 'transparent' }} />}
+               sx={{
+                 background: theme.gradientes.botonInactivo,
+                 borderRadius: '18px',
+                 boxShadow: theme.sombraComponente,
+                 color: theme.textoPrincipal,
+                 fontWeight: 'bold',
+                 fontSize: 18,
+                 px: 6,
+                 width: '100%',
+                 py: 1.5,
+                 height: 52,
+                 '&:disabled': {
+                   background: theme.fondoOverlay,
+                   color: theme.textoDeshabilitado,
+                   boxShadow: 'none',
+                 },
+               }}
+             >
+               {processing 
+                 ? APP_MESSAGES.BUTTON_PROCESSING_TEXT 
+                 : workMode === 0 
+                   ? APP_MESSAGES.BUTTON_PROCESS_TEXT 
+                   : APP_MESSAGES.BUTTON_PROCESS_TEXT
+               }
+             </Button>
+           </motion.div>
+         </Box>
+
+         {/* Paso 3: Generar PDF */}
+         <Box>
+           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+             <Box sx={{ 
+               width: 32, 
+               height: 32, 
+               borderRadius: '50%', 
+               background: theme.modo === 'claro' ? '#e8f5e8' : '#388e3c',
+               display: 'flex', 
+               alignItems: 'center', 
+               justifyContent: 'center',
+               mr: 2,
+               color: theme.modo === 'claro' ? '#2e7d32' : '#ffffff',
+               fontWeight: 'bold',
+               fontSize: '1.2rem'
+             }}>
+               3
+             </Box>
+             <Typography variant="h6" sx={{ color: theme.textoPrincipal, fontWeight: 600 }}>
+               Generar reporte PDF
+             </Typography>
+           </Box>
+           <motion.div
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.6, delay: 0.2 }}
+           >
+             <motion.div
+               whileHover={ANIMATIONS.buttonHover}
+               whileTap={ANIMATIONS.buttonClick}
+               animate={canGeneratePDF ? ANIMATIONS.buttonActive.animate : {}}
+             >
+               <Button
+                 variant="contained"
+                 disabled={!canGeneratePDF}
+                 onClick={handleGeneratePDF}
+                 startIcon={<Box component="img" src={pdfIcon} alt="PDF" sx={{ width: 28, height: 28, bgcolor: 'transparent' }} />}
+                 sx={{
+                   background: theme.modo === 'claro' 
+                     ? 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' 
+                     : 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                   borderRadius: '14px',
+                   boxShadow: theme.modo === 'claro' 
+                     ? '0 4px 12px rgba(25,118,210,0.3)' 
+                     : '0 4px 12px rgba(25,118,210,0.5)',
+                   color: theme.modo === 'claro' ? '#1565c0' : '#ffffff',
+                   fontWeight: 'bold',
+                   fontSize: 18,
+                   px: 6,
+                   width: '100%',
+                   height: 52,
+                   transition: 'all 0.3s ease',
+                   '&:hover': {
+                     background: theme.modo === 'claro' 
+                       ? 'linear-gradient(135deg, #bbdefb 0%, #90caf9 100%)' 
+                       : 'linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)',
+                     boxShadow: theme.modo === 'claro' 
+                       ? '0 6px 16px rgba(25,118,210,0.4)' 
+                       : '0 6px 16px rgba(25,118,210,0.6)',
+                     transform: 'translateY(-2px)',
+                   },
+                   '&:disabled': {
+                     background: theme.fondoOverlay,
+                     color: theme.textoDeshabilitado,
+                     boxShadow: 'none',
+                     transform: 'none',
+                   },
+                 }}
+               >
+                 {APP_MESSAGES.BUTTON_GENERATE_PDF_TEXT}
+               </Button>
+             </motion.div>
+           </motion.div>
+         </Box>
+       </Box>
       {/* Diálogo de confirmación para PDF duplicado */}
       <Dialog
         open={showDuplicateDialog}
