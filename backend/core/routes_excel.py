@@ -239,13 +239,21 @@ def analytics():
         # Filtrar solo YA RELACIONADO
         df_filtrado = df[df[col_estado] == 'YA RELACIONADO'].copy()
         df_filtrado = df_filtrado[df_filtrado[col_fecha].notna()].copy()
-        df_filtrado['MES'] = pd.Series(df_filtrado[col_fecha].dt.to_period('M').astype(str), index=df_filtrado.index)
+        # Convertir formato de mes de "2025-01" a "Enero 2025"
+        meses_espanol = {
+            1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+            5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+            9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+        }
+        df_filtrado['MES'] = df_filtrado[col_fecha].apply(lambda x: f"{meses_espanol[x.month]} {x.year}" if pd.notna(x) else None)
+        
         # Filtrar solo EFECTIVO
         df_efectivo = df[df[col_forma_pago] == 'EFECTIVO'].copy() if col_forma_pago else df.iloc[0:0].copy()
         df_efectivo = df_efectivo[df_efectivo[col_fecha].notna()].copy()
-        df_efectivo['MES'] = pd.Series(df_efectivo[col_fecha].dt.to_period('M').astype(str), index=df_efectivo.index)
+        df_efectivo['MES'] = df_efectivo[col_fecha].apply(lambda x: f"{meses_espanol[x.month]} {x.year}" if pd.notna(x) else None)
+        
         # Calcular resumen por mes según condiciones solicitadas
-        df['MES'] = pd.Series(df[col_fecha].dt.to_period('M').astype(str), index=df.index)
+        df['MES'] = df[col_fecha].apply(lambda x: f"{meses_espanol[x.month]} {x.year}" if pd.notna(x) else None)
         resumen = {}
         meses = set(df['MES'][df['MES'].notna()].unique())
         for mes in meses:
@@ -281,6 +289,40 @@ def analytics():
                 'total_general': total_general,
                 'cantidad_general': cantidad_general
             }
+        # Calcular totales de servicios pendientes por mes
+        pendientes_por_mes = {}
+        
+        for mes in meses:
+            grupo_mes = df[df['MES'] == mes]
+            
+            # Servicios pendientes por relacionar (efectivo sin estado YA RELACIONADO)
+            mask_efectivo_pendiente = (
+                (grupo_mes[col_forma_pago] == 'EFECTIVO') &
+                (grupo_mes[col_fecha].notna()) &
+                (
+                    (grupo_mes[col_estado] != 'YA RELACIONADO') |
+                    (grupo_mes[col_estado].isna()) |
+                    (grupo_mes[col_estado].astype(str).str.strip() == '')
+                )
+            )
+            total_pendientes_relacionar = len(grupo_mes[mask_efectivo_pendiente])
+            
+            # Servicios pendientes por cobrar (estado PENDIENTE COBRAR)
+            mask_pendiente_cobrar = (
+                (grupo_mes[col_fecha].notna()) &
+                (grupo_mes[col_estado] == 'PENDIENTE COBRAR')
+            )
+            total_pendientes_cobrar = len(grupo_mes[mask_pendiente_cobrar])
+            
+            pendientes_por_mes[mes] = {
+                'total_pendientes_relacionar': total_pendientes_relacionar,
+                'total_pendientes_cobrar': total_pendientes_cobrar
+            }
+        
+        # Calcular totales globales de pendientes
+        total_pendientes_relacionar_global = sum(pendientes_por_mes[mes]['total_pendientes_relacionar'] for mes in pendientes_por_mes)
+        total_pendientes_cobrar_global = sum(pendientes_por_mes[mes]['total_pendientes_cobrar'] for mes in pendientes_por_mes)
+        
         try:
             os.remove(temp_path)
         except Exception as e:
@@ -288,7 +330,15 @@ def analytics():
         
         # Convertir tipos de numpy antes de serializar a JSON
         resumen_convertido = convert_numpy_types(resumen)
-        return jsonify({'resumen': resumen_convertido, 'success': True})
+        pendientes_por_mes_convertido = convert_numpy_types(pendientes_por_mes)
+        
+        return jsonify({
+            'resumen': resumen_convertido, 
+            'pendientes_por_mes': pendientes_por_mes_convertido,
+            'total_pendientes_relacionar': total_pendientes_relacionar_global,
+            'total_pendientes_cobrar': total_pendientes_cobrar_global,
+            'success': True
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -10,7 +10,7 @@ import ServiciosPendientesEfectivo from '../analytics/ServiciosPendientesEfectiv
 import ServiciosPendientesCobrar from '../analytics/ServiciosPendientesCobrar';
 import Analytics from '../analytics/Analytics';
 import DashboardPage from '../../pages/DashboardPage';
-import ProcessingConsole from '../common/ProcessingConsole';
+
 import { useTheme } from '../../context/ThemeContext';
 
 function ContentArea({ 
@@ -19,13 +19,10 @@ function ContentArea({
   fechaInicio,
   fechaFin,
   note,
-  logs,
   onFileChange,
   onFechaInicioChange,
   onFechaFinChange,
   onNoteChange,
-  addLog,
-  clearLogs,
   onProcessData,
   processing,
   animationState,
@@ -34,7 +31,6 @@ function ContentArea({
   showError,
   setShowSuccess,
   setShowError,
-
 }) {
   const { theme } = useTheme();
 
@@ -88,7 +84,6 @@ function ContentArea({
               showError={showError}
               setShowSuccess={setShowSuccess}
               setShowError={setShowError}
-              addLog={addLog}
             />
           </>
         );
@@ -139,7 +134,7 @@ function ContentArea({
           {/* Selector de archivo Excel */}
           <motion.div variants={STAGGER_ITEM_VARIANTS}>
             <Box sx={{ width: '100%', mb: 1 }}>
-              <ExcelUploader onFileChange={onFileChange} addLog={addLog} workMode={workMode} />
+              <ExcelUploader onFileChange={onFileChange} workMode={workMode} />
             </Box>
           </motion.div>
 
@@ -164,7 +159,6 @@ function ContentArea({
                   fechaFin={fechaFin}
                   onFechaInicioChange={onFechaInicioChange}
                   onFechaFinChange={onFechaFinChange}
-                  addLog={addLog}
                 />
               </Box>
               <Box
@@ -180,7 +174,7 @@ function ContentArea({
                   minHeight: 220,
                 }}
               >
-                <NotesCard value={note} onChange={onNoteChange} addLog={addLog} />
+                <NotesCard value={note} onChange={onNoteChange} />
               </Box>
             </Box>
           </motion.div>
@@ -192,14 +186,7 @@ function ContentArea({
         {renderRouteContent()}
       </motion.div>
 
-      {/* Solo mostrar consola de procesamiento si NO estamos en el Dashboard */}
-      {shouldShowFormComponents && (
-        <motion.div variants={STAGGER_ITEM_VARIANTS}>
-          <Box sx={{ width: '100%' }}>
-            <ProcessingConsole logs={logs} onClearLogs={clearLogs} />
-          </Box>
-        </motion.div>
-      )}
+
     </motion.div>
   );
 }

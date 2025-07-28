@@ -2,12 +2,12 @@ import React, { useRef, useState } from 'react';
 import { TextField, Button, Typography, Box, Avatar } from '@mui/material';
 import { APP_MESSAGES } from '../../config/appConfig';
 import excelIcon from '../../assets/document_microsoft_excel.png';
-import { createLogEntry } from '../../config/logMessages';
+
 import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
 import { ANIMATIONS } from '../../config/animations';
 
-function ExcelUploader({ onFileChange, addLog, workMode = 0 }) {
+function ExcelUploader({ onFileChange, workMode = 0 }) {
   const [fileName, setFileName] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
   const [dragCounter, setDragCounter] = useState(0);
@@ -29,21 +29,12 @@ function ExcelUploader({ onFileChange, addLog, workMode = 0 }) {
       const fileExtension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
       
       if (!validExtensions.includes(fileExtension)) {
-        addLog(createLogEntry('ERROR_FILE_INVALID', fileName));
         alert('Por favor selecciona un archivo Excel válido (.xlsx o .xls)');
         return;
       }
       
       setFileName(fileName);
       if (onFileChange) onFileChange(file);
-      
-      // Log de archivo cargado exitosamente
-      addLog(createLogEntry('FILE_UPLOADED', fileName));
-      
-      // Log de advertencia si el archivo es grande
-      if (file.size > 5 * 1024 * 1024) { // 5MB
-        addLog(createLogEntry('WARNING_LARGE_FILE'));
-      }
     }
   };
 

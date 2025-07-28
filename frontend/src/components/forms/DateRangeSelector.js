@@ -15,7 +15,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { APP_MESSAGES } from '../../config/appConfig';
 import calendarIcon from '../../assets/calendario.png';
-import { createLogEntry } from '../../config/logMessages';
+
 
 // CAMBIO: Imports añadidos para la nueva estructura
 import Grid from '@mui/material/Grid';
@@ -57,7 +57,7 @@ const getDarkFieldSx = (theme) => ({
   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.bordeFocus },
 });
 
-function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFechaFinChange, addLog, fullHeight }) {
+function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFechaFinChange, fullHeight }) {
   const { theme } = useTheme();
   const currentYear = dayjs().year();
   const [month, setMonth] = useState(dayjs().month());
@@ -79,10 +79,7 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
     const newMonth = e.target.value;
     setMonth(newMonth);
     
-    if (addLog) {
-      const monthName = months[newMonth];
-      addLog(createLogEntry('MONTH_SELECTED', monthName));
-    }
+
     
     // Actualizar las fechas después del log
     const newFrom = dayjs().year(year).month(newMonth).startOf('month');
@@ -99,9 +96,7 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
     const newYear = e.target.value;
     setYear(newYear);
     
-    if (addLog) {
-      addLog(createLogEntry('YEAR_SELECTED', newYear));
-    }
+
     
     // Actualizar las fechas después del log
     const newFrom = dayjs().year(newYear).month(month).startOf('month');
@@ -121,12 +116,7 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
       if (onFechaInicioChange) onFechaInicioChange(newDate);
       
       // Solo loguear si realmente cambió la fecha
-      if (addLog && !newDate.isSame(fromDate, 'day')) {
-        const day = newDate.date();
-        const monthName = months[newDate.month()];
-        const year = newDate.year();
-        addLog(createLogEntry('DATE_INICIO_UPDATED', `${day} de ${monthName} de ${year}`));
-      }
+      
     }
   };
 
@@ -137,12 +127,7 @@ function DateRangeSelector({ fechaInicio, fechaFin, onFechaInicioChange, onFecha
       if (onFechaFinChange) onFechaFinChange(newDate);
       
       // Solo loguear si realmente cambió la fecha
-      if (addLog && !newDate.isSame(toDate, 'day')) {
-        const day = newDate.date();
-        const monthName = months[newDate.month()];
-        const year = newDate.year();
-        addLog(createLogEntry('DATE_FIN_UPDATED', `${day} de ${monthName} de ${year}`));
-      }
+      
     }
   };
 

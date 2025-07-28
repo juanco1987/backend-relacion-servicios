@@ -1,5 +1,5 @@
 // Servicio para procesar datos Excel y generar análisis
-import { createLogEntry } from '../config/logMessages';
+
 
 export class AnalyticsService {
   constructor() {

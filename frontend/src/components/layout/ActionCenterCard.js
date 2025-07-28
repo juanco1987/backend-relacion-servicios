@@ -13,7 +13,7 @@ import actionIcon from '../../assets/flechas_circulo.png';
 import pdfIcon from '../../assets/icono_pdf.png';
 import processIcon from '../../assets/Engrenages.png'
 import { generarPDFServiciosEfectivo, generarPDFPendientes } from '../../services/pdfService';
-import { createLogEntry } from '../../config/logMessages';
+
 import IconButton from '@mui/material/IconButton';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useTheme } from '../../context/ThemeContext';
@@ -28,7 +28,7 @@ import SuccessAnimation from '../animations/SuccessAnimation';
 import ErrorAnimation from '../animations/ErrorAnimation';
 import ModeTransitionAnimation from '../animations/ModeTransitionAnimation';
 
-function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, fullHeight, workMode = 0, onProcessData }) {
+function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, fullHeight, workMode = 0, onProcessData }) {
   const { theme } = useTheme();
   
   const neumorphicBox = {
@@ -135,20 +135,17 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
   const generatePDF = async () => {
     try {
       if (!archivoExcel || !fechaInicio || !fechaFin) {
-        addLog(createLogEntry('ERROR_FILE_REQUIRED'));
         alert('Debes seleccionar un archivo y un rango de fechas.');
         return;
       }
 
       // Verificar que las fechas sean objetos dayjs válidos
       if (!fechaInicio || !fechaInicio.isValid || !fechaInicio.isValid()) {
-        addLog(createLogEntry('ERROR_INVALID_DATE', 'Fecha de inicio inválida'));
         alert('Error: Fecha de inicio inválida');
         return;
       }
 
       if (!fechaFin || !fechaFin.isValid || !fechaFin.isValid()) {
-        addLog(createLogEntry('ERROR_INVALID_DATE', 'Fecha de fin inválida'));
         alert('Error: Fecha de fin inválida');
         return;
       }
@@ -156,12 +153,8 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
       // Usar el nombre personalizado o generar uno por defecto
       const pdfName = reportName.trim() || generateDefaultName();
       let blob;
-      if (notas && notas.trim() !== '') {
-        addLog(createLogEntry('NOTAS_CARGADAS', notas));
-      }
              if (workMode === 0) {
          // Modo: Relación de Servicios
-         addLog(createLogEntry('PDF_GENERATION_STARTED'));
          blob = await generarPDFServiciosEfectivo({
            archivo: archivoExcel,
            fechaInicio: fechaInicio.format('YYYY-MM-DD'),
@@ -169,11 +162,8 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
            notas,
            nombrePDF: pdfName,
          });
-         addLog(createLogEntry('PDF_GENERATED_SUCCESS'));
-         addLog(createLogEntry('PDF_DOWNLOADED', pdfName));
        } else {
          // Modo: Pendientes de Pago
-         addLog(createLogEntry('PDF_PENDIENTES_GENERATION_STARTED'));
          blob = await generarPDFPendientes({
            archivo: archivoExcel,
            fechaInicio: fechaInicio.format('YYYY-MM-DD'),
@@ -181,8 +171,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
            notas,
            nombrePDF: pdfName,
          });
-         addLog(createLogEntry('PDF_PENDIENTES_GENERATED_SUCCESS'));
-         addLog(createLogEntry('PDF_PENDIENTES_DOWNLOADED', pdfName));
        }
       
       // Crear URL del blob para poder abrirlo después
@@ -209,7 +197,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
       
     } catch (error) {
       console.error('Error generando PDF:', error);
-      addLog(createLogEntry('PDF_GENERATION_ERROR', error.message));
       alert(`Error al generar el PDF: ${error.message}`);
     }
   };
@@ -220,7 +207,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
     }
     try {
       if (!archivoExcel || !fechaInicio || !fechaFin) {
-        addLog(createLogEntry('ERROR_FILE_REQUIRED'));
         setAnimationState('error');
         setTimeout(() => setAnimationState('idle'), 3000);
         alert('Debes seleccionar un archivo y un rango de fechas.');
@@ -239,7 +225,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
 
       // Verificar que las fechas sean objetos dayjs válidos
       if (!fechaInicio || !fechaInicio.isValid || !fechaInicio.isValid()) {
-        addLog(createLogEntry('ERROR_INVALID_DATE', 'Fecha de inicio inválida'));
         setAnimationState('error');
         setTimeout(() => setAnimationState('idle'), 3000);
         alert('Error: Fecha de inicio inválida');
@@ -249,7 +234,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
       }
 
       if (!fechaFin || !fechaFin.isValid || !fechaFin.isValid()) {
-        addLog(createLogEntry('ERROR_INVALID_DATE', 'Fecha de fin inválida'));
         setAnimationState('error');
         setTimeout(() => setAnimationState('idle'), 3000);
         alert('Error: Fecha de fin inválida');
@@ -266,7 +250,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
       
       if (workMode === 0) {
         // Modo: Relación de Servicios
-        addLog(createLogEntry('PROCESSING_STARTED'));
         try {
           const formData = new FormData();
           formData.append('file', archivoExcel);
@@ -294,7 +277,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           const result = await response.json();
           console.log('Respuesta del backend:', result);
           if (result.error) {
-                      addLog(createLogEntry('NO_DATA_IN_RANGE'));
           setCanGeneratePDF(false);
           setProcessing(false);
           setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
@@ -302,21 +284,18 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           return;
         }
         if (!result.data || result.data.length === 0) {
-          addLog(createLogEntry('NO_DATA_IN_RANGE'));
           setCanGeneratePDF(false);
           setProcessing(false);
           setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
           alert('No se encontraron datos en el rango de fechas seleccionado.');
           return;
         }
-        addLog(createLogEntry('DATA_FOUND', `${result.data.length} registros encontrados`));
         setCanGeneratePDF(true);
           // Mostrar animación de éxito
           setAnimationState('success');
           setTimeout(() => setAnimationState('idle'), 2000);
         } catch (error) {
           console.error('Error en handleProcess:', error, typeof error, error?.message);
-          addLog(createLogEntry('ERROR_VALIDATION', error.message || JSON.stringify(error)));
           setCanGeneratePDF(false);
           setProcessing(false);
           // Mostrar animación de error
@@ -324,10 +303,8 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           setTimeout(() => setAnimationState('idle'), 3000);
           return;
         }
-        addLog(createLogEntry('PROCESSING_COMPLETED'));
       } else {
         // Modo: Pendientes de Pago
-        addLog(createLogEntry('PENDIENTES_PROCESSING_STARTED'));
         try {
           const formData = new FormData();
           formData.append('file', archivoExcel);
@@ -355,7 +332,6 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           const result = await response.json();
           console.log('Respuesta del backend:', result);
           if (result.error) {
-            addLog(createLogEntry('PENDIENTES_NO_DATA'));
             setCanGeneratePDF(false);
             setProcessing(false);
             setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
@@ -363,21 +339,19 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
             return;
           }
           if (!result.data || result.data.length === 0) {
-            addLog(createLogEntry('PENDIENTES_NO_DATA'));
             setCanGeneratePDF(false);
             setProcessing(false);
             setAnimationState('idle'); // <-- Asegura que el overlay desaparezca
             alert('No se encontraron servicios pendientes en el rango de fechas seleccionado.');
             return;
           }
-          addLog(createLogEntry('PENDIENTES_DATA_FILTERED', `${result.data.length} pendientes encontrados`));
+
                   setCanGeneratePDF(true);
           // Mostrar animación de éxito
           setAnimationState('success');
           setTimeout(() => setAnimationState('idle'), 2000);
         } catch (error) {
           console.error('Error en handleProcess:', error, typeof error, error?.message);
-          addLog(createLogEntry('ERROR_VALIDATION', error.message || JSON.stringify(error)));
           setCanGeneratePDF(false);
           setProcessing(false);
           // Mostrar animación de error
@@ -385,10 +359,8 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, addLog, 
           setTimeout(() => setAnimationState('idle'), 3000);
           return;
         }
-        addLog(createLogEntry('PENDIENTES_PROCESSING_COMPLETED'));
       }
     } catch (error) {
-      addLog(createLogEntry('PROCESSING_ERROR', error.message));
       alert(error.message);
       setCanGeneratePDF(false);
     } finally {

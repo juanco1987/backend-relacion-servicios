@@ -101,7 +101,8 @@ function Sidebar({ onNavigation, currentRoute }) {
         position: 'fixed',
         top: 0,
         left: 0,
-        zIndex: 10,
+        zIndex: 1000,
+        pointerEvents: 'auto',
       }}
     >
       {/* Tarjeta de usuario */}
@@ -175,10 +176,23 @@ function Sidebar({ onNavigation, currentRoute }) {
                     '&:hover': {
                       background: theme.fondoMenuActivo,
                       color: theme.primario,
+                      transform: 'none',
                     },
                     justifyContent: { xs: 'center', md: 'flex-start' },
                     px: { xs: 0, md: 3 },
                     minHeight: 56,
+                    cursor: 'pointer',
+                    position: 'relative',
+                    zIndex: 10,
+                    transform: 'none',
+                    transition: 'background-color 0.2s ease',
+                    '& .MuiListItemIcon-root': {
+                      minWidth: 36,
+                      color: 'inherit',
+                    },
+                    '& .MuiListItemText-root': {
+                      margin: 0,
+                    },
                   }}
                 >
                   <ListItemIcon sx={{ color: 'inherit', minWidth: 36 }}>
@@ -221,12 +235,25 @@ function Sidebar({ onNavigation, currentRoute }) {
                               '&:hover': {
                                 background: theme.fondoMenuActivo,
                                 color: theme.primario,
+                                transform: 'none',
                               },
                               '&:active': {
                                 background: theme.fondoMenuActivo,
                               },
                               justifyContent: { xs: 'center', md: 'flex-start' },
                               minHeight: 48,
+                              cursor: 'pointer',
+                              position: 'relative',
+                              zIndex: 10,
+                              transform: 'none',
+                              transition: 'background-color 0.2s ease',
+                              '& .MuiListItemIcon-root': {
+                                minWidth: 32,
+                                color: 'inherit',
+                              },
+                              '& .MuiListItemText-root': {
+                                margin: 0,
+                              },
                             }}
                           >
                             <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>

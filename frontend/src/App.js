@@ -22,7 +22,6 @@ function App() {
   const [fechaInicio, setFechaInicio] = useState(dayjs().startOf('month'));
   const [fechaFin, setFechaFin] = useState(dayjs().endOf('month'));
   const [note, setNote] = useState('');
-  const [logs, setLogs] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [animationState, setAnimationState] = useState('idle');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -31,60 +30,23 @@ function App() {
   const [showModeTransition, setShowModeTransition] = useState(false);
   const [modeTransitionData, setModeTransitionData] = useState({ from: '', to: '' });
 
-
-  // Inicializar logs de bienvenida
-  useEffect(() => {
-    const welcomeLogs = [
-      { message: '¡Bienvenido al Sistema de Reportes!', type: 'success', timestamp: new Date().toLocaleTimeString() },
-      { message: 'Carga un archivo Excel para comenzar', type: 'info', timestamp: new Date().toLocaleTimeString() },
-      { message: 'Selecciona el rango de fechas deseado', type: 'info', timestamp: new Date().toLocaleTimeString() },
-      { message: 'Usa el menú lateral para navegar entre funciones', type: 'info', timestamp: new Date().toLocaleTimeString() },
-      { message: 'Sistema listo para procesar datos', type: 'success', timestamp: new Date().toLocaleTimeString() },
-    ];
-    setLogs(welcomeLogs);
-  }, []);
-
   // Handlers existentes
   const handleFileChange = (data) => {
     setExcelData(data);
-    addLog('Archivo Excel cargado correctamente', 'success');
   };
 
   const handleFechaInicioChange = (date) => {
     console.log('handleFechaInicioChange recibió:', date, 'tipo:', typeof date, 'es dayjs:', date && date.isValid);
     setFechaInicio(date);
-    if (date && date.isValid && date.isValid()) {
-      addLog(`Fecha de inicio establecida: ${date.format('DD/MM/YYYY')}`, 'info');
-    } else {
-      addLog('Error: Fecha de inicio inválida recibida', 'error');
-    }
   };
 
   const handleFechaFinChange = (date) => {
     console.log('handleFechaFinChange recibió:', date, 'tipo:', typeof date, 'es dayjs:', date && date.isValid);
     setFechaFin(date);
-    if (date && date.isValid && date.isValid()) {
-      addLog(`Fecha de fin establecida: ${date.format('DD/MM/YYYY')}`, 'info');
-    } else {
-      addLog('Error: Fecha de fin inválida recibida', 'error');
-    }
   };
 
   const handleNoteChange = (newNote) => {
     setNote(newNote);
-    if (newNote.trim()) {
-      addLog('Nota agregada al reporte', 'info');
-    }
-  };
-
-  const addLog = (message, type = 'info') => {
-    const timestamp = new Date().toLocaleTimeString();
-    const newLog = { message, type, timestamp };
-    setLogs(prev => [...prev, newLog]);
-  };
-
-  const clearLogs = () => {
-    setLogs([]);
   };
 
   const handleProcessData = async (data) => {
@@ -96,10 +58,8 @@ function App() {
       // Simular procesamiento
       await new Promise(resolve => setTimeout(resolve, 2000));
       setShowSuccess(true);
-      addLog('Datos procesados exitosamente', 'success');
     } catch (error) {
       setShowError(true);
-      addLog('Error al procesar datos', 'error');
     } finally {
       setProcessing(false);
       setAnimationState('idle');
@@ -113,7 +73,6 @@ function App() {
   const handleClearNote = () => {
     setNote('');
     setShowNoteDialog(false);
-    addLog('Nota limpiada', 'info');
   };
 
 
@@ -121,7 +80,6 @@ function App() {
   // Handler para navegación
   const handleNavigation = (route) => {
     setCurrentRoute(route);
-    addLog(`Navegando a: ${route}`, 'info');
   };
 
   return (
@@ -169,13 +127,10 @@ function App() {
               fechaInicio={fechaInicio}
               fechaFin={fechaFin}
               note={note}
-              logs={logs}
               onFileChange={handleFileChange}
               onFechaInicioChange={handleFechaInicioChange}
               onFechaFinChange={handleFechaFinChange}
               onNoteChange={handleNoteChange}
-              addLog={addLog}
-              clearLogs={clearLogs}
               onProcessData={handleProcessData}
               processing={processing}
               animationState={animationState}
@@ -184,7 +139,6 @@ function App() {
               showError={showError}
               setShowSuccess={setShowSuccess}
               setShowError={setShowError}
-
             />
           </motion.div>
 

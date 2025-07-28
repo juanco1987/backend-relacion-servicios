@@ -38,6 +38,11 @@ function Analytics({ excelData, workMode }) {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [mesSeleccionado, setMesSeleccionado] = useState('Total Global');
   const [loading, setLoading] = useState(false);
+  const [pendientesData, setPendientesData] = useState({ 
+    total_pendientes_relacionar: 0, 
+    total_pendientes_cobrar: 0,
+    pendientes_por_mes: {}
+  });
 
   useEffect(() => {
     if (!excelData) return;
@@ -68,6 +73,11 @@ function Analytics({ excelData, workMode }) {
         });
         
         setAnalyticsData(cleanAnalyticsData);
+        setPendientesData({
+          total_pendientes_relacionar: data.total_pendientes_relacionar || 0,
+          total_pendientes_cobrar: data.total_pendientes_cobrar || 0,
+          pendientes_por_mes: data.pendientes_por_mes || {}
+        });
       } catch (error) {
         console.error('Error fetching analytics:', error);
       } finally {
@@ -146,6 +156,47 @@ function Analytics({ excelData, workMode }) {
     ? totalGlobal 
     : analyticsData[mesSeleccionado] || {};
 
+  // Obtener datos de pendientes según el mes seleccionado
+  const pendientesSeleccionados = mesSeleccionado === 'Total Global'
+    ? {
+        total_pendientes_relacionar: pendientesData.total_pendientes_relacionar,
+        total_pendientes_cobrar: pendientesData.total_pendientes_cobrar
+      }
+    : pendientesData.pendientes_por_mes[mesSeleccionado] || { total_pendientes_relacionar: 0, total_pendientes_cobrar: 0 };
+
+  // Funciones para mostrar mensajes reconfortantes
+  const getPendientesRelacionarDisplay = () => {
+    const cantidad = pendientesSeleccionados.total_pendientes_relacionar || 0;
+    if (cantidad === 0) {
+      return {
+        value: "¡Excelente!",
+        subtitle: "Estás al día en la relación de servicios",
+        color: theme.terminalVerde
+      };
+    }
+    return {
+      value: cantidad.toString(),
+      subtitle: "servicios por relacionar",
+      color: theme.terminalRojo
+    };
+  };
+
+  const getPendientesCobrarDisplay = () => {
+    const cantidad = pendientesSeleccionados.total_pendientes_cobrar || 0;
+    if (cantidad === 0) {
+      return {
+        value: "¡Excelente!",
+        subtitle: "Estás al día en el cobro de pendientes",
+        color: theme.terminalVerde
+      };
+    }
+    return {
+      value: cantidad.toString(),
+      subtitle: "servicios por cobrar",
+      color: theme.terminalAmarillo
+    };
+  };
+
   // Preparar KPIs
   const kpi = {
     efectivo_total: Number(datosSeleccionados?.efectivo_total || 0),
@@ -212,6 +263,41 @@ function Analytics({ excelData, workMode }) {
               '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                 borderColor: theme.bordeFocus,
               },
+              '& .MuiSelect-select': {
+                padding: '12px 14px',
+                cursor: 'pointer',
+                transform: 'none',
+              },
+              '& .MuiMenuItem-root': {
+                padding: '10px 16px',
+                cursor: 'pointer',
+                transform: 'none',
+                '&:hover': {
+                  backgroundColor: theme.fondoContenedor,
+                  transform: 'none',
+                },
+              },
+              '& .MuiPaper-root': {
+                zIndex: 9999,
+                transform: 'none',
+              },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  zIndex: 9999,
+                  transform: 'none',
+                  '& .MuiMenuItem-root': {
+                    padding: '10px 16px',
+                    cursor: 'pointer',
+                    transform: 'none',
+                    '&:hover': {
+                      backgroundColor: theme.fondoContenedor,
+                      transform: 'none',
+                    },
+                  },
+                },
+              },
             }}
           >
             <MenuItem value="Total Global">Total Global</MenuItem>
@@ -246,6 +332,18 @@ function Analytics({ excelData, workMode }) {
           value={`$${kpi.total_general.toLocaleString('es-CO')}`}
           subtitle={`${kpi.efectivo_cantidad + kpi.transferencia_cantidad} servicios totales`}
           color={theme.primario}
+        />
+        <KpiCard
+          title="Pendientes Relacionar"
+          value={getPendientesRelacionarDisplay().value}
+          subtitle={getPendientesRelacionarDisplay().subtitle}
+          color={getPendientesRelacionarDisplay().color}
+        />
+        <KpiCard
+          title="Pendientes Cobrar"
+          value={getPendientesCobrarDisplay().value}
+          subtitle={getPendientesCobrarDisplay().subtitle}
+          color={getPendientesCobrarDisplay().color}
         />
       </Box>
 
@@ -289,7 +387,7 @@ function Analytics({ excelData, workMode }) {
         }}>
           Resumen Detallado
         </Typography>
-        <AnalyticsResumen resumen={analyticsData} />
+        <AnalyticsResumen resumen={analyticsData} pendientes={pendientesData} />
       </Box>
     </Box>
   );

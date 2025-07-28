@@ -69,10 +69,7 @@ export const APP_MESSAGES = {
   WELCOME_MESSAGE_4: "📡 Conexión establecida",
   WELCOME_MESSAGE_5: "🔧 Todos los sistemas operativos",
   WELCOME_MESSAGE_6: "📋 Esperando instrucciones...",
-  LOG_ICON_INFO: "ℹ️",
-  LOG_ICON_SUCCESS: "✅",
-  LOG_ICON_ERROR: "❌",
-  LOG_ICON_WARNING: "⚠️",
+
   EXIT_CONFIRM_TITLE: "Salir",
   EXIT_CONFIRM_MESSAGE: "¿Deseas salir de la aplicación?",
   LOADING_APP: "Cargando aplicación...",
@@ -85,7 +82,7 @@ export const APP_MESSAGES = {
   CONNECTION_ESTABLISHED: "📡 Conexión establecida",
   SYSTEMS_OPERATIONAL: "🔧 Todos los sistemas operativos",
   WAITING_INSTRUCTIONS: "📋 Esperando instrucciones...",
-  LOG_CLEARED: "🧹 Log limpiado",
+
   THEME_UPDATED: "🎨 Tema actualizado",
   THEME_CHANGED: "🎨 Tema cambiado a:",
   WARNING_ICON_NOT_FOUND: "Advertencia: No se pudo cargar el icono de {0}: {1}",
@@ -113,9 +110,9 @@ export const APP_MESSAGES = {
   THEME_UPDATED_LOG: "🎨 Tema actualizado",
   THEME_CHANGED_TO_LOG: "🎨 Tema cambiado a: {0}",
   TERMINAL_CREATE_ERROR: "Error al crear terminal: {0}",
-  CLEAR_LOG_MESSAGE: "🧹 Log limpiado",
+
   ERROR_MESSAGE_PREFIX: "❌ ",
-  LOG_FALLBACK_TIMESTAMP_FORMAT: "YYYY-MM-DD HH:mm:ss",
+
   ACTION_CARD_TITLE: "Centro de Acciones",
   PDF_NAME_LABEL: "Nombre del informe:",
   PDF_NAME_PLACEHOLDER: "Escribe el nombre del archivo PDF...",

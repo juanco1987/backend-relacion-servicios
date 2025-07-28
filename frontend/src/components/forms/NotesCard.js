@@ -11,7 +11,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
 import { ANIMATIONS } from '../../config/animations';
 
-function NotesCard({ value, onChange, addLog, fullHeight }) {
+function NotesCard({ value, onChange, fullHeight }) {
   const { theme } = useTheme();
   
   const handleNoteChange = (e) => {

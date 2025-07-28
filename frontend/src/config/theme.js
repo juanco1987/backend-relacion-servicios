@@ -12,7 +12,7 @@ const TEMA_OSCURO = {
   // Texto
   textoPrincipal: "#ffffff",
   textoSecundario: "#cfd8dc",
-  textoLog: "#4afcb3",
+  
   textoEnLinea: "#27c93f",
   textoAdvertencia: "#ffb300",
   textoInfo: "#64b5f6",
@@ -72,7 +72,7 @@ const TEMA_CLARO = {
   // Texto
   textoPrincipal: "#162447",
   textoSecundario: "#1f4068",
-  textoLog: "#00bcd4",
+  
   textoEnLinea: "#43b97f",
   textoAdvertencia: "#ffb300",
   textoInfo: "#1976d2",

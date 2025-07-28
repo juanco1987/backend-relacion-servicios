@@ -19,11 +19,14 @@ function DashboardLayout({ children, onNavigation, currentRoute }) {
           top: 0,
           left: 0,
           bottom: 0,
-          bgcolor: theme.fondoMenu,
-          zIndex: 1000,
+          bgcolor: 'transparent',
+          zIndex: 1,
+          pointerEvents: 'none',
         }}
       >
-        <Sidebar onNavigation={onNavigation} currentRoute={currentRoute} />
+        <Box sx={{ pointerEvents: 'auto' }}>
+          <Sidebar onNavigation={onNavigation} currentRoute={currentRoute} />
+        </Box>
       </Box>
 
       {/* Área de contenido a la derecha del sidebar */}
