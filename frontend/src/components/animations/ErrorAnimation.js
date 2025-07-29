@@ -107,7 +107,7 @@ function ErrorAnimation({ message = "Error" }) {
               width: 60 + index * 20,
               height: 60 + index * 20,
               borderRadius: '50%',
-              border: `2px solid ${theme.error || '#ff4444'}`,
+              border: `2px solid ${theme.error || theme.acentoError}`,
               left: '50%',
               top: '50%',
               transform: 'translate(-50%, -50%)',

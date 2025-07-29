@@ -26,6 +26,78 @@ def convert_numpy_types(obj):
     else:
         return obj
 
+@bp_excel.route('/process', methods=['POST'])
+def process_data():
+    """Endpoint para procesar y validar datos antes de generar PDF"""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No se envió archivo'}), 400
+    
+    file = request.files['file']
+    filename = file.filename or 'archivo.xlsx'
+    if filename == '':
+        return jsonify({'success': False, 'error': 'Nombre de archivo vacío'}), 400
+    
+    try:
+        # Obtener fechas del form-data
+        fecha_inicio_str = request.form.get('fecha_inicio')
+        fecha_fin_str = request.form.get('fecha_fin')
+        notas = request.form.get('notas', '')
+        
+        if not fecha_inicio_str or not fecha_fin_str:
+            return jsonify({'success': False, 'error': 'Fechas de inicio y fin son requeridas'}), 400
+        
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
+            fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
+        except Exception:
+            return jsonify({'success': False, 'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
+        
+        # Validar que la fecha de inicio no sea mayor que la fecha de fin
+        if fecha_inicio > fecha_fin:
+            return jsonify({'success': False, 'error': 'La fecha de inicio no puede ser mayor que la fecha de fin'}), 400
+        
+        # Guardar archivo temporalmente para validación
+        temp_path = os.path.join('temp', filename)
+        os.makedirs('temp', exist_ok=True)
+        file.save(temp_path)
+        
+        # Intentar leer el archivo para validar que sea un Excel válido
+        try:
+            df = pd.read_excel(temp_path)
+            if df.empty:
+                return jsonify({'success': False, 'error': 'El archivo Excel está vacío'}), 400
+            
+            # Contar filas para validación básica
+            row_count = len(df)
+            if row_count < 1:
+                return jsonify({'success': False, 'error': 'El archivo debe contener al menos una fila de datos'}), 400
+                
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Error al leer el archivo Excel: {str(e)}'}), 400
+        finally:
+            # Limpiar archivo temporal
+            try:
+                os.remove(temp_path)
+            except Exception as e:
+                print(f"No se pudo borrar el archivo temporal: {e}")
+        
+        # Si llegamos aquí, la validación fue exitosa
+        return jsonify({
+            'success': True,
+            'data': {
+                'filename': filename,
+                'row_count': row_count,
+                'fecha_inicio': fecha_inicio_str,
+                'fecha_fin': fecha_fin_str,
+                'notas': notas,
+                'processed_at': datetime.now().isoformat()
+            },
+            'message': f'Datos validados exitosamente. Archivo: {filename}, Filas: {row_count}'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Error interno del servidor: {str(e)}'}), 500
+
 @bp_excel.route('/procesar_excel', methods=['POST'])
 def procesar_excel():
     if 'file' not in request.files:

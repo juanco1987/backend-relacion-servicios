@@ -424,12 +424,12 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, fullHeig
                width: 32, 
                height: 32, 
                borderRadius: '50%', 
-               background: theme.modo === 'claro' ? '#e3f2fd' : '#1976d2',
+               background: theme.gradientes.botonInactivo,
                display: 'flex', 
                alignItems: 'center', 
                justifyContent: 'center',
                mr: 2,
-               color: theme.modo === 'claro' ? '#1565c0' : '#ffffff',
+               color: theme.textoContraste,
                fontWeight: 'bold',
                fontSize: '1.2rem'
              }}>
@@ -547,12 +547,12 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, fullHeig
                width: 32, 
                height: 32, 
                borderRadius: '50%', 
-               background: theme.modo === 'claro' ? '#fff3e0' : '#f57c00',
+               background: theme.gradientes.botonInactivo,
                display: 'flex', 
                alignItems: 'center', 
                justifyContent: 'center',
                mr: 2,
-               color: theme.modo === 'claro' ? '#e65100' : '#ffffff',
+               color: theme.textoContraste,
                fontWeight: 'bold',
                fontSize: '1.2rem'
              }}>
@@ -606,12 +606,12 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, fullHeig
                width: 32, 
                height: 32, 
                borderRadius: '50%', 
-               background: theme.modo === 'claro' ? '#e8f5e8' : '#388e3c',
+               background: theme.gradientes.botonInactivo,
                display: 'flex', 
                alignItems: 'center', 
                justifyContent: 'center',
                mr: 2,
-               color: theme.modo === 'claro' ? '#2e7d32' : '#ffffff',
+               color: theme.textoContraste,
                fontWeight: 'bold',
                fontSize: '1.2rem'
              }}>
@@ -637,14 +637,10 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, fullHeig
                  onClick={handleGeneratePDF}
                  startIcon={<Box component="img" src={pdfIcon} alt="PDF" sx={{ width: 28, height: 28, bgcolor: 'transparent' }} />}
                  sx={{
-                   background: theme.modo === 'claro' 
-                     ? 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' 
-                     : 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                   background: theme.gradientes.botonGenerar,
                    borderRadius: '14px',
-                   boxShadow: theme.modo === 'claro' 
-                     ? '0 4px 12px rgba(25,118,210,0.3)' 
-                     : '0 4px 12px rgba(25,118,210,0.5)',
-                   color: theme.modo === 'claro' ? '#1565c0' : '#ffffff',
+                   boxShadow: theme.sombraComponente,
+                   color: theme.textoContraste,
                    fontWeight: 'bold',
                    fontSize: 18,
                    px: 6,
@@ -652,12 +648,8 @@ function ActionCenterCard({ archivoExcel, fechaInicio, fechaFin, notas, fullHeig
                    height: 52,
                    transition: 'all 0.3s ease',
                    '&:hover': {
-                     background: theme.modo === 'claro' 
-                       ? 'linear-gradient(135deg, #bbdefb 0%, #90caf9 100%)' 
-                       : 'linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)',
-                     boxShadow: theme.modo === 'claro' 
-                       ? '0 6px 16px rgba(25,118,210,0.4)' 
-                       : '0 6px 16px rgba(25,118,210,0.6)',
+                     background: theme.gradientes.botonGenerarHover,
+                     boxShadow: theme.sombraComponenteHover,
                      transform: 'translateY(-2px)',
                    },
                    '&:disabled': {

@@ -159,10 +159,10 @@ export class AnalyticsService {
   // Calcular servicios por estado
   calculateServicesByStatus(data, workMode) {
     const statusCount = {
-      'Completados': { cantidad: 0, color: '#4caf50' },
-      'Pendientes': { cantidad: 0, color: '#ff9800' },
-      'Cotizados': { cantidad: 0, color: '#2196f3' },
-      'Cancelados': { cantidad: 0, color: '#f44336' }
+      'Completados': { cantidad: 0, color: 'success' },
+      'Pendientes': { cantidad: 0, color: 'warning' },
+      'Cotizados': { cantidad: 0, color: 'info' },
+      'Cancelados': { cantidad: 0, color: 'error' }
     };
 
     data.forEach(item => {

@@ -5,34 +5,6 @@ import { useTheme } from '../../context/ThemeContext';
 import AnalyticsResumen from './AnalyticsResumen';
 import KpiCard from '../KpiCard';
 
-// Componente Tooltip personalizado
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <Box sx={{
-        background: 'rgba(0, 0, 0, 0.8)',
-        border: '1px solid #ccc',
-        borderRadius: '8px',
-        padding: '10px',
-        color: 'white'
-      }}>
-        <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-          {label}
-        </Typography>
-        {payload.map((entry, index) => {
-          if (entry.name === 'precio') return null; // Excluir 'precio'
-          return (
-            <Typography key={index} variant="body2" sx={{ color: entry.color }}>
-              {entry.name}: ${entry.value.toLocaleString('es-CO', { minimumFractionDigits: 0 })}
-            </Typography>
-          );
-        })}
-      </Box>
-    );
-  }
-  return null;
-};
-
 function Analytics({ excelData, workMode }) {
   const { theme } = useTheme();
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -43,6 +15,34 @@ function Analytics({ excelData, workMode }) {
     total_pendientes_cobrar: 0,
     pendientes_por_mes: {}
   });
+
+  // Componente Tooltip personalizado
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <Box sx={{
+          background: 'rgba(0, 0, 0, 0.8)',
+          border: `1px solid ${theme.bordePrincipal}`,
+          borderRadius: '8px',
+          padding: '10px',
+          color: 'white'
+        }}>
+          <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+            {label}
+          </Typography>
+          {payload.map((entry, index) => {
+            if (entry.name === 'precio') return null; // Excluir 'precio'
+            return (
+              <Typography key={index} variant="body2" sx={{ color: entry.color }}>
+                {entry.name}: ${entry.value.toLocaleString('es-CO', { minimumFractionDigits: 0 })}
+              </Typography>
+            );
+          })}
+        </Box>
+      );
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (!excelData) return;

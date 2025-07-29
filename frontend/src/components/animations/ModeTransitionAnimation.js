@@ -206,7 +206,7 @@ function ModeTransitionAnimation({ fromMode, toMode }) {
           <Typography
             variant="h4"
             sx={{
-              color: theme.modo === 'claro' ? '#1a1a1a' : theme.textoPrincipal,
+              color: theme.textoPrincipal,
               fontWeight: 800,
               textAlign: 'center',
               mb: 2,
@@ -226,7 +226,7 @@ function ModeTransitionAnimation({ fromMode, toMode }) {
           <Typography
             variant="h6"
             sx={{
-              color: theme.modo === 'claro' ? '#333333' : theme.textoSecundario,
+              color: theme.textoSecundario,
               textAlign: 'center',
               textShadow: theme.modo === 'claro' 
                 ? '0 0 10px rgba(255,255,255,0.7)' 

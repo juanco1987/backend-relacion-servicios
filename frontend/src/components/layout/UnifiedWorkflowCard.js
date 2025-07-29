@@ -58,6 +58,7 @@ const UnifiedWorkflowCard = ({
   const [activeStep, setActiveStep] = useState(0);
   const [reportName, setReportName] = useState('');
   const [processCompleted, setProcessCompleted] = useState(false);
+  const [dataProcessed, setDataProcessed] = useState(false);
   const [showNewProcessDialog, setShowNewProcessDialog] = useState(false);
   const [shouldClearFile, setShouldClearFile] = useState(false);
   const prevActiveStepRef = useRef(0);
@@ -117,6 +118,7 @@ const UnifiedWorkflowCard = ({
     setActiveStep(0);
     setReportName(generateDefaultName());
     setProcessCompleted(false);
+    setDataProcessed(false);
     setMonth(dayjs().month());
     setYear(currentYear);
     setFromDate(null);
@@ -144,6 +146,31 @@ const UnifiedWorkflowCard = ({
   const cancelNewProcess = () => {
     setShowNewProcessDialog(false);
   };
+
+  // Función personalizada para manejar el procesamiento
+  const handleProcessDataClick = async () => {
+    if (onProcessData) {
+      const result = await onProcessData();
+      
+      // Solo establecer dataProcessed como true si el procesamiento fue exitoso
+      if (result && result.success) {
+        console.log('Procesamiento exitoso, habilitando campo de nombre del PDF');
+        setDataProcessed(true);
+      } else {
+        console.log('Procesamiento falló, manteniendo estado actual del botón de avance');
+        // NO cambiar dataProcessed, mantener el estado actual
+        // Esto mantiene el botón de avance del stepper en su estado original
+      }
+    }
+  };
+
+  // Resetear dataProcessed cuando cambien los archivos o fechas
+  useEffect(() => {
+    if (dataProcessed) {
+      console.log('Archivo o fechas cambiaron, reseteando estado de datos procesados');
+      setDataProcessed(false);
+    }
+  }, [archivoExcel, fechaInicio, fechaFin]);
 
   // Debug logs para verificar props
   useEffect(() => {
@@ -178,6 +205,7 @@ const UnifiedWorkflowCard = ({
       }
       setReportName(generateDefaultName()); // Resetear nombre del reporte al predeterminado
       setProcessCompleted(false); // Asegurar que el estado de completado del proceso se
+      setDataProcessed(false); // Resetear el estado de datos procesados
     }
     prevActiveStepRef.current = activeStep;
   }, [archivoExcel, activeStep, onFileChange, onNoteChange, generateDefaultName]);
@@ -278,7 +306,7 @@ const UnifiedWorkflowCard = ({
       case 1: // Configurar parámetros
         return userHasConfiguredDates ? 'completed' : 'pending';
       case 2: // Generar reporte
-        return processing ? 'active' : 'pending';
+        return dataProcessed ? 'completed' : (processing ? 'active' : 'pending');
       default:
         return 'pending';
     }
@@ -302,13 +330,12 @@ const UnifiedWorkflowCard = ({
                 placeholder="Selecciona un archivo Excel..."
                 variant="outlined"
                 size="small"
-                // Debug: mostrar el valor actual
-                helperText={`Debug: ${archivoExcel?.name || 'Sin archivo'}`}
                 InputProps={{
                   readOnly: true,
                 }}
                 sx={{
                   width: '70%',
+                  height: '40px',
                   '& .MuiOutlinedInput-root': {
                     background: theme.fondoOverlay,
                     borderRadius: '16px',
@@ -413,7 +440,7 @@ const UnifiedWorkflowCard = ({
                  Período de tiempo
                </Typography>
                <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, mb: 2 }}>
-                 <FormControl fullWidth size="small">
+                 <FormControl size="small" sx={{ flex: 1 }}>
                    <InputLabel>Mes</InputLabel>
                    <Select
                      value={month}
@@ -452,7 +479,7 @@ const UnifiedWorkflowCard = ({
                      ))}
                    </Select>
                  </FormControl>
-                 <FormControl fullWidth size="small">
+                 <FormControl size="small" sx={{ flex: 1 }}>
                    <InputLabel>Año</InputLabel>
                    <Select
                      value={year}
@@ -501,8 +528,9 @@ const UnifiedWorkflowCard = ({
                      slotProps={{
                        textField: {
                          size: 'small',
-                         fullWidth: true,
                          sx: {
+                          flex: 1, 
+                          width: '150px',
                            '& .MuiOutlinedInput-root': {
                              background: theme.fondoOverlay,
                              borderRadius: '16px',
@@ -551,9 +579,10 @@ const UnifiedWorkflowCard = ({
                      slotProps={{
                        textField: {
                          size: 'small',
-                         fullWidth: true,
                          sx: {
-                           '& .MuiOutlinedInput-root': {
+                          flex: 1, 
+                          width: '120px',
+                          '& .MuiOutlinedInput-root': {
                              background: theme.fondoOverlay,
                              borderRadius: '16px',
                              transition: 'all 0.3s ease',
@@ -601,7 +630,7 @@ const UnifiedWorkflowCard = ({
               <Typography variant="subtitle2" sx={{ mb: 1, color: theme.textoSecundario }}>
                 Notas del reporte
               </Typography>
-                             <TextField
+                <TextField
                  label="Escribe tus notas aquí..."
                  value={notas || ''}
                  onChange={(e) => {
@@ -612,7 +641,7 @@ const UnifiedWorkflowCard = ({
                 variant="outlined"
                 size="small"
                 multiline
-                rows={3}
+                rows={3.5}
                 fullWidth
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -670,6 +699,16 @@ const UnifiedWorkflowCard = ({
               <Typography variant="subtitle2" sx={{ mb: 1, color: theme.textoSecundario }}>
                 Nombre del PDF
               </Typography>
+              {!dataProcessed && (
+                <Typography variant="caption" sx={{ 
+                  color: theme.textoDeshabilitado, 
+                  mb: 1, 
+                  display: 'block',
+                  fontStyle: 'italic'
+                }}>
+                  * Debes procesar los datos primero para habilitar este campo
+                </Typography>
+              )}
               <TextField
                 fullWidth
                 label="Nombre del PDF"
@@ -677,43 +716,53 @@ const UnifiedWorkflowCard = ({
                 onChange={(e) => setReportName(e.target.value)}
                 variant="outlined"
                 size="small"
+                disabled={!dataProcessed}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    background: theme.fondoOverlay,
+                    background: dataProcessed ? theme.fondoOverlay : theme.fondoDeshabilitado,
                     borderRadius: '16px',
                     transition: 'all 0.3s ease',
                     '&:hover': {
                       '& > fieldset': { 
-                        borderColor: theme.bordeHover,
+                        borderColor: dataProcessed ? theme.bordeHover : theme.bordeDeshabilitado,
                         borderWidth: '2px',
                       },
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 12px rgba(0,0,0,0.1)',
+                      transform: dataProcessed ? 'translateY(-2px)' : 'none',
+                      boxShadow: dataProcessed ? '0 6px 12px rgba(0,0,0,0.1)' : 'none',
                     },
                     '&.Mui-focused': {
                       '& > fieldset': { 
-                        borderColor: theme.bordeHover,
+                        borderColor: dataProcessed ? theme.bordeHover : theme.bordeDeshabilitado,
                         borderWidth: '2px',
                       },
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+                      transform: dataProcessed ? 'translateY(-2px)' : 'none',
+                      boxShadow: dataProcessed ? '0 8px 16px rgba(0,0,0,0.15)' : 'none',
                     },
                     '& > fieldset': {
-                      borderColor: theme.bordePrincipal,
+                      borderColor: dataProcessed ? theme.bordePrincipal : theme.bordeDeshabilitado,
                       borderWidth: '1.5px',
+                    },
+                    '&.Mui-disabled': {
+                      background: theme.fondoDeshabilitado,
+                      '& > fieldset': {
+                        borderColor: theme.bordeDeshabilitado,
+                      },
                     },
                   },
                   '& .MuiInputLabel-root': {
-                    color: theme.textoSecundario,
+                    color: dataProcessed ? theme.textoSecundario : theme.textoDeshabilitado,
                     fontWeight: 500,
                     '&.Mui-focused': {
-                      color: theme.textoPrincipal,
+                      color: dataProcessed ? theme.textoPrincipal : theme.textoDeshabilitado,
                       fontWeight: 600,
                     },
                   },
                   '& .MuiInputBase-input': {
-                    color: theme.textoPrincipal,
+                    color: dataProcessed ? theme.textoPrincipal : theme.textoDeshabilitado,
                     fontWeight: 500,
+                    '&.Mui-disabled': {
+                      color: theme.textoDeshabilitado,
+                    },
                   },
                 }}
               />
@@ -726,30 +775,31 @@ const UnifiedWorkflowCard = ({
                                                     <Button
                      variant="contained"
                      disabled={!archivoExcel || !userHasConfiguredDates || processing}
-                     onClick={onProcessData}
+                     onClick={handleProcessDataClick}
                    startIcon={<img src={processIcon} alt="Procesar" style={{ width: 16, height: 16 }} />}
                    sx={{
-                     background: theme.modo === 'claro' ? '#ff9800' : '#f57c00',
-                     color: 'white',
-                     borderRadius: '16px',
-                     px: 3,
+                     background: theme.gradientes.botonProcesar,
+                     color: theme.textoContraste,
+                     borderRadius: '20px',
+                     height: '40px',
+                     px: 4,
                      py: 1.5,
-                     fontSize: '0.9rem',
+                     fontSize: '0.7rem',
                      fontWeight: 600,
                      textTransform: 'none',
                      transition: 'all 0.3s ease',
-                     boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                     boxShadow: theme.sombraComponente,
                      '&:hover': {
-                       background: theme.modo === 'claro' ? '#f57c00' : '#e65100',
+                       background: theme.gradientes.botonProcesarHover,
                        transform: 'translateY(-2px)',
-                       boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+                       boxShadow: theme.sombraComponenteHover,
                      },
                      '&:active': {
                        transform: 'translateY(0)',
                      },
                      '&:disabled': {
-                       background: theme.textoSecundario,
-                       color: theme.textoPrincipal,
+                       background: theme.fondoOverlay,
+                       color: theme.textoDeshabilitado,
                        transform: 'none',
                        boxShadow: 'none',
                      },
@@ -760,7 +810,7 @@ const UnifiedWorkflowCard = ({
                  </Button>
                                     <Button
                      variant="contained"
-                     disabled={!archivoExcel || !userHasConfiguredDates || processing}
+                     disabled={!archivoExcel || !userHasConfiguredDates || processing || !dataProcessed || !reportName.trim()}
                      onClick={() => {
                        if (onGeneratePDF) {
                          onGeneratePDF(reportName, workMode);
@@ -769,27 +819,28 @@ const UnifiedWorkflowCard = ({
                      }}
                      startIcon={<img src={pdfIcon} alt="PDF" style={{ width: 16, height: 16 }} />}
                    sx={{
-                     background: theme.modo === 'claro' ? '#4caf50' : '#388e3c',
-                     color: 'white',
-                     borderRadius: '16px',
+                     background: theme.gradientes.botonGenerar,
+                     color: theme.textoContraste,
+                     borderRadius: '20px',
+                     height: '40px',
                      px: 3,
                      py: 1.5,
-                     fontSize: '0.9rem',
+                     fontSize: '0.7rem',
                      fontWeight: 600,
                      textTransform: 'none',
                      transition: 'all 0.3s ease',
-                     boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                     boxShadow: theme.sombraComponente,
                      '&:hover': {
-                       background: theme.modo === 'claro' ? '#388e3c' : '#2e7d32',
+                       background: theme.gradientes.botonGenerarHover,
                        transform: 'translateY(-2px)',
-                       boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+                       boxShadow: theme.sombraComponenteHover,
                      },
                      '&:active': {
                        transform: 'translateY(0)',
                      },
                      '&:disabled': {
-                       background: theme.textoSecundario,
-                       color: theme.textoPrincipal,
+                       background: theme.fondoOverlay,
+                       color: theme.textoDeshabilitado,
                        transform: 'none',
                        boxShadow: 'none',
                      },
@@ -886,10 +937,10 @@ const UnifiedWorkflowCard = ({
               '& .MuiStepIcon-root': {
                 color: theme.textoSecundario,
                 '&.Mui-active': {
-                  color: theme.modo === 'claro' ? '#2196f3' : '#64b5f6',
+                  color: theme.acento || theme.primario,
                 },
                 '&.Mui-completed': {
-                  color: theme.modo === 'claro' ? '#4caf50' : '#81c784',
+                  color: theme.acentoVerde || theme.primario,
                 }
               }
             }}
@@ -920,8 +971,9 @@ const UnifiedWorkflowCard = ({
                 <StepContent>
                   {activeStep === index && step.content}
                   {activeStep === index && (
-                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-start', gap: 2 }}>
                       {/* Botón Atrás - siempre disponible para volver al paso anterior */}
+                      {index > 0 && (
                       <Button
                         variant="outlined"
                         onClick={() => {
@@ -930,28 +982,32 @@ const UnifiedWorkflowCard = ({
                         }}
                         disabled={index === 0} // Deshabilitar solo en el primer paso
                         sx={{
-                          borderColor: theme.modo === 'claro' ? '#757575' : '#9e9e9e',
-                          color: theme.modo === 'claro' ? '#757575' : '#9e9e9e',
-                          borderRadius: '16px',
+                          background: theme.gradientes.botonInactivo,
+                          borderColor: theme.bordePrincipal,
+                          color: theme.textoPrincipal,
+                          borderRadius: '18px',
+                          boxShadow: theme.sombraComponente,
+                          fontWeight: 'bold',
+                          fontSize: '0.8rem',
                           px: 3,
                           py: 1.5,
-                          fontSize: '0.9rem',
-                          fontWeight: 600,
-                          textTransform: 'none',
+                          height: 40,
                           transition: 'all 0.3s ease',
                           borderWidth: '2px',
                           '&:hover': {
-                            borderColor: theme.modo === 'claro' ? '#616161' : '#757575',
-                            backgroundColor: theme.modo === 'claro' ? 'rgba(117, 117, 117, 0.04)' : 'rgba(158, 158, 158, 0.04)',
+                            borderColor: theme.bordeHover,
+                            background: theme.gradientes.botonHover,
                             transform: 'translateY(-2px)',
-                            boxShadow: '0 6px 12px rgba(0,0,0,0.1)',
+                            boxShadow: theme.sombraComponenteHover,
                           },
                           '&:active': {
                             transform: 'translateY(0)',
+                            boxShadow: theme.sombraComponente,
                           },
                           '&:disabled': {
                             borderColor: theme.textoSecundario,
-                            color: theme.textoSecundario,
+                            color: theme.textoDeshabilitado,
+                            background: theme.fondoOverlay,
                             transform: 'none',
                             boxShadow: 'none',
                             cursor: 'not-allowed',
@@ -960,6 +1016,7 @@ const UnifiedWorkflowCard = ({
                       >
                         Atrás
                       </Button>
+                      )}
                       
                       {/* Botón Continuar - solo mostrar si no es el último paso */}
                       {index < steps.length - 1 && (
@@ -971,30 +1028,32 @@ const UnifiedWorkflowCard = ({
                           }}
                           disabled={
                             (index === 0 && !archivoExcel) ||
-                            (index === 1 && !userHasConfiguredDates)
+                            (index === 1 && !userHasConfiguredDates) ||
+                            (index === 2 && !dataProcessed)
                           }
                           sx={{
-                            background: theme.modo === 'claro' ? '#2196f3' : '#64b5f6',
-                            color: 'white',
-                            borderRadius: '16px',
+                            background: theme.gradientes.botonActivo,
+                            color: theme.textoContraste,
+                            borderRadius: '18px',
+                            boxShadow: theme.sombraComponente,
+                            fontWeight: 'bold',
+                            fontSize: '0.8rem',
                             px: 3,
                             py: 1.5,
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            textTransform: 'none',
+                            height: 40,
                             transition: 'all 0.3s ease',
-                            boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                             '&:hover': {
-                              background: theme.modo === 'claro' ? '#1976d2' : '#42a5f5',
+                              background: theme.gradientes.botonActivoHover,
+                              boxShadow: theme.sombraComponenteHover,
                               transform: 'translateY(-2px)',
-                              boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
                             },
                             '&:active': {
                               transform: 'translateY(0)',
+                              boxShadow: theme.sombraComponente,
                             },
                             '&:disabled': {
-                              background: theme.textoSecundario,
-                              color: theme.textoPrincipal,
+                              background: theme.fondoOverlay,
+                              color: theme.textoDeshabilitado,
                               transform: 'none',
                               boxShadow: 'none',
                             },
@@ -1035,16 +1094,16 @@ const UnifiedWorkflowCard = ({
              </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <Chip
-                label={processing ? 'Procesando...' : 'Listo para procesar'}
-                color={processing ? 'warning' : 'default'}
+                label={processing ? 'Procesando...' : (dataProcessed ? 'Procesado exitosamente' : 'Listo para procesar')}
+                color={processing ? 'warning' : (dataProcessed ? 'success' : 'default')}
                 variant="outlined"
                 sx={{ width: '100%' }}
               />
             </Grid>
                          <Grid item xs={12} sm={6} md={3}>
                <Chip
-                 label={archivoExcel && userHasConfiguredDates ? 'Listo para generar' : 'Configuración incompleta'}
-                 color={archivoExcel && userHasConfiguredDates ? 'success' : 'default'}
+                 label={dataProcessed ? 'Listo para generar' : 'Configuración incompleta'}
+                 color={dataProcessed ? 'success' : 'default'}
                  variant="outlined"
                  sx={{ width: '100%' }}
                />
@@ -1119,7 +1178,7 @@ const UnifiedWorkflowCard = ({
             sx={{ 
               color: theme.textoSecundario,
               '&:hover': {
-                backgroundColor: theme.modo === 'claro' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.04)',
+                backgroundColor: theme.fondoHover,
               }
             }}
           >
@@ -1129,10 +1188,10 @@ const UnifiedWorkflowCard = ({
             onClick={confirmNewProcess}
             variant="contained"
             sx={{
-              background: theme.modo === 'claro' ? '#2196f3' : '#64b5f6',
-              color: 'white',
+              background: theme.primario,
+              color: theme.textoContraste,
               '&:hover': {
-                background: theme.modo === 'claro' ? '#1976d2' : '#42a5f5',
+                background: theme.primarioHover,
               },
             }}
           >
@@ -1144,4 +1203,4 @@ const UnifiedWorkflowCard = ({
   );
 };
 
-export default UnifiedWorkflowCard; 
+export default UnifiedWorkflowCard;

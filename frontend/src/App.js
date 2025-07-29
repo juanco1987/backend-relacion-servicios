@@ -59,17 +59,69 @@ function App() {
     setNote(newNote);
   };
 
-  const handleProcessData = async (data) => {
-    // Lógica de procesamiento existente
+  const handleProcessData = async () => {
     setProcessing(true);
     setAnimationState('loading');
     
     try {
-      // Simular procesamiento
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setShowSuccess(true);
+      if (!excelData || !fechaInicio || !fechaFin) {
+        throw new Error('Debes seleccionar un archivo y un rango de fechas.');
+      }
+
+      // Verificar que las fechas sean objetos dayjs válidos
+      if (!fechaInicio || !fechaInicio.isValid || !fechaInicio.isValid()) {
+        throw new Error('Error: Fecha de inicio inválida');
+      }
+
+      if (!fechaFin || !fechaFin.isValid || !fechaFin.isValid()) {
+        throw new Error('Error: Fecha de fin inválida');
+      }
+
+      // Crear FormData para enviar al backend
+      const formData = new FormData();
+      formData.append('file', excelData);
+      formData.append('fecha_inicio', fechaInicio.format('YYYY-MM-DD'));
+      formData.append('fecha_fin', fechaFin.format('YYYY-MM-DD'));
+      formData.append('notas', note || '');
+      
+      // Intentar conectar al backend
+      const response = await fetch('http://localhost:5000/api/process', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('El backend no está disponible. Verifica que el servidor esté ejecutándose en http://localhost:5000');
+        } else if (response.status === 500) {
+          throw new Error('Error interno del servidor. Verifica los logs del backend.');
+        } else if (response.status === 0 || response.statusText === 'Failed to fetch') {
+          throw new Error('No se puede conectar al backend. Verifica que el servidor esté ejecutándose en http://localhost:5000');
+        } else {
+          throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
+        }
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setShowSuccess(true);
+        return { success: true, data: result.data };
+      } else {
+        throw new Error(result.error || 'Error desconocido en el procesamiento');
+      }
+      
     } catch (error) {
+      console.error('Error en el procesamiento:', error);
+      
+      // Manejar errores de red específicamente
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        setShowError(true);
+        return { success: false, error: 'No se puede conectar al backend. Verifica que el servidor esté ejecutándose en http://localhost:5000' };
+      }
+      
       setShowError(true);
+      return { success: false, error: error.message };
     } finally {
       setProcessing(false);
       setAnimationState('idle');
