@@ -1,26 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Box, 
-  Typography, 
-  TextField, 
-  Button, 
-  Grid, 
-  Stepper, 
-  Step, 
-  StepLabel, 
-  StepContent,
-  Paper,
-  IconButton,
-  Chip,
-  Divider,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
+  Box, Typography, TextField, Button, Grid, Stepper, Step, StepLabel, 
+  StepContent, Paper, IconButton, Chip, Divider, MenuItem, Select,
+  FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Grow
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
@@ -32,8 +14,10 @@ import dayjs from 'dayjs';
 
 // Iconos
 import excelIcon from '../../assets/document_microsoft_excel.png';
-import calendarIcon from '../../assets/calendario.png';
+import engraneIcon from '../../assets/engrane.png';
+import calendarIcon2 from '../../assets/calendario_2.png';
 import notesIcon from '../../assets/document_write.png';
+import planIcon from '../../assets/play.png';
 import actionIcon from '../../assets/flechas_circulo.png';
 import pdfIcon from '../../assets/icono_pdf.png';
 import processIcon from '../../assets/Engrenages.png';
@@ -62,6 +46,7 @@ const UnifiedWorkflowCard = ({
   const [showNewProcessDialog, setShowNewProcessDialog] = useState(false);
   const [shouldClearFile, setShouldClearFile] = useState(false);
   const prevActiveStepRef = useRef(0);
+  const [pdfGenerated, setPdfGenerated] = useState(false);
   
   // Estados para el selector de fechas
   const currentYear = dayjs().year();
@@ -431,14 +416,26 @@ const UnifiedWorkflowCard = ({
     {
       label: 'Configurar parámetros',
       description: 'Define el período de tiempo y agrega notas al reporte',
-      icon: calendarIcon,
+      icon: engraneIcon,
       content: (
         <Box sx={{ mt: 2 }}>
           <Grid container spacing={3}>
                          <Grid item xs={12} md={6}>
-               <Typography variant="subtitle2" sx={{ mb: 1, color: theme.textoSecundario }}>
-                 Período de tiempo
-               </Typography>
+                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <Box
+                    component="img"
+                    src={calendarIcon2}
+                    alt="Calendario"
+                    sx={{ 
+                      width: 20, 
+                      height: 20,
+                      filter: theme.modo === 'oscuro' ? 'invert(1)' : 'none'
+                    }}
+                  />
+                  <Typography variant="subtitle2" sx={{ color: theme.textoSecundario }}>
+                    Período de tiempo
+                  </Typography>
+                </Box>
                <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, mb: 2 }}>
                  <FormControl size="small" sx={{ flex: 1 }}>
                    <InputLabel>Mes</InputLabel>
@@ -626,10 +623,22 @@ const UnifiedWorkflowCard = ({
                  </Box>
                </LocalizationProvider>
              </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: theme.textoSecundario }}>
-                Notas del reporte
-              </Typography>
+             <Grid item xs={12} md={6}>
+               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                 <Box
+                   component="img"
+                   src={notesIcon}
+                   alt="notas"
+                  sx={{ 
+                    width: 20, 
+                    height: 20,
+                    filter: theme.modo === 'oscuro' ? 'invert(1)' : 'none'
+                  }}
+                />
+                <Typography variant="subtitle2" sx={{ color: theme.textoSecundario }}>
+                  Notas del reporte
+                </Typography>
+              </Box>
                 <TextField
                  label="Escribe tus notas aquí..."
                  value={notas || ''}
@@ -691,14 +700,26 @@ const UnifiedWorkflowCard = ({
     {
       label: 'Generar reporte',
       description: 'Procesa los datos y genera el PDF del reporte',
-      icon: actionIcon,
+      icon: planIcon,
       content: (
         <Box sx={{ mt: 2 }}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: theme.textoSecundario }}>
-                Nombre del PDF
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Box
+                  component="img"
+                  src={pdfIcon}
+                  alt="PDF"
+                  sx={{ 
+                    width: 20, 
+                    height: 20,
+                    filter: theme.modo === 'oscuro' ? 'invert(1)' : 'none'
+                  }}
+                />
+                <Typography variant="subtitle2" sx={{ mb: 1, color: theme.textoSecundario }}>
+                  Nombre del PDF
+                </Typography>
+              </Box>
               {!dataProcessed && (
                 <Typography variant="caption" sx={{ 
                   color: theme.textoDeshabilitado, 
@@ -815,6 +836,7 @@ const UnifiedWorkflowCard = ({
                        if (onGeneratePDF) {
                          onGeneratePDF(reportName, workMode);
                          setProcessCompleted(true);
+                         setPdfGenerated(true);
                        }
                      }}
                      startIcon={<img src={pdfIcon} alt="PDF" style={{ width: 16, height: 16 }} />}
@@ -940,7 +962,7 @@ const UnifiedWorkflowCard = ({
                   color: theme.acento || theme.primario,
                 },
                 '&.Mui-completed': {
-                  color: theme.acentoVerde || theme.primario,
+                  color: theme.terminalVerde,
                 }
               }
             }}
@@ -1077,37 +1099,404 @@ const UnifiedWorkflowCard = ({
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={3}>
-              <Chip
-                label={archivoExcel ? 'Archivo cargado' : 'Sin archivo'}
-                color={archivoExcel ? 'success' : 'default'}
-                variant="outlined"
-                sx={{ width: '100%' }}
-              />
+              <Grow in={true} timeout={200}>
+                <Box sx={{ position: 'relative', width: '100%' }}>
+                  <Chip
+                    label={archivoExcel ? 'Archivo cargado' : 'Sin archivo'}
+                    color={archivoExcel ? 'success' : 'default'}
+                    variant="outlined"
+                    sx={{
+                      width: '100%',
+                      background: archivoExcel
+                        ? theme.terminalVerde
+                        : theme.fondoOverlay,
+                      color: archivoExcel
+                        ? '#fff'
+                        : theme.textoPrincipal,
+                      boxShadow: theme.sombraComponente,
+                      fontWeight: 600,
+                      letterSpacing: 0.5,
+                      border: `2px solid ${archivoExcel ? theme.terminalVerde : theme.bordePrincipal}`,
+                      transition: 'background 0.5s, color 0.5s, border-color 0.5s',
+                      pointerEvents: 'none',
+                      zIndex: 1,
+                      position: 'relative',
+                    }}
+                  />
+                  {archivoExcel && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: '-6px',
+                        top: '-6px',
+                        width: 'calc(100% + 12px)',
+                        height: 'calc(100% + 12px)',
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <svg
+                        width="100%"
+                        height="100%"
+                        style={{ position: 'absolute', left: 0, top: 0 }}
+                      >
+                        <rect
+                          x="4" y="4"
+                          width="calc(100% - 8px)"
+                          height="calc(100% - 8px)"
+                          rx="18"
+                          ry="18"
+                          fill="none"
+                          stroke={theme.neon?.exito || theme.acento || theme.terminalVerde}
+                          strokeWidth="3"
+                          strokeDasharray="440"
+                          strokeDashoffset="440"
+                        >
+                          <animate
+                            attributeName="stroke-dashoffset"
+                            from="440"
+                            to="0"
+                            dur="2.4s"
+                            fill="freeze"
+                            keySplines="0.4 0 0.2 1"
+                            calcMode="spline"
+                          />
+                        </rect>
+                      </svg>
+                    </Box>
+                  )}
+                  <style>{`
+                    @keyframes underline-grow {
+                      from { width: 0%; opacity: 0.5; }
+                      60% { width: 100%; opacity: 1; }
+                      to { width: 100%; opacity: 1; }
+                    }
+                  `}</style>
+                </Box>
+              </Grow>
             </Grid>
-                         <Grid item xs={12} sm={6} md={3}>
-               <Chip
-                 label={userHasConfiguredDates ? 'Fechas configuradas' : 'Fechas pendientes'}
-                 color={userHasConfiguredDates ? 'success' : 'default'}
-                 variant="outlined"
-                 sx={{ width: '100%' }}
-               />
-             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <Chip
-                label={processing ? 'Procesando...' : (dataProcessed ? 'Procesado exitosamente' : 'Listo para procesar')}
-                color={processing ? 'warning' : (dataProcessed ? 'success' : 'default')}
-                variant="outlined"
-                sx={{ width: '100%' }}
-              />
+              <Grow in={true} timeout={350}>
+                <Box sx={{ position: 'relative', width: '100%' }}>
+                  <Chip
+                    label={userHasConfiguredDates ? 'Fechas configuradas' : 'Fechas pendientes'}
+                    color={userHasConfiguredDates ? 'success' : 'default'}
+                    variant="outlined"
+                    sx={{
+                      width: '100%',
+                      background: userHasConfiguredDates
+                        ? theme.terminalVerde
+                        : theme.fondoOverlay,
+                      color: userHasConfiguredDates
+                        ? '#fff'
+                        : theme.textoPrincipal,
+                      boxShadow: theme.sombraComponente,
+                      fontWeight: 600,
+                      letterSpacing: 0.5,
+                      border: `2px solid ${userHasConfiguredDates ? theme.terminalVerde : theme.bordePrincipal}`,
+                      transition: 'background 0.5s, color 0.5s, border-color 0.5s',
+                      pointerEvents: 'none',
+                      zIndex: 1,
+                      position: 'relative',
+                    }}
+                  />
+                  {userHasConfiguredDates && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: '-6px',
+                        top: '-6px',
+                        width: 'calc(100% + 12px)',
+                        height: 'calc(100% + 12px)',
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <svg
+                        width="100%"
+                        height="100%"
+                        style={{ position: 'absolute', left: 0, top: 0 }}
+                      >
+                        <rect
+                          x="4" y="4"
+                          width="calc(100% - 8px)"
+                          height="calc(100% - 8px)"
+                          rx="18"
+                          ry="18"
+                          fill="none"
+                          stroke={theme.neon?.exito || theme.acento || theme.terminalVerde}
+                          strokeWidth="3"
+                          strokeDasharray="440"
+                          strokeDashoffset="440"
+                        >
+                          <animate
+                            attributeName="stroke-dashoffset"
+                            from="440"
+                            to="0"
+                            dur="2.4s"
+                            fill="freeze"
+                            keySplines="0.4 0 0.2 1"
+                            calcMode="spline"
+                          />
+                        </rect>
+                      </svg>
+                    </Box>
+                  )}
+                  <style>{`
+                    @keyframes underline-grow {
+                      from { width: 0%; opacity: 0.5; }
+                      60% { width: 100%; opacity: 1; }
+                      to { width: 100%; opacity: 1; }
+                    }
+                  `}</style>
+                </Box>
+              </Grow>
             </Grid>
-                         <Grid item xs={12} sm={6} md={3}>
-               <Chip
-                 label={dataProcessed ? 'Listo para generar' : 'Configuración incompleta'}
-                 color={dataProcessed ? 'success' : 'default'}
-                 variant="outlined"
-                 sx={{ width: '100%' }}
-               />
-             </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Grow in={true} timeout={500}>
+                <Box sx={{ position: 'relative', width: '100%' }}>
+                  <Chip
+                    label={processing ? 'Procesando...' : (dataProcessed ? 'Procesado exitosamente' : 'Listo para procesar')}
+                    color={processing ? 'warning' : (dataProcessed ? 'success' : 'default')}
+                    variant="outlined"
+                    sx={{
+                      width: '100%',
+                      background: dataProcessed
+                        ? theme.terminalVerde
+                        : processing
+                          ? theme.terminalAmarillo
+                          : theme.fondoOverlay,
+                      color: dataProcessed
+                        ? '#fff'
+                        : theme.textoPrincipal,
+                      boxShadow: theme.sombraComponente,
+                      fontWeight: 600,
+                      letterSpacing: 0.5,
+                      border: `2px solid ${dataProcessed ? theme.terminalVerde : theme.bordePrincipal}`,
+                      transition: 'background 0.5s, color 0.5s, border-color 0.5s',
+                      pointerEvents: 'none',
+                      zIndex: 1,
+                      position: 'relative',
+                    }}
+                  />
+                  {dataProcessed && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: '-6px',
+                        top: '-6px',
+                        width: 'calc(100% + 12px)',
+                        height: 'calc(100% + 12px)',
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <svg
+                        width="100%"
+                        height="100%"
+                        style={{ position: 'absolute', left: 0, top: 0 }}
+                      >
+                        <rect
+                          x="4" y="4"
+                          width="calc(100% - 8px)"
+                          height="calc(100% - 8px)"
+                          rx="18"
+                          ry="18"
+                          fill="none"
+                          stroke={theme.neon?.exito || theme.acento || theme.terminalVerde}
+                          strokeWidth="3"
+                          strokeDasharray="440"
+                          strokeDashoffset="440"
+                        >
+                          <animate
+                            attributeName="stroke-dashoffset"
+                            from="440"
+                            to="0"
+                            dur="2.4s"
+                            fill="freeze"
+                            keySplines="0.4 0 0.2 1"
+                            calcMode="spline"
+                          />
+                        </rect>
+                      </svg>
+                    </Box>
+                  )}
+                  <style>{`
+                    @keyframes underline-grow {
+                      from { width: 0%; opacity: 0.5; }
+                      60% { width: 100%; opacity: 1; }
+                      to { width: 100%; opacity: 1; }
+                    }
+                  `}</style>
+                </Box>
+              </Grow>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Grow in={true} timeout={700}>
+                <Box sx={{ position: 'relative', width: '100%' }}>
+                  <Chip
+                    label={dataProcessed ? 'Listo para generar' : 'Configuración incompleta'}
+                    color={dataProcessed ? 'success' : 'default'}
+                    variant="outlined"
+                    sx={{
+                      width: '100%',
+                      background: dataProcessed
+                        ? theme.terminalVerde
+                        : theme.fondoOverlay,
+                      color: dataProcessed
+                        ? '#fff'
+                        : theme.textoPrincipal,
+                      boxShadow: theme.sombraComponente,
+                      fontWeight: 600,
+                      letterSpacing: 0.5,
+                      border: `2px solid ${dataProcessed ? theme.terminalVerde : theme.bordePrincipal}`,
+                      transition: 'background 0.5s, color 0.5s, border-color 0.5s',
+                      pointerEvents: 'none',
+                      zIndex: 1,
+                      position: 'relative',
+                    }}
+                  />
+                  {dataProcessed && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: '-6px',
+                        top: '-6px',
+                        width: 'calc(100% + 12px)',
+                        height: 'calc(100% + 12px)',
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <svg
+                        width="100%"
+                        height="100%"
+                        style={{ position: 'absolute', left: 0, top: 0 }}
+                      >
+                        <rect
+                          x="4" y="4"
+                          width="calc(100% - 8px)"
+                          height="calc(100% - 8px)"
+                          rx="18"
+                          ry="18"
+                          fill="none"
+                          stroke={theme.neon?.exito || theme.acento || theme.terminalVerde}
+                          strokeWidth="3"
+                          strokeDasharray="440"
+                          strokeDashoffset="440"
+                        >
+                          <animate
+                            attributeName="stroke-dashoffset"
+                            from="440"
+                            to="0"
+                            dur="2.4s"
+                            fill="freeze"
+                            keySplines="0.4 0 0.2 1"
+                            calcMode="spline"
+                          />
+                        </rect>
+                      </svg>
+                    </Box>
+                  )}
+                  <style>{`
+                    @keyframes underline-grow {
+                      from { width: 0%; opacity: 0.5; }
+                      60% { width: 100%; opacity: 1; }
+                      to { width: 100%; opacity: 1; }
+                    }
+                  `}</style>
+                </Box>
+              </Grow>
+            </Grid>
+            {pdfGenerated && (
+              <Grid item xs={12} sm={6} md={3}>
+                <Grow in={true} timeout={900}>
+                  <Box sx={{ position: 'relative', width: '100%' }}>
+                    <Chip
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <img src={pdfIcon} alt="PDF" style={{ width: 20, height: 20 }} />
+                          PDF generado
+                        </Box>
+                      }
+                      color="success"
+                      variant="outlined"
+                      sx={{
+                        width: '100%',
+                        background: theme.terminalVerde,
+                        color: '#fff',
+                        fontWeight: 600,
+                        letterSpacing: 0.5,
+                        border: `2px solid ${theme.terminalVerde}`,
+                        transition: 'background 0.5s, color 0.5s, border-color 0.5s',
+                        pointerEvents: 'none',
+                        zIndex: 1,
+                        position: 'relative',
+                        boxShadow:
+                          theme.modo === 'claro'
+                            ? `${theme.neon?.exitoGlow ? `0 0 24px 8px ${theme.neon.exitoGlow}, ` : ''}0 0 16px 4px ${theme.neon?.exito}, 0 0 32px 8px ${theme.neon?.exito}80`
+                            : `0 0 12px 2px ${theme.neon?.exito}, 0 0 32px 8px ${theme.neon?.exito}80`,
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: '-6px',
+                        top: '-6px',
+                        width: 'calc(100% + 12px)',
+                        height: 'calc(100% + 12px)',
+                        pointerEvents: 'none',
+                        zIndex: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <svg
+                        width="100%"
+                        height="100%"
+                        style={{ position: 'absolute', left: 0, top: 0 }}
+                      >
+                        <rect
+                          x="4" y="4"
+                          width="calc(100% - 8px)"
+                          height="calc(100% - 8px)"
+                          rx="18"
+                          ry="18"
+                          fill="none"
+                          stroke={theme.neon?.exito || theme.acento || theme.terminalVerde}
+                          strokeWidth="3"
+                          strokeDasharray="440"
+                          strokeDashoffset="440"
+                        >
+                          <animate
+                            attributeName="stroke-dashoffset"
+                            from="440"
+                            to="0"
+                            dur="2.4s"
+                            fill="freeze"
+                            keySplines="0.4 0 0.2 1"
+                            calcMode="spline"
+                          />
+                        </rect>
+                      </svg>
+                    </Box>
+                  </Box>
+                </Grow>
+              </Grid>
+            )}
           </Grid>
         </Box>
 
