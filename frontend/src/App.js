@@ -249,7 +249,7 @@ function App() {
                   position: 'relative',
                 }}
               >
-                <Header />
+                
               </Box>
             </motion.div>
 
