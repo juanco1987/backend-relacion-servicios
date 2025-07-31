@@ -436,88 +436,9 @@ const UnifiedWorkflowCard = ({
                     Período de tiempo
                   </Typography>
                 </Box>
-               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, mb: 2 }}>
-                 <FormControl size="small" sx={{ flex: 1 }}>
-                   <InputLabel>Mes</InputLabel>
-                   <Select
-                     value={month}
-                     onChange={handleMonthChange}
-                     label="Mes"
-                     sx={{
-                       background: theme.fondoOverlay,
-                       borderRadius: '16px',
-                       transition: 'all 0.3s ease',
-                       '& .MuiOutlinedInput-notchedOutline': {
-                         borderColor: theme.bordePrincipal,
-                         borderWidth: '1.5px',
-                       },
-                       '&:hover .MuiOutlinedInput-notchedOutline': {
-                         borderColor: theme.bordeHover,
-                         borderWidth: '2px',
-                       },
-                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                         borderColor: theme.bordeHover,
-                         borderWidth: '2px',
-                       },
-                       '&:hover': {
-                         transform: 'translateY(-2px)',
-                         boxShadow: '0 6px 12px rgba(0,0,0,0.1)',
-                       },
-                       '&.Mui-focused': {
-                         transform: 'translateY(-2px)',
-                         boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
-                       },
-                     }}
-                   >
-                     {months.map((monthName, index) => (
-                       <MenuItem key={index} value={index}>
-                         {monthName}
-                       </MenuItem>
-                     ))}
-                   </Select>
-                 </FormControl>
-                 <FormControl size="small" sx={{ flex: 1 }}>
-                   <InputLabel>Año</InputLabel>
-                   <Select
-                     value={year}
-                     onChange={handleYearChange}
-                     label="Año"
-                     sx={{
-                       background: theme.fondoOverlay,
-                       borderRadius: '16px',
-                       transition: 'all 0.3s ease',
-                       '& .MuiOutlinedInput-notchedOutline': {
-                         borderColor: theme.bordePrincipal,
-                         borderWidth: '1.5px',
-                       },
-                       '&:hover .MuiOutlinedInput-notchedOutline': {
-                         borderColor: theme.bordeHover,
-                         borderWidth: '2px',
-                       },
-                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                         borderColor: theme.bordeHover,
-                         borderWidth: '2px',
-                       },
-                       '&:hover': {
-                         transform: 'translateY(-2px)',
-                         boxShadow: '0 6px 12px rgba(0,0,0,0.1)',
-                       },
-                       '&.Mui-focused': {
-                         transform: 'translateY(-2px)',
-                         boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
-                       },
-                     }}
-                   >
-                     {Array.from({ length: 10 }, (_, i) => currentYear - 5 + i).map((year) => (
-                       <MenuItem key={year} value={year}>
-                         {year}
-                       </MenuItem>
-                     ))}
-                   </Select>
-                 </FormControl>
-               </Box>
+
                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                 <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                 <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'column' } }}>
                    <DatePicker
                      label="Desde"
                      value={fromDate}
@@ -527,7 +448,7 @@ const UnifiedWorkflowCard = ({
                          size: 'small',
                          sx: {
                           flex: 1, 
-                          width: '150px',
+                          width: '180px',
                            '& .MuiOutlinedInput-root': {
                              background: theme.fondoOverlay,
                              borderRadius: '16px',
@@ -578,7 +499,7 @@ const UnifiedWorkflowCard = ({
                          size: 'small',
                          sx: {
                           flex: 1, 
-                          width: '120px',
+                          width: '180px',
                           '& .MuiOutlinedInput-root': {
                              background: theme.fondoOverlay,
                              borderRadius: '16px',

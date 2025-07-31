@@ -41,7 +41,7 @@ const menuItems = [
   }
 ];
 
-function Sidebar({ onNavigation, currentRoute, open, onClose }) {
+function Sidebar({ onNavigation, open, onClose }) {
   const { theme } = useTheme();
   const muiTheme = useMUITheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
