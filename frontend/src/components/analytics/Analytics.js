@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } fro
 import { useTheme } from '../../context/ThemeContext';
 import AnalyticsResumen from './AnalyticsResumen';
 import KpiCard from '../KpiCard';
+import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
 
 function Analytics({ excelData, workMode }) {
   const { theme } = useTheme();
@@ -245,69 +246,32 @@ function Analytics({ excelData, workMode }) {
         📊 Analytics - Análisis de Datos
       </Typography>
 
-      {/* Selector de mes */}
+      {/* Selector de mes - VERSIÓN CORREGIDA */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel sx={{ color: theme.textoSecundario }}>Seleccionar Mes</InputLabel>
+        <FormControl variant="outlined" sx={{ minWidth: 200 }}>
+          <InputLabel 
+            id="mes-selector-label" 
+            sx={getCustomLabelSx(theme)}
+          >
+            Seleccionar Mes
+          </InputLabel>
           <Select
+            labelId="mes-selector-label"
             value={mesSeleccionado}
             onChange={(e) => setMesSeleccionado(e.target.value)}
-            sx={{
-              color: theme.textoPrincipal,
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme.bordePrincipal,
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme.bordeHover,
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: theme.bordeFocus,
-              },
-              '& .MuiSelect-select': {
-                padding: '12px 14px',
-                cursor: 'pointer',
-                transform: 'none',
-              },
-              '& .MuiMenuItem-root': {
-                padding: '10px 16px',
-                cursor: 'pointer',
-                transform: 'none',
-                '&:hover': {
-                  backgroundColor: theme.fondoContenedor,
-                  transform: 'none',
-                },
-              },
-              '& .MuiPaper-root': {
-                zIndex: 9999,
-                transform: 'none',
-              },
-            }}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  zIndex: 9999,
-                  transform: 'none',
-                  '& .MuiMenuItem-root': {
-                    padding: '10px 16px',
-                    cursor: 'pointer',
-                    transform: 'none',
-                    '&:hover': {
-                      backgroundColor: theme.fondoContenedor,
-                      transform: 'none',
-                    },
-                  },
-                },
-              },
-            }}
+            label="Seleccionar Mes"
+            sx={getCustomSelectSx(theme)}
+            MenuProps={getCustomMenuProps(theme)}
           >
             <MenuItem value="Total Global">Total Global</MenuItem>
             {mesesOrdenados.map((mes) => (
-              <MenuItem key={mes} value={mes}>{mes}</MenuItem>
+              <MenuItem key={mes} value={mes}>
+                {mes}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
       </Box>
-
       {/* KPIs de montos */}
       <Box sx={{ 
         display: 'grid', 

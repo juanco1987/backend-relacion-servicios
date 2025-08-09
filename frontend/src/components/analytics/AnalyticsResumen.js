@@ -35,7 +35,8 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
       };
     })
     .sort((a, b) => {
-      const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+      const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
       const añoA = a.mes.split(' ')[1];
       const añoB = b.mes.split(' ')[1];
       const mesA = meses.indexOf(a.mes.split(' ')[0]);

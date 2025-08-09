@@ -78,15 +78,15 @@ const UnifiedWorkflowCard = ({
 
   // Generar nombre por defecto
   const generateDefaultName = () => {
-    const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '-');
-    const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-');
+    const dateStr = dayjs().format('YYYY-MM-DD');
+    const timeStr = dayjs().format('HH-mm-ss');
     if (workMode === 0) {
       return `Relacion_Servicios_${dateStr}_${timeStr}.pdf`;
     } else {
       return `Pendientes_de_Pago_${dateStr}_${timeStr}.pdf`;
     }
   };
+
 
   useEffect(() => {
     setReportName(generateDefaultName());
