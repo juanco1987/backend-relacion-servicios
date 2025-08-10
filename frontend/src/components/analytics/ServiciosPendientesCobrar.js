@@ -144,8 +144,8 @@ const ServiciosPendientesCobrar = ({ file }) => {
     }) : [];
 
     return (
-        <div style={{ marginTop: '2rem' }}>
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: theme.textoPrincipal }}>
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+            <h2 style={{ display: 'inline-block', alignItems: 'center', gap: '8px', color: theme.textoPrincipal }}>
                 💸 Servicios Pendientes por Cobrar
             </h2>
 

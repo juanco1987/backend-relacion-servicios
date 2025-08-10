@@ -150,8 +150,8 @@ const ServiciosPendientesEfectivo = ({ file }) => {
   };
 
   return (
-    <div style={{ marginTop: '2rem' }}>
-      <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: theme.textoPrincipal }}>
+    <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+      <h2 style={{ display: 'inline-block', alignItems: 'center', gap: '8px', color: theme.textoPrincipal }}>
         💰 Servicios en Efectivo Pendientes
       </h2>
 
@@ -255,7 +255,7 @@ const ServiciosPendientesEfectivo = ({ file }) => {
           width: '100%',
           margin: '0 auto'
         }}>
-          <h3 style={{ margin: '0 0 1rem 0', color: theme.textoPrincipal }}> Detalle de Servicios Pendientes</h3>
+          <h3 style={{ margin: '0 0 1rem 0', color: theme.textoPrincipal, textAlign: 'center' }}> Detalle de Servicios Pendientes</h3>
 
           <div style={{ overflowX: 'auto' }}>
             <table style={{
