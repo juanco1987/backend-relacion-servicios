@@ -50,6 +50,7 @@ const TEMA_OSCURO = {
   terminalNaranja: "#f6b62cef",
   terminalAzul: "#1E90FF",
   terminalOliva: "#808000",
+  terminalRosa: "#FF1493",
 
   // Gradientes y efectos
   gradientes: {
@@ -114,6 +115,7 @@ const TEMA_CLARO = {
   terminalVerdeNeon: "#7FFF00",
   terminalAzul: "#1E90FF",
   terminalOliva: "#808000",
+  terminalRosa: "#FF1493",
   
   // Gradientes y efectos
   gradientes: {

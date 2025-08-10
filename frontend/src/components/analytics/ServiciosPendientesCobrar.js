@@ -3,6 +3,7 @@ import { Box, Typography, Select, MenuItem, FormControl, InputLabel } from '@mui
 import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
 import { formatearMesAnio } from '../../utils/dateFormatters';
+import KpiCard from '../KpiCard';
 
 const ServiciosPendientesCobrar = ({ file }) => {
     const { theme } = useTheme();
@@ -175,66 +176,50 @@ const ServiciosPendientesCobrar = ({ file }) => {
                 </FormControl>
             </Box>
 
-            {/* Tarjetas de KPIs */}
+            {/* Tarjetas de KPIs usando KpiCard */}
             <div style={{
-                display: 'flex',
-                gap: '2rem',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '16px',
                 margin: '1.5rem 0',
-                flexWrap: 'wrap',
-                justifyContent: 'flex-start',
             }}>
-                <div style={{
-                    background: theme.fondoContenedor,
-                    border: `2px solid ${theme.textoInfo}`,
-                    borderRadius: '16px',
-                    padding: '1.2rem 2.2rem',
-                    minWidth: 180,
-                    textAlign: 'center',
-                    boxShadow: theme.sombraComponente,
-                    color: theme.textoPrincipal
-                }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoInfo, marginBottom: 4 }}>Total Servicios</div>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: theme.textoInfo }}>{datosSeleccionados.total_servicios}</div>
-                </div>
-                <div style={{
-                    background: theme.fondoContenedor,
-                    border: `2px solid ${theme.textoAdvertencia}`,
-                    borderRadius: '16px',
-                    padding: '1.2rem 2.2rem',
-                    minWidth: 180,
-                    textAlign: 'center',
-                    boxShadow: theme.sombraComponente,
-                    color: theme.textoAdvertencia
-                }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoAdvertencia, marginBottom: 4 }}>Con +30 días de retraso</div>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: theme.textoAdvertencia }}>{datosSeleccionados.servicios_retraso}</div>
-                </div>
-                <div style={{
-                    background: theme.fondoContenedor,
-                    border: `2px solid ${theme.terminalRojo}`,
-                    borderRadius: '16px',
-                    padding: '1.2rem 2.2rem',
-                    minWidth: 180,
-                    textAlign: 'center',
-                    boxShadow: theme.sombraComponente,
-                    color: theme.terminalRojo
-                }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: theme.terminalRojo, marginBottom: 4 }}>Días Máximos de Retraso</div>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: theme.terminalRojo }}>{datosSeleccionados.max_dias_retraso}</div>
-                </div>
-                <div style={{
-                    background: theme.fondoContenedor,
-                    border: `2px solid ${theme.textoInfo}`,
-                    borderRadius: '16px',
-                    padding: '1.2rem 2.2rem',
-                    minWidth: 180,
-                    textAlign: 'center',
-                    boxShadow: theme.sombraComponente,
-                    color: theme.textoInfo
-                }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: theme.textoInfo, marginBottom: 4 }}>Servicio más antiguo</div>
-                    <div style={{ fontSize: 20, fontWeight: 900, color: theme.textoInfo }}>{datosSeleccionados.fecha_mas_antigua}</div>
-                </div>
+                <KpiCard color={theme.terminalOliva} variant='elevated'>
+                    <div style={{ color: theme.terminalOliva, fontWeight: 'bold', fontSize: '28px' }}>
+                        {datosSeleccionados.total_servicios}
+                    </div>
+                    <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
+                        Total Servicios
+                    </div>
+                </KpiCard>
+
+                <KpiCard color={theme.terminalRosa} variant='elevated'>
+                    <div style={{ color: theme.terminalRosa, fontWeight: 'bold', fontSize: '28px' }}>
+                        {datosSeleccionados.servicios_retraso}
+                    </div>
+                    <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
+                        Con +30 días de retraso
+                    </div>
+                </KpiCard>
+
+                <KpiCard color={theme.terminalRojo} variant='elevated'>
+                    <div style={{ color: theme.terminalRojo, fontWeight: 'bold', fontSize: '28px' }}>
+                        {datosSeleccionados.max_dias_retraso}
+                    </div>
+                    <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
+                        Días Máximos de Retraso
+                    </div>
+                </KpiCard>
+
+                <KpiCard color={theme.textoInfo} variant='elevated'>
+                    <div style={{ color: theme.textoInfo, fontWeight: 'bold', fontSize: '16px' }}>
+                        {datosSeleccionados.fecha_mas_antigua !== '9999-12-31' 
+                            ? datosSeleccionados.fecha_mas_antigua 
+                            : 'N/A'}
+                    </div>
+                    <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
+                        Servicio más antiguo
+                    </div>
+                </KpiCard>
             </div>
 
             {/* Tabla de detalle */}

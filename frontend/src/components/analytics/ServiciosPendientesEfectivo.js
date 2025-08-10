@@ -3,6 +3,7 @@ import { Box, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
 import { formatearMesAnio } from '../../utils/dateFormatters';
+import KpiCard from '../KpiCard';
 
 const ServiciosPendientesEfectivo = ({ file }) => {
   const { theme } = useTheme();
@@ -188,65 +189,59 @@ const ServiciosPendientesEfectivo = ({ file }) => {
         <strong>{datosSeleccionados.tiene_pendientes ? '⚠️ ADVERTENCIA:' : '✅ ÉXITO:'}</strong> {datosSeleccionados.advertencia}
       </div>
 
-      {/* Tarjetas de resumen */}
+      {/* Tarjetas de resumen usando KpiCard */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1rem',
+        gap: '16px',
         marginBottom: '2rem'
       }}>
-        <div style={{
-          padding: '1rem',
-          border: `1px solid ${theme.bordePrincipal}`,
-          borderRadius: '8px',
-          backgroundColor: theme.fondoContenedor
-        }}>
-          <h4 style={{ margin: '0 0 0.5rem 0', color: theme.textoSecundario }}>Total Servicios</h4>
-          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 'bold', color: theme.textoPrincipal }}>
+        <KpiCard color={theme.terminalOliva} variant='elevated'>
+          <div style={{ color: theme.terminalOliva, fontWeight: 'bold', fontSize: '28px' }}>
             {datosSeleccionados.total_servicios}
-          </p>
-        </div>
+          </div>
+          <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
+            Total Servicios
+          </div>
+        </KpiCard>
 
-        <div style={{
-          padding: '1rem',
-          border: `1px solid ${theme.bordePrincipal}`,
-          borderRadius: '8px',
-          backgroundColor: theme.fondoContenedor
-        }}>
-          <h4 style={{ margin: '0 0 0.5rem 0', color: theme.textoSecundario }}>Total ABRECAR</h4>
-          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 'bold', color: theme.textoPrincipal }}>
+        <KpiCard color={theme.terminalVerde} variant='elevated'>
+          <div style={{ color: theme.terminalVerde, fontWeight: 'bold', fontSize: '20px' }}>
             {formatCurrency(datosSeleccionados.total_valor)}
-          </p>
-        </div>
+          </div>
+          <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
+            Total ABRECAR
+          </div>
+        </KpiCard>
 
-        <div style={{
-          padding: '1rem',
-          border: `1px solid ${theme.bordePrincipal}`,
-          borderRadius: '8px',
-          backgroundColor: theme.fondoContenedor
-        }}>
-          <h4 style={{ margin: '0 0 0.5rem 0', color: theme.textoSecundario }}>Días Máximos Sin Relacionar</h4>
-          <p style={{ fontSize: '2rem', margin: 0, fontWeight: 'bold', color: theme.terminalRojo }}>
+        <KpiCard color={theme.terminalRojo} variant='elevated'>
+          <div style={{ color: theme.terminalRojo, fontWeight: 'bold', fontSize: '28px' }}>
             {datosSeleccionados.dias_sin_relacionar}
-          </p>
-        </div>
+          </div>
+          <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
+            Días Máximos Sin Relacionar
+          </div>
+        </KpiCard>
 
-        <div style={{
-          padding: '1rem',
-          border: `1px solid ${theme.bordePrincipal}`,
-          borderRadius: '8px',
-          backgroundColor: theme.fondoContenedor
-        }}>
-          <h4 style={{ margin: '0 0 0.5rem 0', color: theme.textoSecundario }}>Estado</h4>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '1.5rem' }}>
+        <KpiCard color={datosSeleccionados.tiene_pendientes ? theme.terminalAmarillo : theme.terminalVerde} variant='elevated'>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            justifyContent: 'center',
+            color: datosSeleccionados.tiene_pendientes ? theme.terminalAmarillo : theme.terminalVerde,
+            fontWeight: 'bold',
+            fontSize: '18px'
+          }}>
+            <span style={{ fontSize: '24px' }}>
               {datosSeleccionados.tiene_pendientes ? '⚠️' : '✅'}
             </span>
-            <span style={{ fontWeight: 'bold' }}>
-              {datosSeleccionados.tiene_pendientes ? 'Pendiente' : 'Al día'}
-            </span>
+            {datosSeleccionados.tiene_pendientes ? 'Pendiente' : 'Al día'}
           </div>
-        </div>
+          <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
+            Estado
+          </div>
+        </KpiCard>
       </div>
 
       {/* Tabla de detalle */}
@@ -260,7 +255,7 @@ const ServiciosPendientesEfectivo = ({ file }) => {
           width: '100%',
           margin: '0 auto'
         }}>
-          <h3 style={{ margin: '0 0 1rem 0' }}>Detalle de Servicios Pendientes</h3>
+          <h3 style={{ margin: '0 0 1rem 0', color: theme.textoPrincipal }}> Detalle de Servicios Pendientes</h3>
 
           <div style={{ overflowX: 'auto' }}>
             <table style={{
