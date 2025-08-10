@@ -22,7 +22,7 @@ function Analytics({ excelData, workMode }) {
     if (active && payload && payload.length) {
       return (
         <Box sx={{
-          background: 'rgba(0, 0, 0, 0.8)',
+          background: theme.fondoContenedor,
           border: `1px solid ${theme.bordePrincipal}`,
           borderRadius: '8px',
           padding: '10px',
@@ -119,23 +119,35 @@ function Analytics({ excelData, workMode }) {
 
   // Preparar datos para el gráfico (excluyendo meses inválidos)
   const dataGrafica = Object.entries(analyticsData)
-    .filter(([mes]) => {
-      if (!mes) return false;
-      const normalizado = mes.trim().toLowerCase();
-      return normalizado &&
-        normalizado !== 'null' &&
-        normalizado !== 'undefined' &&
-        normalizado !== 'invalid date' &&
-        !/^nat$/i.test(normalizado);
-    })
-    .map(([mes, datos]) => ({
-      mes,
-      Efectivo: Number(datos?.efectivo_total || 0),
-      Transferencia: Number(datos?.transferencia_total || 0),
-      'Total General': Number(datos?.total_general || 0),
-      efectivo_cantidad: Number(datos?.efectivo_cantidad || 0),
-      transferencia_cantidad: Number(datos?.transferencia_cantidad || 0)
-    }));
+  .filter(([mes]) => {
+    if (!mes) return false;
+    const normalizado = mes.trim().toLowerCase();
+    return normalizado &&
+      normalizado !== 'null' &&
+      normalizado !== 'undefined' &&
+      normalizado !== 'invalid date' &&
+      !/^nat$/i.test(normalizado);
+  })
+  .sort(([mesA], [mesB]) => {
+    // Aplicar el mismo ordenamiento cronológico que se usa para el selector
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const añoA = mesA.split(' ')[1];
+    const añoB = mesB.split(' ')[1];
+    const mesIndexA = meses.indexOf(mesA.split(' ')[0]);
+    const mesIndexB = meses.indexOf(mesB.split(' ')[0]);
+    
+    if (añoA !== añoB) return añoA - añoB;
+    return mesIndexA - mesIndexB;
+  })
+  .map(([mes, datos]) => ({
+    mes,
+    Efectivo: Number(datos?.efectivo_total || 0),
+    Transferencia: Number(datos?.transferencia_total || 0),
+    'Total General': Number(datos?.total_general || 0),
+    efectivo_cantidad: Number(datos?.efectivo_cantidad || 0),
+    transferencia_cantidad: Number(datos?.transferencia_cantidad || 0)
+  }));
 
   // Calcular totales globales
   const totalGlobal = dataGrafica.reduce((acc, item) => ({
@@ -295,7 +307,7 @@ function Analytics({ excelData, workMode }) {
           title="Total General"
           value={`$${kpi.total_general.toLocaleString('es-CO')}`}
           subtitle={`${kpi.efectivo_cantidad + kpi.transferencia_cantidad} servicios totales`}
-          color={theme.primario}
+          color={theme.terminalVerdeNeon}
         />
         <KpiCard
           title="Pendientes Relacionar"
@@ -336,7 +348,7 @@ function Analytics({ excelData, workMode }) {
             <Legend />
             <Bar dataKey="Efectivo" fill={theme.terminalVerde} />
             <Bar dataKey="Transferencia" fill={theme.textoInfo} />
-            <Bar dataKey="Total General" fill={theme.primario} />
+            <Bar dataKey="Total General" fill={theme.terminalVerdeNeon} />
           </BarChart>
         </ResponsiveContainer>
       </Box>

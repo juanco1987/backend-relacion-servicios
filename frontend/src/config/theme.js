@@ -14,7 +14,7 @@ const TEMA_OSCURO = {
   textoSecundario: "#cfd8dc",
   
   textoEnLinea: "#27c93f",
-  textoAdvertencia: "#ffb300",
+  textoAdvertencia: "#ffee00ff",
   textoInfo: "#64b5f6",
   textoDeshabilitado: "#b0b8c1",
   textoPlaceholder: "#b0b8c1",
@@ -46,7 +46,11 @@ const TEMA_OSCURO = {
   terminalRojo: "#ff5f56",
   terminalAmarillo: "#ffbd2e",
   terminalVerde: "#27c93f",
-  
+  terminalVerdeNeon: "#7FFF00",
+  terminalNaranja: "#f6b62cef",
+  terminalAzul: "#1E90FF",
+  terminalOliva: "#808000",
+
   // Gradientes y efectos
   gradientes: {
     servicios: 'linear-gradient(135deg, #232b3b 80%, #00eaff 100%)',
@@ -75,7 +79,7 @@ const TEMA_CLARO = {
   textoSecundario: "#1f4068",
   
   textoEnLinea: "#43b97f",
-  textoAdvertencia: "#ffb300",
+  textoAdvertencia: "#ffee00ff",
   textoInfo: "#1976d2",
   textoDeshabilitado: "#b0b8c1",
   textoPlaceholder: "#b0b8c1",
@@ -107,6 +111,9 @@ const TEMA_CLARO = {
   terminalRojo: "#ff5f56",
   terminalAmarillo: "#ffbd2e",
   terminalVerde: "#27c93f",
+  terminalVerdeNeon: "#7FFF00",
+  terminalAzul: "#1E90FF",
+  terminalOliva: "#808000",
   
   // Gradientes y efectos
   gradientes: {
