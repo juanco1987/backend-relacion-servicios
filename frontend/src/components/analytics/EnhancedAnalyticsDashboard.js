@@ -71,30 +71,16 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
   // Datos de ejemplo basados en tu Excel (se pueden adaptar con datos reales)
   const sampleData = {
     serviciosPorTipo: [
-      { tipo: 'Instalación', cantidad: 18, valor: 3200000 },
-      { tipo: 'Mantenimiento', cantidad: 12, valor: 1800000 },
-      { tipo: 'Reparación', cantidad: 8, valor: 1200000 },
-      { tipo: 'Revisión', cantidad: 7, valor: 900000 }
+      
     ],
     tendenciaMensual: [
-      { mes: 'Enero', servicios: 25, ingresos: 4200000 },
-      { mes: 'Febrero', servicios: 30, ingresos: 5100000 },
-      { mes: 'Marzo', servicios: 28, ingresos: 4800000 },
-      { mes: 'Abril', servicios: 35, ingresos: 5900000 },
-      { mes: 'Mayo', servicios: 32, ingresos: 5400000 },
-      { mes: 'Junio', servicios: 38, ingresos: 6200000 },
-      { mes: 'Julio', servicios: 40, ingresos: 6800000 }
+      
     ],
     clientesRecurrentes: [
-      { cliente: 'EMPRESAS', servicios: 15, valor: 2800000 },
-      { cliente: 'CASA', servicios: 20, valor: 2200000 },
-      { cliente: 'ADMINISTRACIÓN', servicios: 8, valor: 1800000 },
-      { cliente: 'LOCAL', servicios: 5, valor: 900000 }
+      
     ],
     estadosServicio: [
-      { estado: 'YA RELACIONADO', cantidad: 35, porcentaje: 70 },
-      { estado: 'PENDIENTE COBRAR', cantidad: 12, porcentaje: 24 },
-      { estado: 'EN PROCESO', cantidad: 3, porcentaje: 6 }
+      
     ]
   };
 

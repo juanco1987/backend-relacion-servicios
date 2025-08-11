@@ -151,7 +151,7 @@ const ServiciosPendientesCobrar = ({ file }) => {
 
             {/* Selector de mes: value = key cruda (YYYY-MM), label = mes bonito */}
             <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
-                <FormControl variant="outlined" sx={{ minWidth: 200 }}>
+                <FormControl variant="outlined" sx={{ minWidth: 150 }}>
                     <InputLabel
                         id="mes-selector-label"
                         sx={getCustomLabelSx(theme)}

@@ -241,7 +241,7 @@ function Analytics({ excelData, workMode }) {
     });
 
   return (
-    <Box sx={{ 
+    <div sx={{ 
       width: '100%', 
       background: theme.fondoContenedor,
       borderRadius: '28px',
@@ -258,9 +258,9 @@ function Analytics({ excelData, workMode }) {
         📊 Analytics - Análisis de Datos
       </Typography>
 
-      {/* Selector de mes - VERSIÓN CORREGIDA */}
+      {/* Selector de mes  */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
-        <FormControl variant="outlined" sx={{ minWidth: 200 }}>
+        <FormControl variant="outlined" sx={{ minWidth: 150 }}>
           <InputLabel 
             id="mes-selector-label" 
             sx={getCustomLabelSx(theme)}
@@ -365,7 +365,7 @@ function Analytics({ excelData, workMode }) {
         </Typography>
         <AnalyticsResumen resumen={analyticsData} pendientes={pendientesData} />
       </Box>
-    </Box>
+    </div>
   );
 }
 

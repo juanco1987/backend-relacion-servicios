@@ -1,16 +1,16 @@
 export const getCustomSelectSx = (theme) => ({
   background: theme.fondoContenedor,
-  borderRadius: '16px',
+  borderRadius: '30px',
   boxShadow: theme.sombraContenedor,
   color: theme.textoPrincipal,
   input: { color: theme.textoPrincipal, fontWeight: 500, background: 'transparent' },
   textarea: { color: theme.textoPrincipal, fontWeight: 500, background: 'transparent' },
   label: { color: theme.textoSecundario },
   '& .MuiInputBase-root': { color: theme.textoPrincipal, background: 'transparent' },
-  '& .MuiOutlinedInput-root': { background: 'transparent', color: theme.textoPrincipal, borderRadius: '16px' },
+  '& .MuiOutlinedInput-root': { background: 'transparent', color: theme.textoPrincipal, borderRadius: '30px' },
   '& .MuiOutlinedInput-notchedOutline': { 
     borderColor: theme.bordePrincipal, 
-    borderRadius: '16px', 
+    borderRadius: '30px', 
     borderWidth: '3px'
   },
   '&:hover .MuiOutlinedInput-notchedOutline': { 

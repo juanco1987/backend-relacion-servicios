@@ -76,6 +76,7 @@ function DashboardPage({ excelData }) {
             boxShadow: theme.sombraContenedor,
             p: 3,
             mb: 4,
+            marginTop: 3,
             textAlign: 'center'
           }}>
             <Typography 
