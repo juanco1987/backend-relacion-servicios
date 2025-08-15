@@ -1429,9 +1429,9 @@ const UnifiedWorkflowCard = ({
               onClick={handleNewProcess}
               startIcon={<RefreshIcon />}
               sx={{
-                borderColor: theme.modo === 'claro' ? '#2196f3' : '#64b5f6',
-                color: theme.modo === 'claro' ? '#2196f3' : '#64b5f6',
-                borderRadius: '16px',
+                borderColor: theme.primario,
+                color: theme.textoPrincipal,
+                borderRadius: '25px',
                 px: 4,
                 py: 1.5,
                 fontSize: '1rem',
@@ -1485,8 +1485,11 @@ const UnifiedWorkflowCard = ({
         }}>
           <Button 
             onClick={cancelNewProcess}
+            variant='contained'
             sx={{ 
-              color: theme.textoSecundario,
+              background: theme.bordeTerminal,
+              color: theme.textoPrincipal,
+              borderRadius: '25px',
               '&:hover': {
                 backgroundColor: theme.fondoHover,
               }
@@ -1499,6 +1502,7 @@ const UnifiedWorkflowCard = ({
             variant="contained"
             sx={{
               background: theme.primario,
+              borderRadius: '25px',
               color: theme.textoContraste,
               '&:hover': {
                 background: theme.primarioHover,

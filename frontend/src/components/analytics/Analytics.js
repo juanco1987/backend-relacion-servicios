@@ -26,7 +26,7 @@ function Analytics({ excelData, workMode }) {
           border: `1px solid ${theme.bordePrincipal}`,
           borderRadius: '8px',
           padding: '10px',
-          color: 'white'
+          color: theme.textoPrincipal
         }}>
           <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
             {label}
@@ -324,7 +324,13 @@ function Analytics({ excelData, workMode }) {
       </Box>
 
       {/* Gráfico */}
-      <Box sx={{ mb: 4 }}>
+      <div style={{
+          background: theme.fondoContenedor,
+          borderRadius: '16px',
+          padding: '24px',
+          boxShadow: theme.sombraComponente,
+          border: `1px solid ${theme.bordePrincipal}`
+        }}>
         <Typography variant="h6" sx={{ 
           color: theme.textoPrincipal, 
           fontWeight: 'bold', 
@@ -351,20 +357,12 @@ function Analytics({ excelData, workMode }) {
             <Bar dataKey="Total General" fill={theme.terminalVerdeNeon} />
           </BarChart>
         </ResponsiveContainer>
-      </Box>
+      </div>
 
       {/* Resumen detallado */}
-      <Box>
-        <Typography variant="h6" sx={{ 
-          color: theme.textoPrincipal, 
-          fontWeight: 'bold', 
-          mb: 2,
-          textAlign: 'center'
-        }}>
-          Resumen Detallado
-        </Typography>
-        <AnalyticsResumen resumen={analyticsData} pendientes={pendientesData} />
-      </Box>
+        <Box sx={{mb: 4}}/>
+        <AnalyticsResumen resumen={analyticsData} pendientes={pendientesData}  />
+    
     </div>
   );
 }
