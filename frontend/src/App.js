@@ -20,6 +20,7 @@ function App() {
   
   // Estados existentes
   const [excelData, setExcelData] = useState(null);
+  const [analyticsFile, setAnalyticsFile] = useState(null);
   const [fechaInicio, setFechaInicio] = useState(dayjs().startOf('month'));
   const [fechaFin, setFechaFin] = useState(dayjs().endOf('month'));
   const [note, setNote] = useState('');
@@ -41,6 +42,28 @@ function App() {
     } else {
       console.log('No se seleccionó ningún archivo');
       setExcelData(null);
+    }
+  };
+
+  const handleAnalyticsFileChange = (input) => {
+    console.log('handleAnalyticsFileChange recibió:', input);
+    let file = null;
+
+    // Permitir recibir directamente un File o un evento de input
+    if (input instanceof File) {
+      file = input;
+    } else if (input?.target?.files?.[0]) {
+      file = input.target.files[0];
+    } else if (input?.files?.[0]) {
+      file = input.files[0];
+    }
+
+    if (file) {
+      console.log('Archivo de Analytics seleccionado:', file.name, file.size, file.type);
+      setAnalyticsFile(file);
+    } else {
+      console.log('No se seleccionó ningún archivo de Analytics');
+      setAnalyticsFile(null);
     }
   };
 
@@ -257,10 +280,12 @@ function App() {
             <ContentArea
               currentRoute={currentRoute}
               excelData={excelData}
+              analyticsFile={analyticsFile}
               fechaInicio={fechaInicio}
               fechaFin={fechaFin}
               note={note}
               onFileChange={handleFileChange}
+              onAnalyticsFileChange={handleAnalyticsFileChange}
               onFechaInicioChange={handleFechaInicioChange}
               onFechaFinChange={handleFechaFinChange}
               onNoteChange={handleNoteChange}

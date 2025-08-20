@@ -13,10 +13,12 @@ import { useTheme } from '../../context/ThemeContext';
 function ContentArea({ 
   currentRoute,
   excelData,
+  analyticsFile,
   fechaInicio,
   fechaFin,
   note,
   onFileChange,
+  onAnalyticsFileChange,
   onFechaInicioChange,
   onFechaFinChange,
   onNoteChange,
@@ -29,6 +31,7 @@ function ContentArea({
   showError,
   setShowSuccess,
   setShowError,
+  onClearAnalyticsFile,
 }) {
   const { theme } = useTheme();
 
@@ -77,7 +80,12 @@ function ContentArea({
       case '/':
       case '/dashboard':
         return (
-          <DashboardPage excelData={excelData} />
+          <DashboardPage 
+            excelData={excelData} 
+            analyticsFile={analyticsFile} 
+            onAnalyticsFileChange={onAnalyticsFileChange} 
+            onClearAnalyticsFile={onClearAnalyticsFile}
+          />
         );
       
       case '/reportes/servicios':
@@ -103,7 +111,7 @@ function ContentArea({
       case '/analytics/efectivo':
         return (
           <ServiciosPendientesEfectivo 
-            file={excelData} 
+            file={analyticsFile} 
             fechaInicio={fechaInicio ? fechaInicio.format('YYYY-MM-DD') : ''}
             fechaFin={fechaFin ? fechaFin.format('YYYY-MM-DD') : ''}
           />
@@ -112,9 +120,19 @@ function ContentArea({
       case '/analytics/cobrar':
         return (
           <ServiciosPendientesCobrar 
-            file={excelData} 
+            file={analyticsFile} 
             fechaInicio={fechaInicio ? fechaInicio.format('YYYY-MM-DD') : ''}
             fechaFin={fechaFin ? fechaFin.format('YYYY-MM-DD') : ''}
+          />
+        );
+      
+      case '/analytics':
+        return (
+          <Analytics 
+            excelData={analyticsFile}
+            workMode={workMode}
+            onFileChange={onAnalyticsFileChange}
+            onClearFile={onClearAnalyticsFile}
           />
         );
       

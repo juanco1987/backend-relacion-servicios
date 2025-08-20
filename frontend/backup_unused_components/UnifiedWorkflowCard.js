@@ -5,13 +5,12 @@ import {
   FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Grow
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import { useTheme } from '../../context/ThemeContext';
-import { ANIMATIONS } from '../../config/animations';
-import { APP_MESSAGES } from '../../config/appConfig';
+import { useTheme } from '../src/context/ThemeContext';
+import { ANIMATIONS } from '../src/config/animations';
+import { APP_MESSAGES } from '../src/config/appConfig';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import 'dayjs/locale/es';
 
 // Iconos
 import excelIcon from '../../assets/document_microsoft_excel.png';
@@ -23,8 +22,6 @@ import actionIcon from '../../assets/flechas_circulo.png';
 import pdfIcon from '../../assets/icono_pdf.png';
 import processIcon from '../../assets/Engrenages.png';
 import RefreshIcon from '@mui/icons-material/Refresh';
-
-dayjs.locale('es');
 
 const UnifiedWorkflowCard = ({
   archivoExcel,
@@ -235,6 +232,43 @@ const UnifiedWorkflowCard = ({
     }
   }, [shouldClearFile, archivoExcel, onFileChange, onNoteChange]);
 
+  // Removido el auto-avance del paso 1 al 2 para permitir que el usuario escriba notas
+
+  // Handlers para fechas
+  const handleMonthChange = (e) => {
+    const newMonth = e.target.value;
+    console.log('handleMonthChange ejecutado:', newMonth);
+    setMonth(newMonth);
+    
+    const newFrom = dayjs().year(year).month(newMonth).startOf('month');
+    const newTo = dayjs().year(year).month(newMonth).endOf('month');
+    setFromDate(newFrom);
+    setToDate(newTo);
+    setUserHasConfiguredDates(true);
+    
+    console.log('Month changed:', newMonth, 'From:', newFrom.format('YYYY-MM-DD'), 'To:', newTo.format('YYYY-MM-DD'));
+    console.log('onFechaInicioChange existe:', !!onFechaInicioChange);
+    console.log('onFechaFinChange existe:', !!onFechaFinChange);
+    
+    if (onFechaInicioChange) onFechaInicioChange(newFrom);
+    if (onFechaFinChange) onFechaFinChange(newTo);
+  };
+
+  const handleYearChange = (e) => {
+    const newYear = e.target.value;
+    setYear(newYear);
+    
+    const newFrom = dayjs().year(newYear).month(month).startOf('month');
+    const newTo = dayjs().year(newYear).month(month).endOf('month');
+    setFromDate(newFrom);
+    setToDate(newTo);
+    setUserHasConfiguredDates(true);
+    
+    console.log('Year changed:', newYear, 'From:', newFrom.format('YYYY-MM-DD'), 'To:', newTo.format('YYYY-MM-DD'));
+    if (onFechaInicioChange) onFechaInicioChange(newFrom);
+    if (onFechaFinChange) onFechaFinChange(newTo);
+  };
+
   const handleFromDateChange = (newDate) => {
     console.log('From date changed:', newDate?.format('YYYY-MM-DD'));
     setFromDate(newDate);
@@ -403,7 +437,7 @@ const UnifiedWorkflowCard = ({
                   </Typography>
                 </Box>
 
-               <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='es'>
+               <LocalizationProvider dateAdapter={AdapterDayjs}>
                  <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'column' } }}>
                    <DatePicker
                      label="Desde"

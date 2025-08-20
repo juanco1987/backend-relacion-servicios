@@ -6,12 +6,14 @@ import Analytics from '../components/analytics/Analytics';
 import EnhancedAnalyticsDashboard from '../components/analytics/EnhancedAnalyticsDashboard';
 import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from '../config/animations';
 
-function DashboardPage({ excelData }) {
+function DashboardPage({ excelData, analyticsFile, onAnalyticsFileChange, onClearAnalyticsFile }) {
   const { theme } = useTheme();
   const [showFullDashboard, setShowFullDashboard] = useState(false);
 
+  const fileForAnalytics = analyticsFile || excelData;
+
   const handleStartAnalysis = () => {
-    if (excelData) {
+    if (fileForAnalytics) {
       setShowFullDashboard(true);
     }
   };
@@ -20,7 +22,7 @@ function DashboardPage({ excelData }) {
     setShowFullDashboard(false);
   };
 
-  if (showFullDashboard && excelData) {
+  if (showFullDashboard && fileForAnalytics) {
     return (
       <motion.div
         variants={STAGGER_VARIANTS}
@@ -47,7 +49,7 @@ function DashboardPage({ excelData }) {
           </Box>
           
           <EnhancedAnalyticsDashboard 
-            file={excelData}
+            file={fileForAnalytics}
             fechaInicio="2024-01-01"
             fechaFin="2024-12-31"
           />
@@ -64,11 +66,11 @@ function DashboardPage({ excelData }) {
     >
       {/* Dashboard Original de Analytics */}
       <motion.div variants={STAGGER_ITEM_VARIANTS}>
-        <Analytics excelData={excelData} workMode={0} />
+                  <Analytics excelData={fileForAnalytics} workMode={0} onFileChange={onAnalyticsFileChange} onClearFile={onClearAnalyticsFile} />
       </motion.div>
 
       {/* Botón para acceder al Dashboard Completo */}
-      {excelData && (
+      {fileForAnalytics && (
         <motion.div variants={STAGGER_ITEM_VARIANTS}>
           <Box sx={{ 
             background: theme.fondoContenedor,
