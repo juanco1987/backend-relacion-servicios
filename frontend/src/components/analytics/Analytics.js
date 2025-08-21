@@ -1,35 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Select, 
-  MenuItem, 
-  FormControl, 
-  InputLabel,
-  TextField,
-  Button,
-  Paper,
-  CircularProgress,
-  Chip,
-  Grow
-} from '@mui/material';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
-} from 'recharts';
+import { Box, Typography, Select, MenuItem, FormControl, InputLabel,
+  TextField, Button, Paper, CircularProgress, Chip, Grow } from '@mui/material';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { ANIMATIONS } from '../../config/animations';
 import AnalyticsResumen from './AnalyticsResumen';
 import KpiCard from '../KpiCard';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
-
-// Iconos - usando los mismos que tu UnifiedWorkflowCard
+// Iconos 
 import excelIcon from '../../assets/document_microsoft_excel.png';
 import engraneIcon from '../../assets/engrane.png';
 

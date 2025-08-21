@@ -4,6 +4,7 @@ import {
   StepContent, Paper, IconButton, Chip, Divider, MenuItem, Select,
   FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Grow
 } from '@mui/material';
+
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { ANIMATIONS } from '../../config/animations';
@@ -12,6 +13,9 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
+import WorkflowHeader from '../UnifiedWorkflowCard/WorkflowHeader';
+import StepFileUpload from '../UnifiedWorkflowCard/StepFileUpload';
+import StepParameters from '../UnifiedWorkflowCard/StepParameters';
 
 // Iconos
 import excelIcon from '../../assets/document_microsoft_excel.png';
@@ -269,114 +273,11 @@ const UnifiedWorkflowCard = ({
       description: 'Selecciona el archivo de datos que contiene la información de servicios',
       icon: excelIcon,
       content: (
-        <Box sx={{ mt: 2 }}>
-          <motion.div
-            whileHover={ANIMATIONS.formFieldHover}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
-              <TextField
-                label="Archivo Excel"
-                value={archivoExcel?.name || ''}
-                placeholder="Selecciona un archivo Excel..."
-                variant="outlined"
-                size="small"
-                InputProps={{
-                  readOnly: true,
-                }}
-                sx={{
-                  width: '70%',
-                  height: '40px',
-                  '& .MuiOutlinedInput-root': {
-                    background: theme.fondoOverlay,
-                    borderRadius: '16px',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      '& > fieldset': { 
-                        borderColor: theme.bordeHover,
-                        borderWidth: '2px',
-                      },
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 12px rgba(0,0,0,0.1)',
-                    },
-                    '&.Mui-focused': {
-                      '& > fieldset': { 
-                        borderColor: theme.bordeHover,
-                        borderWidth: '2px',
-                      },
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
-                    },
-                    '& > fieldset': {
-                      borderColor: theme.bordePrincipal,
-                      borderWidth: '1.5px',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: theme.textoSecundario,
-                    fontWeight: 500,
-                    '&.Mui-focused': {
-                      color: theme.textoPrincipal,
-                      fontWeight: 600,
-                    },
-                  },
-                  '& .MuiInputBase-input': {
-                    color: theme.textoPrincipal,
-                    fontWeight: 500,
-                  },
-                  '& .MuiFormHelperText-root': {
-                    color: theme.textoSecundario,
-                    fontSize: '0.75rem',
-                  },
-                }}
-              />
-              <Button
-                variant="outlined"
-                component="label"
-                size="small"
-                sx={{
-                  background: theme.fondoOverlay,
-                  color: theme.textoPrincipal,
-                  borderColor: theme.bordePrincipal,
-                  borderRadius: '16px',
-                  px: 3,
-                  py: 1.5,
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  transition: 'all 0.3s ease',
-                  borderWidth: '2px',
-                  minWidth: '120px',
-                  height: '40px',
-                  '&:hover': {
-                    background: theme.fondoHover,
-                    borderColor: theme.bordeHover,
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 12px rgba(0,0,0,0.1)',
-                  },
-                  '&:active': {
-                    transform: 'translateY(0)',
-                  },
-                  '&:focus': {
-                    borderColor: theme.bordeHover,
-                    borderWidth: '2px',
-                  }
-                }}
-              >
-                Examinar
-                <input
-                  type="file"
-                  hidden
-                  accept=".xlsx,.xls"
-                  onChange={(e) => {
-                    console.log('File selected:', e.target.files[0]);
-                    onFileChange(e);
-                  }}
-                />
-              </Button>
-            </Box>
-          </motion.div>
-        </Box>
+        <StepFileUpload
+          archivoExcel={archivoExcel}
+          onFileChange={onFileChange}
+          theme={theme}
+        />
       )
     },
     {
@@ -384,204 +285,17 @@ const UnifiedWorkflowCard = ({
       description: 'Define el período de tiempo y agrega notas al reporte',
       icon: engraneIcon,
       content: (
-        <Box sx={{ mt: 2 }}>
-          <Grid container spacing={3}>
-                         <Grid item xs={12} md={6}>
-                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Box
-                    component="img"
-                    src={calendarIcon2}
-                    alt="Calendario"
-                    sx={{ 
-                      width: 20, 
-                      height: 20,
-                      filter: theme.modo === 'oscuro' ? 'invert(1)' : 'none'
-                    }}
-                  />
-                  <Typography variant="subtitle2" sx={{ color: theme.textoSecundario }}>
-                    Período de tiempo
-                  </Typography>
-                </Box>
-
-               <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale='es'>
-                 <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'column' } }}>
-                   <DatePicker
-                     label="Desde"
-                     value={fromDate}
-                     onChange={handleFromDateChange}
-                     slotProps={{
-                       textField: {
-                         size: 'small',
-                         sx: {
-                          flex: 1, 
-                          width: '180px',
-                           '& .MuiOutlinedInput-root': {
-                             background: theme.fondoOverlay,
-                             borderRadius: '16px',
-                             transition: 'all 0.3s ease',
-                             '&:hover': {
-                               '& > fieldset': { 
-                                 borderColor: theme.bordeHover,
-                                 borderWidth: '2px',
-                               },
-                               transform: 'translateY(-2px)',
-                               boxShadow: '0 6px 12px rgba(0,0,0,0.1)',
-                             },
-                             '&.Mui-focused': {
-                               '& > fieldset': { 
-                                 borderColor: theme.bordeHover,
-                                 borderWidth: '2px',
-                               },
-                               transform: 'translateY(-2px)',
-                               boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
-                             },
-                             '& > fieldset': {
-                               borderColor: theme.bordePrincipal,
-                               borderWidth: '1.5px',
-                             },
-                           },
-                           '& .MuiInputLabel-root': {
-                             color: theme.textoSecundario,
-                             fontWeight: 500,
-                             '&.Mui-focused': {
-                               color: theme.textoPrincipal,
-                               fontWeight: 600,
-                             },
-                           },
-                           '& .MuiInputBase-input': {
-                             color: theme.textoPrincipal,
-                             fontWeight: 500,
-                           },
-                         }
-                       }
-                     }}
-                   />
-                   <DatePicker
-                     label="Hasta"
-                     value={toDate}
-                     onChange={handleToDateChange}
-                     slotProps={{
-                       textField: {
-                         size: 'small',
-                         sx: {
-                          flex: 1, 
-                          width: '180px',
-                          '& .MuiOutlinedInput-root': {
-                             background: theme.fondoOverlay,
-                             borderRadius: '16px',
-                             transition: 'all 0.3s ease',
-                             '&:hover': {
-                               '& > fieldset': { 
-                                 borderColor: theme.bordeHover,
-                                 borderWidth: '2px',
-                               },
-                               transform: 'translateY(-2px)',
-                               boxShadow: '0 6px 12px rgba(0,0,0,0.1)',
-                             },
-                             '&.Mui-focused': {
-                               '& > fieldset': { 
-                                 borderColor: theme.bordeHover,
-                                 borderWidth: '2px',
-                               },
-                               transform: 'translateY(-2px)',
-                               boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
-                             },
-                             '& > fieldset': {
-                               borderColor: theme.bordePrincipal,
-                               borderWidth: '1.5px',
-                             },
-                           },
-                           '& .MuiInputLabel-root': {
-                             color: theme.textoSecundario,
-                             fontWeight: 500,
-                             '&.Mui-focused': {
-                               color: theme.textoPrincipal,
-                               fontWeight: 600,
-                             },
-                           },
-                           '& .MuiInputBase-input': {
-                             color: theme.textoPrincipal,
-                             fontWeight: 500,
-                           },
-                         }
-                       }
-                     }}
-                   />
-                 </Box>
-               </LocalizationProvider>
-             </Grid>
-             <Grid item xs={12} md={6}>
-               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                 <Box
-                   component="img"
-                   src={notesIcon}
-                   alt="notas"
-                  sx={{ 
-                    width: 20, 
-                    height: 20,
-                    filter: theme.modo === 'oscuro' ? 'invert(1)' : 'none'
-                  }}
-                />
-                <Typography variant="subtitle2" sx={{ color: theme.textoSecundario }}>
-                  Notas del reporte
-                </Typography>
-              </Box>
-                <TextField
-                 label="Escribe tus notas aquí..."
-                 value={notas || ''}
-                 onChange={(e) => {
-                   console.log('Notes changed:', e.target.value);
-                   console.log('onNoteChange existe:', !!onNoteChange);
-                   if (onNoteChange) onNoteChange(e.target.value);
-                 }}
-                variant="outlined"
-                size="small"
-                multiline
-                rows={3.5}
-                fullWidth
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    background: theme.fondoOverlay,
-                    borderRadius: '16px',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      '& > fieldset': { 
-                        borderColor: theme.bordeHover,
-                        borderWidth: '2px',
-                      },
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 12px rgba(0,0,0,0.1)',
-                    },
-                    '&.Mui-focused': {
-                      '& > fieldset': { 
-                        borderColor: theme.bordeHover,
-                        borderWidth: '2px',
-                      },
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
-                    },
-                    '& > fieldset': {
-                      borderColor: theme.bordePrincipal,
-                      borderWidth: '1.5px',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: theme.textoSecundario,
-                    fontWeight: 500,
-                    '&.Mui-focused': {
-                      color: theme.textoPrincipal,
-                      fontWeight: 600,
-                    },
-                  },
-                  '& .MuiInputBase-input': {
-                    color: theme.textoPrincipal,
-                    fontWeight: 500,
-                  },
-                }}
-              />
-            </Grid>
-          </Grid>
-        </Box>
+        <StepParameters
+          theme={theme}
+          calendarIcon2={calendarIcon2}
+          notesIcon={notesIcon}
+          fromDate={fromDate}
+          toDate={toDate}
+          notas={notas}
+          onNoteChange={onNoteChange}
+          onFromDateChange={handleFromDateChange}
+          onToDateChange={handleToDateChange}
+        />
       )
     },
     {
@@ -783,46 +497,7 @@ const UnifiedWorkflowCard = ({
         }}
       >
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          mb: 4,
-          flexDirection: { xs: 'column', sm: 'row' },
-          gap: 2
-        }}>
-          <Box
-            component="img"
-            src={actionIcon}
-            alt="Flujo de trabajo"
-            sx={{ 
-              width: { xs: 40, md: 48 }, 
-              height: { xs: 40, md: 48 },
-              filter: theme.modo === 'oscuro' ? 'invert(1)' : 'none'
-            }}
-          />
-          <Box sx={{ flex: 1, textAlign: { xs: 'center', sm: 'left' } }}>
-            <Typography 
-              variant="h4" 
-              sx={{ 
-                fontWeight: 'bold', 
-                color: theme.textoPrincipal,
-                fontSize: { xs: '1.5rem', md: '2rem' }
-              }}
-            >
-              {workMode === 0 ? 'Relación de Servicios' : 'Pendientes de Pago'}
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: theme.textoSecundario,
-                mt: 1,
-                fontSize: { xs: '0.9rem', md: '1rem' }
-              }}
-            >
-              Flujo de trabajo unificado para generar reportes
-            </Typography>
-          </Box>
-        </Box>
+        <WorkflowHeader theme={theme} workMode={workMode} actionIcon={actionIcon} />
 
         {/* Stepper */}
         <Box sx={{ maxWidth: '100%' }}>
