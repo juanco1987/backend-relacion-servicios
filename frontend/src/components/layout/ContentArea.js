@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Box } from '@mui/material';
 import { motion } from 'framer-motion';
 import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from '../../config/animations';
-import UnifiedWorkflowCard from './UnifiedWorkflowCard';
+import UnifiedWorkflowCard from '../UnifiedWorkflowCard';
 import ServiciosPendientesEfectivo from '../analytics/ServiciosPendientesEfectivo';
 import ServiciosPendientesCobrar from '../analytics/ServiciosPendientesCobrar';
 import Analytics from '../analytics/Analytics';
@@ -71,8 +71,7 @@ function ContentArea({
   const workMode = getWorkMode(currentRoute);
 
   // Verificar si estamos en el Dashboard o en Analytics
-  const isDashboard = currentRoute === '/' || currentRoute === '/dashboard';
-  const isAnalytics = currentRoute === '/analytics/efectivo' || currentRoute === '/analytics/cobrar';
+  
 
   // Renderizar contenido específico según la ruta
   const renderRouteContent = () => {
