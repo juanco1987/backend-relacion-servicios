@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
+import KpiCard from '../KpiCard'; // ✅ Importar el componente reutilizable
 import ServiciosPendientesEfectivo from './ServiciosPendientesEfectivo';
 import ServiciosPendientesCobrar from './ServiciosPendientesCobrar';
 
@@ -48,40 +49,17 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
     return `$${Number(value || 0).toLocaleString('es-CO')}`;
   };
 
-  const KpiCard = ({ title, value, subtitle, color = theme.textoInfo, icon }) => (
-    <div style={{
-      background: theme.fondoContenedor,
-      borderRadius: '16px',
-      padding: '20px',
-      boxShadow: theme.sombraComponente,
-      border: `2px solid ${color}`,
-      textAlign: 'center',
-      minWidth: '200px',
-      color: theme.textoPrincipal
-    }}>
-      <div style={{ fontSize: '24px', marginBottom: '8px' }}>{icon}</div>
-      <div style={{ fontSize: '14px', color: theme.textoSecundario, marginBottom: '8px' }}>{title}</div>
-      <div style={{ fontSize: '28px', fontWeight: 'bold', color: color, marginBottom: '4px' }}>
-        {value}
-      </div>
-      <div style={{ fontSize: '12px', color: theme.textoSecundario }}>{subtitle}</div>
-    </div>
-  );
+  // ❌ ELIMINAR - Ya no necesitamos el KpiCard inline
+  // const KpiCard = ({ title, value, subtitle, color = theme.textoInfo, icon }) => (
+  //   ...
+  // );
 
   // Datos de ejemplo basados en tu Excel (se pueden adaptar con datos reales)
   const sampleData = {
-    serviciosPorTipo: [
-      
-    ],
-    tendenciaMensual: [
-      
-    ],
-    clientesRecurrentes: [
-      
-    ],
-    estadosServicio: [
-      
-    ]
+    serviciosPorTipo: [],
+    tendenciaMensual: [],
+    clientesRecurrentes: [],
+    estadosServicio: []
   };
 
   // Datos reales basados en el Excel (se procesan dinámicamente)
@@ -167,35 +145,31 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {/* KPIs Principales */}
+        {/* KPIs Principales - Usando el componente reutilizable */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
           <KpiCard
-            title="Total Servicios"
+            title="🔧 Total Servicios"
             value={totalServicios.toString()}
             subtitle="Total general"
             color={theme.textoInfo}
-            icon="🔧"
           />
           <KpiCard
-            title="Ingresos Totales"
+            title="💰 Ingresos Totales"
             value={formatCurrency(totalIngresos)}
             subtitle="Total general"
             color={theme.terminalVerde}
-            icon="💰"
           />
           <KpiCard
-            title="Servicios Pendientes"
+            title="⏳ Servicios Pendientes"
             value={serviciosPendientes.toString()}
             subtitle="Por cobrar"
             color={theme.textoAdvertencia}
-            icon="⏳"
           />
           <KpiCard
-            title="Efectividad"
+            title="✅ Efectividad"
             value={`${efectividad}%`}
             subtitle="Servicios completados"
             color={theme.terminalVerde}
-            icon="✅"
           />
         </div>
 
@@ -309,28 +283,16 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
         border: `1px solid ${theme.bordePrincipal}`
       }}>
         <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>💎 Mejores Clientes</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
           {dataToUse.clientesRecurrentes.map((cliente, index) => (
-            <div key={cliente.cliente} style={{
-              padding: '16px',
-              background: theme.fondoContenedor,
-              borderRadius: '12px',
-              border: `1px solid ${theme.bordePrincipal}`,
-              color: theme.textoPrincipal
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', color: theme.textoPrincipal }}>{cliente.cliente}</span>
-                <span style={{ fontSize: '18px' }}>
-                  {index === 0 ? '👑' : index === 1 ? '⭐' : '🏢'}
-                </span>
-              </div>
-              <div style={{ color: theme.textoSecundario, fontSize: '14px' }}>
-                {cliente.servicios} servicios
-              </div>
-              <div style={{ color: theme.terminalVerde, fontWeight: 'bold', fontSize: '16px' }}>
-                {formatCurrency(cliente.valor)}
-              </div>
-            </div>
+            <KpiCard
+              key={cliente.cliente}
+              title={`${index === 0 ? '🏆' : index === 1 ? '⭐' : '🏢'} ${cliente.cliente}`}
+              value={formatCurrency(cliente.valor)}
+              subtitle={`${cliente.servicios} servicios`}
+              color={index === 0 ? theme.terminalVerde : index === 1 ? theme.textoInfo : theme.textoSecundario}
+              valueStyle={{ fontSize: '1rem' }}
+            />
           ))}
         </div>
       </div>
@@ -369,35 +331,31 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
         </ResponsiveContainer>
       </div>
 
-      {/* Métricas de Servicios */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+      {/* Métricas de Servicios - Usando KpiCard reutilizable */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minMax(200px, 1fr))', gap: '20px' }}>
         <KpiCard
-          title="Servicio Más Común"
+          title="🔧 Servicio Más Común"
           value="Instalación"
           subtitle="40% del total"
           color={theme.textoInfo}
-          icon="🔧"
         />
         <KpiCard
-          title="Valor Promedio"
+          title="💵 Valor Promedio"
           value={formatCurrency(145000)}
           subtitle="Por servicio"
           color={theme.terminalVerde}
-          icon="💵"
         />
         <KpiCard
-          title="Tiempo Promedio"
+          title="⏱️ Tiempo Promedio"
           value="2.5 días"
           subtitle="Para completar"
           color={theme.textoAdvertencia}
-          icon="⏱️"
         />
         <KpiCard
-          title="Satisfacción"
+          title="⭐ Satisfacción"
           value="4.8/5"
           subtitle="Promedio cliente"
           color={theme.terminalVerde}
-          icon="⭐"
         />
       </div>
     </div>
@@ -549,4 +507,4 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
   );
 };
 
-export default EnhancedAnalyticsDashboard; 
+export default EnhancedAnalyticsDashboard;

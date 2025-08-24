@@ -3,11 +3,8 @@ import { Box } from '@mui/material';
 import { motion } from 'framer-motion';
 import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from '../../config/animations';
 import UnifiedWorkflowCard from '../UnifiedWorkflowCard';
-import ServiciosPendientesEfectivo from '../analytics/ServiciosPendientesEfectivo';
-import ServiciosPendientesCobrar from '../analytics/ServiciosPendientesCobrar';
 import Analytics from '../analytics/Analytics';
 import DashboardPage from '../../pages/DashboardPage';
-
 import { useTheme } from '../../context/ThemeContext';
 
 function ContentArea({ 
@@ -26,11 +23,6 @@ function ContentArea({
   onGeneratePDF,
   processing,
   animationState,
-  setAnimationState,
-  showSuccess,
-  showError,
-  setShowSuccess,
-  setShowError,
   onClearAnalyticsFile,
 }) {
   const { theme } = useTheme();
@@ -59,20 +51,13 @@ function ContentArea({
         return 0; // Relación de Servicios
       case '/reportes/pendientes':
         return 1; // Pendientes de Pago
-      case '/analytics/efectivo':
-        return 2; // Servicios Pendientes en Efectivo
-      case '/analytics/cobrar':
-        return 3; // Servicios Pendientes por Cobrar
       default:
         return 0;
     }
   };
 
   const workMode = getWorkMode(currentRoute);
-
-  // Verificar si estamos en el Dashboard o en Analytics
   
-
   // Renderizar contenido específico según la ruta
   const renderRouteContent = () => {
     switch(currentRoute) {
@@ -104,24 +89,6 @@ function ContentArea({
             processing={processing}
             animationState={animationState}
             workMode={workMode}
-          />
-        );
-      
-      case '/analytics/efectivo':
-        return (
-          <ServiciosPendientesEfectivo 
-            file={analyticsFile} 
-            fechaInicio={fechaInicio ? fechaInicio.format('YYYY-MM-DD') : ''}
-            fechaFin={fechaFin ? fechaFin.format('YYYY-MM-DD') : ''}
-          />
-        );
-      
-      case '/analytics/cobrar':
-        return (
-          <ServiciosPendientesCobrar 
-            file={analyticsFile} 
-            fechaInicio={fechaInicio ? fechaInicio.format('YYYY-MM-DD') : ''}
-            fechaFin={fechaFin ? fechaFin.format('YYYY-MM-DD') : ''}
           />
         );
       
@@ -158,13 +125,10 @@ function ContentArea({
       animate="visible"
     >
 
-
       {/* Contenido específico según la ruta */}
       <motion.div variants={STAGGER_ITEM_VARIANTS}>
         {renderRouteContent()}
       </motion.div>
-
-
     </motion.div>
   );
 }

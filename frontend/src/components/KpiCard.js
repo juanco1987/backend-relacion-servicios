@@ -9,7 +9,8 @@ function KpiCard({
   subtitle,
   color,
   children,
-  variant = 'elevated'
+  variant = 'elevated',
+  valueStyle = {},
 }) {
   const { theme } = useTheme();
 
@@ -52,6 +53,7 @@ function KpiCard({
               mb: 1,
               textShadow: color ? `0 0 10px ${color}40` : 'none',
               fontSize: { xs: '1.5rem', md: '2rem' }
+              , ...valueStyle
             }}>
               {value}
             </Typography>

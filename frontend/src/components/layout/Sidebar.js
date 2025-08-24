@@ -31,14 +31,7 @@ const menuItems = [
       { label: 'Pendientes de Pago', icon: <PaymentIcon />, path: '/reportes/pendientes' }
     ]
   },
-  {
-    label: 'Analytics',
-    icon: <BarChartIcon />,
-    subItems: [
-      { label: 'Servicios Pendientes en Efectivo', icon: <AttachMoneyIcon />, path: '/analytics/efectivo' },
-      { label: 'Servicios Pendientes por Cobrar', icon: <AccountBalanceIcon />, path: '/analytics/cobrar' }
-    ]
-  }
+  
 ];
 
 function Sidebar({ onNavigation, open, onClose }) {
@@ -79,7 +72,7 @@ function Sidebar({ onNavigation, open, onClose }) {
                 </ListItemIcon>
                 <ListItemText
                   primary={item.label}
-                  primaryTypographyProps={{ sx: { color: theme.textoPrincipal } }}
+                  primaryTypographyProps={{ sx: { color: theme.textoPrincipal, fontWeight: 700 } }}
                 />
                 {item.subItems ? (
                   openMenu === item.label ? <ExpandLess sx={{ color: theme.iconoPrincipal }} /> : <ExpandMore sx={{ color: theme.iconoPrincipal }} />
