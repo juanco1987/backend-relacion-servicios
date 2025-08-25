@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Typography, Grid, Button } from '@mui/material';
+import { Box, Typography, Grid } from '@mui/material';
+import CustomButton from '../components/common/CustomButton';
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import Analytics from '../components/analytics/Analytics';
@@ -31,21 +32,20 @@ function DashboardPage({ excelData, analyticsFile, onAnalyticsFileChange, onClea
       >
         <motion.div variants={STAGGER_ITEM_VARIANTS}>
           <Box sx={{ mb: 3 }}>
-            <Button
+            <CustomButton
               onClick={handleBackToOverview}
               variant="outlined"
               sx={{
-                borderRadius: '20px',
-                borderColor: theme.bordePrincipal,
-                color: theme.textoPrincipal,
+                borderColor: theme.gradientes.botonProcesar,
+                color: theme.gradientes.botonProcesar,
                 '&:hover': {
-                  borderColor: theme.bordeHover,
-                  backgroundColor: theme.fondoContenedor
+                  borderColor: theme.gradientes.botonProcesar,
+                  opacity: 0.9
                 }
               }}
             >
               ← Volver al Resumen
-            </Button>
+            </CustomButton>
           </Box>
           
           <EnhancedAnalyticsDashboard 
@@ -100,23 +100,13 @@ function DashboardPage({ excelData, analyticsFile, onAnalyticsFileChange, onClea
             >
               Accede a análisis detallados por vendedores, clientes, servicios y más
             </Typography>
-            <Button
+            <CustomButton
               onClick={handleStartAnalysis}
               variant="contained"
-              sx={{
-                borderRadius: '25px',
-                backgroundColor: theme.textoInfo,
-                color: 'white',
-                px: 3,
-                py: 1.5,
-                fontWeight: 'bold',
-                '&:hover': {
-                  backgroundColor: theme.textoAdvertencia
-                }
-              }}
+              color="info"
             >
               Ver Dashboard Completo
-            </Button>
+            </CustomButton>
           </Box>
         </motion.div>
       )}

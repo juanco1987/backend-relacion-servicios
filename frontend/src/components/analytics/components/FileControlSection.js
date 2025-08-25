@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import CustomButton from '../../common/CustomButton';
 import { useTheme } from '../../../context/ThemeContext';
 import excelIcon from '../../../assets/document_microsoft_excel.png';
 
@@ -50,7 +51,7 @@ function FileControlSection({
         </Box>
       </Box>
       
-      <Button
+      <CustomButton
         variant="outlined"
         component="label"
         size="small"
@@ -84,7 +85,7 @@ function FileControlSection({
           accept=".xlsx,.xls"
           onChange={onFileChange}
         />
-      </Button>
+      </CustomButton>
     </Box>
   );
 }

@@ -1,7 +1,8 @@
 import React from 'react';
 import { 
-  Box, Typography, Button, Stepper, Step, StepLabel, StepContent
+  Box, Typography, Stepper, Step, StepLabel, StepContent
 } from '@mui/material';
+import CustomButton from '../common/CustomButton';
 
 const WorkflowStepper = ({
   theme,
@@ -89,8 +90,8 @@ const WorkflowStepper = ({
               {activeStep === index && (
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-start', gap: 2 }}>
                   {/* Botón Atrás - siempre disponible para volver al paso anterior */}
-                  {index > 0 && (
-                    <Button
+                    {index > 0 && (
+                    <CustomButton
                       variant="outlined"
                       onClick={() => handleBackClick(index)}
                       disabled={index === 0}
@@ -128,12 +129,12 @@ const WorkflowStepper = ({
                       }}
                     >
                       Atrás
-                    </Button>
+                    </CustomButton>
                   )}
                   
                   {/* Botón Continuar - solo mostrar si no es el último paso */}
                   {index < steps.length - 1 && (
-                    <Button
+                    <CustomButton
                       variant="contained"
                       onClick={() => handleContinueClick(index)}
                       disabled={isStepDisabled(index)}
@@ -166,7 +167,7 @@ const WorkflowStepper = ({
                       }}
                     >
                       Continuar
-                    </Button>
+                    </CustomButton>
                   )}
                 </Box>
               )}

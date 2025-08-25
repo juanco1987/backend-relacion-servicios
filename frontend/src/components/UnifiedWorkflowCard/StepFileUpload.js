@@ -1,4 +1,5 @@
-import { Box, Button, TextField } from "@mui/material";
+import { Box, TextField } from "@mui/material";
+import CustomButton from '../common/CustomButton';
 import { motion } from "framer-motion";
 import { ANIMATIONS } from "../../config/animations";
 
@@ -74,7 +75,7 @@ const StepFileUpload = ({ archivoExcel, onFileChange, theme }) => {
               },
             }}
           />
-          <Button
+          <CustomButton
             variant="outlined"
             component="label"
             size="small"
@@ -118,7 +119,7 @@ const StepFileUpload = ({ archivoExcel, onFileChange, theme }) => {
                 onFileChange(e);
               }}
             />
-          </Button>
+          </CustomButton>
         </Box>
       </motion.div>
     </Box>

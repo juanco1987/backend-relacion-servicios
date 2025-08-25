@@ -1,7 +1,8 @@
 import React from 'react';
 import { 
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography
+  Dialog, DialogTitle, DialogContent, DialogActions, Typography
 } from '@mui/material';
+import CustomButton from '../common/CustomButton';
 
 const NewProcessDialog = ({
   theme,
@@ -36,34 +37,26 @@ const NewProcessDialog = ({
         borderTop: `1px solid ${theme.borde}`,
         p: 2
       }}>
-        <Button 
+        <CustomButton 
           onClick={onClose}
           variant='contained'
           sx={{ 
-            background: theme.bordeTerminal,
-            color: theme.textoPrincipal,
-            borderRadius: '25px',
-            '&:hover': {
-              backgroundColor: theme.fondoHover,
-            }
+            background: theme.terminalRojo,  // Más explícito que color="error"
+            color: theme.textoContraste
           }}
         >
           Cancelar
-        </Button>
-        <Button 
+        </CustomButton>
+        <CustomButton 
           onClick={onConfirm}
           variant="contained"
           sx={{
-            background: theme.primario,
-            borderRadius: '25px',
-            color: theme.textoContraste,
-            '&:hover': {
-              background: theme.primarioHover,
-            },
+            background: theme.gradientes?.botonProcesar,  // Más explícito que color="primary"
+            color: theme.textoContraste
           }}
         >
           Confirmar
-        </Button>
+        </CustomButton>
       </DialogActions>
     </Dialog>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Button } from '@mui/material';
+import { Box } from '@mui/material';
+import CustomButton from '../common/CustomButton';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 const NewProcessButton = ({ theme, processCompleted, onNewProcess }) => {
@@ -7,7 +8,7 @@ const NewProcessButton = ({ theme, processCompleted, onNewProcess }) => {
 
   return (
     <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-      <Button
+      <CustomButton
         variant="outlined"
         onClick={onNewProcess}
         startIcon={<RefreshIcon />}
@@ -43,7 +44,7 @@ const NewProcessButton = ({ theme, processCompleted, onNewProcess }) => {
         }}
       >
         Iniciar Nuevo Proceso
-      </Button>
+      </CustomButton>
     </Box>
   );
 };

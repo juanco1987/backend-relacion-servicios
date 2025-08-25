@@ -328,8 +328,33 @@ function App() {
               Has cambiado el rango de fechas. ¿Quieres mantener la nota escrita o empezar con una nota vacía?
             </DialogContent>
             <DialogActions>
-              <MuiButton onClick={handleClearNote} color="error">Limpiar nota</MuiButton>
-              <MuiButton onClick={handleKeepNote} color="primary" autoFocus>Mantener nota</MuiButton>
+              <MuiButton 
+                onClick={handleClearNote} 
+                sx={{ 
+                  background: theme.terminalRojo,
+                  color: theme.textoContraste,
+                  '&:hover': {
+                    background: theme.terminalRojo,
+                    opacity: 0.9
+                  }
+                }}
+              >
+                Limpiar nota
+              </MuiButton>
+              <MuiButton 
+                onClick={handleKeepNote} 
+                sx={{ 
+                  background: theme.gradientes.botonProcesar,
+                  color: theme.textoContraste,
+                  '&:hover': {
+                    background: theme.gradientes.botonProcesar,
+                    opacity: 0.9
+                  }
+                }}
+                autoFocus
+              >
+                Mantener nota
+              </MuiButton>
             </DialogActions>
           </Dialog>
         </Box>

@@ -1,7 +1,8 @@
 import React from 'react';
 import { 
-  Box, Typography, TextField, Button, Grid
+  Box, Typography, TextField, Grid
 } from '@mui/material';
+import CustomButton from '../common/CustomButton';
 
 const StepReportGeneration = ({
   theme,
@@ -109,13 +110,14 @@ const StepReportGeneration = ({
             Acciones
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-            <Button
+            <CustomButton
               variant="contained"
               disabled={!archivoExcel || !userHasConfiguredDates || processing}
               onClick={onProcessData}
               startIcon={<img src={processIcon} alt="Procesar" style={{ width: 16, height: 16 }} />}
               sx={{
                 background: theme.gradientes.botonProcesar,
+                color: theme.textoContraste,
                 color: theme.textoContraste,
                 borderRadius: '20px',
                 height: '40px',
@@ -144,9 +146,10 @@ const StepReportGeneration = ({
               }}
             >
               {processing ? 'Procesando...' : 'Procesar Datos'}
-            </Button>
-            <Button
+            </CustomButton>
+            <CustomButton
               variant="contained"
+              color="secondary"
               disabled={!archivoExcel || !userHasConfiguredDates || processing || !dataProcessed || !reportName.trim()}
               onClick={() => onGeneratePDF(reportName, workMode)}
               startIcon={<img src={pdfIcon} alt="PDF" style={{ width: 16, height: 16 }} />}
@@ -180,7 +183,7 @@ const StepReportGeneration = ({
               }}
             >
               Generar PDF
-            </Button>
+            </CustomButton>
           </Box>
         </Grid>
       </Grid>

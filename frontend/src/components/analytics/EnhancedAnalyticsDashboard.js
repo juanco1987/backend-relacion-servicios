@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
-import KpiCard from '../KpiCard'; // ✅ Importar el componente reutilizable
+import KpiCard from '../KpiCard';
+import CustomButton from '../common/CustomButton';
 import ServiciosPendientesEfectivo from './ServiciosPendientesEfectivo';
 import ServiciosPendientesCobrar from './ServiciosPendientesCobrar';
 
@@ -372,40 +373,32 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
         gap: '12px',
         flexWrap: 'wrap'
       }}>
-        <button
+        <CustomButton
           onClick={() => setSelectedView('pendientes-efectivo')}
-          style={{
-            padding: '12px 24px',
-            border: 'none',
-            borderRadius: '25px',
+          variant="contained"
+          sx={{
             background: selectedView === 'pendientes-efectivo' ? theme.textoAdvertencia : theme.fondoContenedor,
             color: selectedView === 'pendientes-efectivo' ? 'white' : theme.textoPrincipal,
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            boxShadow: theme.sombraComponente,
             border: `1px solid ${theme.bordePrincipal}`,
-            transition: 'all 0.3s ease'
+            padding: '12px 24px',
+            fontSize: '1rem'
           }}
         >
           💸 Servicios Pendientes en Efectivo
-        </button>
-        <button
+        </CustomButton>
+        <CustomButton
           onClick={() => setSelectedView('pendientes-cobrar')}
-          style={{
-            padding: '12px 24px',
-            border: 'none',
-            borderRadius: '25px',
+          variant="contained"
+          sx={{
             background: selectedView === 'pendientes-cobrar' ? theme.terminalRojo : theme.fondoContenedor,
             color: selectedView === 'pendientes-cobrar' ? 'white' : theme.textoPrincipal,
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            boxShadow: theme.sombraComponente,
             border: `1px solid ${theme.bordePrincipal}`,
-            transition: 'all 0.3s ease'
+            padding: '12px 24px',
+            fontSize: '1rem'
           }}
         >
           ⏳ Servicios Pendientes por Cobrar
-        </button>
+        </CustomButton>
       </div>
 
       {/* Contenido de pendientes */}
@@ -473,24 +466,20 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
           { key: 'servicios', label: '🔧 Servicios', icon: '🔧' },
           { key: 'pendientes', label: '📋 Pendientes', icon: '📋' }
         ].map((view) => (
-          <button
+          <CustomButton
             key={view.key}
             onClick={() => setSelectedView(view.key)}
-            style={{
-              padding: '12px 24px',
-              border: 'none',
-              borderRadius: '25px',
+            variant="contained"
+            sx={{
               background: selectedView === view.key ? theme.textoInfo : theme.fondoContenedor,
               color: selectedView === view.key ? 'white' : theme.textoPrincipal,
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              boxShadow: theme.sombraComponente,
               border: `1px solid ${theme.bordePrincipal}`,
-              transition: 'all 0.3s ease'
+              padding: '12px 24px',
+              fontSize: '1rem'
             }}
           >
             {view.label}
-          </button>
+          </CustomButton>
         ))}
       </div>
 

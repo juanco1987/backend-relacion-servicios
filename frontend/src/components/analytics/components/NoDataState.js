@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Typography, Button, Paper } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
+import CustomButton from '../../common/CustomButton';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../../context/ThemeContext';
 import { ANIMATIONS } from '../../../config/animations';
@@ -101,7 +102,7 @@ function NoDataState({ onFileChange }) {
             whileTap={{ scale: 0.98 }}
           >
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', justifyContent: 'center' }}>
-              <Button
+              <CustomButton
                 variant="outlined"
                 component="label"
                 size="large"
@@ -142,7 +143,7 @@ function NoDataState({ onFileChange }) {
                   accept=".xlsx,.xls"
                   onChange={onFileChange}
                 />
-              </Button>
+              </CustomButton>
             </Box>
           </motion.div>
         </Box>
