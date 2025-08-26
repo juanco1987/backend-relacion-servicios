@@ -3,7 +3,7 @@ import { Box, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
 import { formatearMesAnio } from '../../utils/dateFormatters';
-import KpiCard from '../KpiCard';
+import KpiCard from '../common/KpiCard';
 
 const ServiciosPendientesEfectivo = ({ file }) => {
   const { theme } = useTheme();

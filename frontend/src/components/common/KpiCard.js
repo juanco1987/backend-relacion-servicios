@@ -1,7 +1,7 @@
 // src/components/KpiCard.jsx
 import React from 'react';
 import { Box, Typography } from '@mui/material';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 
 function KpiCard({
   title,

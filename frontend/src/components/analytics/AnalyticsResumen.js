@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
-import KpiCard from '../KpiCard';
+import KpiCard from '../common/KpiCard';
 
 function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar: 0, total_pendientes_cobrar: 0 } }) {
   const { theme } = useTheme();

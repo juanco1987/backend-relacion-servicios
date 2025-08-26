@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { useTheme } from '../../../context/ThemeContext';
-import KpiCard from '../../KpiCard';
+import KpiCard from '../../common/KpiCard';
 
 function KpiSection({ kpi, pendientesSeleccionados }) {
   const { theme } = useTheme();
