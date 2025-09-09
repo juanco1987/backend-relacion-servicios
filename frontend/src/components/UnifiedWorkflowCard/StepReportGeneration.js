@@ -16,7 +16,7 @@ const StepReportGeneration = ({
   onReportNameChange,
   onProcessData,
   onGeneratePDF,
-  workMode
+  workMode,
 }) => {
   return (
     <Box sx={{ mt: 2 }}>

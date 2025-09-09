@@ -47,7 +47,6 @@ const UnifiedWorkflowCard = ({
   onProcessData,
   onGeneratePDF,
   processing,
-  animationState,
   workMode = 0
 }) => {
   const { theme } = useTheme();
@@ -59,7 +58,8 @@ const UnifiedWorkflowCard = ({
   const [shouldClearFile, setShouldClearFile] = useState(false);
   const prevActiveStepRef = useRef(0);
   const [pdfGenerated, setPdfGenerated] = useState(false);
-  
+  const [imagenes, setImagenes] = useState([]);
+
   // Estados para el selector de fechas
   const currentYear = dayjs().year();
   const [month, setMonth] = useState(dayjs().month());
@@ -83,10 +83,7 @@ const UnifiedWorkflowCard = ({
     }
   }, [fechaFin]);
 
-  const months = APP_MESSAGES.MONTHS_NAMES || [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-  ];
+  
 
   // Generar nombre por defecto
   const generateDefaultName = () => {
@@ -306,6 +303,8 @@ const UnifiedWorkflowCard = ({
           fromDate={fromDate}
           toDate={toDate}
           notas={notas}
+          imagenes={imagenes}
+          onImageChange={setImagenes}
           onNoteChange={onNoteChange}
           onFromDateChange={handleFromDateChange}
           onToDateChange={handleToDateChange}

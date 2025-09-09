@@ -4,6 +4,7 @@ import { Box, Grid, Typography, TextField } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import CustomButton from '../common/CustomButton';
 
 const StepParameters = ({
   theme,
@@ -12,6 +13,8 @@ const StepParameters = ({
   fromDate,
   toDate,
   notas,
+  imagenes,
+  onImageChange,
   onNoteChange,
   onFromDateChange,
   onToDateChange,
@@ -215,6 +218,92 @@ const StepParameters = ({
             }}
           />
         </Grid>
+        <Grid item xs={12} md={6}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Typography variant="subtitle2" sx={{ color: theme.textoSecundario }}>
+              Imágenes para el reporte
+            </Typography>
+          </Box>
+
+          <CustomButton
+            variant="contained"
+            component="label"
+            sx={{
+              borderRadius: '16px',
+              boxShadow: theme.sombraContenedor,
+            }}
+          >
+            Subir imágenes
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              multiple
+              onChange={(e) => {
+                const files = Array.from(e.target.files);
+                files.forEach((file) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    if (onImageChange) {
+                      onImageChange((prev) => [...prev, reader.result]); // agrega sin borrar las otras
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                });
+              }}
+            />
+          </CustomButton>
+
+          {imagenes && imagenes.length > 0 && (
+            <Box
+              mt={2}
+              sx={{
+                display: 'flex',
+                gap: 2,
+                flexWrap: 'wrap',
+              }}
+            >
+              {imagenes.map((img, idx) => (
+                <Box key={idx} sx={{ position: 'relative' }}>
+                  <img
+                    src={img}
+                    alt={`preview-${idx}`}
+                    style={{
+                      maxWidth: '100px',
+                      maxHeight: '100px',
+                      borderRadius: '12px',
+                      boxShadow: theme.sombraContenedor,
+                      objectFit: 'cover',
+                    }}
+                  />
+                  {/* Botón eliminar */}
+                  <Box
+                    component="span"
+                    onClick={() => {
+                      onImageChange((prev) => prev.filter((_, i) => i !== idx));
+                    }}
+                    sx={{
+                      position: 'absolute',
+                      top: -8,
+                      right: -8,
+                      background: 'rgba(0,0,0,0.6)',
+                      color: '#fff',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      padding: '4px 6px',
+                      lineHeight: 1,
+                      userSelect: 'none',
+                    }}
+                  >
+                    ✕
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Grid>
+
       </Grid>
     </Box>
   );
