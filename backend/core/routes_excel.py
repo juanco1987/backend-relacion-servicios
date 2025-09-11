@@ -133,7 +133,10 @@ def procesar_excel():
             print(f"No se pudo borrar el archivo temporal: {e}")
 
         if df is None:
-            return jsonify({'error': 'No se pudo procesar el archivo', 'messages': messages}), 400
+            return jsonify({'error': 'No se pudo procesar el archivo', 'messages': messages, 'empty_range': True}), 400
+        
+        if df.empty:
+            return jsonify({'error': 'No se encontraron servicios pendientes', 'logs': messages, 'filter_empty': True}), 200
         # Convertir DataFrame a JSON
         df = df.replace({np.nan: None})
         data = df.to_dict(orient='records')
@@ -180,7 +183,10 @@ def relacion_servicios():
             print(f"No se pudo borrar el archivo temporal: {e}")
 
         if df is None or df.empty:
-            return jsonify({'error': 'No se encontraron servicios', 'logs': logs}), 200
+            return jsonify({'error': 'No se encontraron servicios', 'logs': logs, 'empty_range': True}), 200
+        
+        if df.empty:
+            return jsonify({'error': 'No se encontraron servicios pendientes', 'logs': logs, 'filter_empty': True}), 200
         df = df.replace({np.nan: None})
         data = df.to_dict(orient='records')
         return jsonify({'data': data, 'logs': logs})
@@ -226,7 +232,9 @@ def pdf_pendientes():
             print(f"No se pudo borrar el archivo temporal: {e}")
 
         if df is None or df.empty:
-            return jsonify({'error': 'No se encontraron servicios pendientes', 'logs': messages}), 200
+            return jsonify({'error': 'No se encontraron servicios pendientes', 'logs': messages, 'empty_range': True}), 200
+        
+        
 
         # Generar el PDF con nombre personalizado o automático
         if nombre_pdf and nombre_pdf.strip():
@@ -456,7 +464,7 @@ def pdf_relacion_servicios():
             print(f"No se pudo borrar el archivo temporal: {e}")
 
         if df is None or df.empty:
-            return jsonify({'error': 'No se encontraron servicios', 'logs': logs}), 200
+            return jsonify({'error': 'No se encontraron servicios', 'logs': logs, 'empty_range': True}), 200
 
         # Generar el PDF con nombre personalizado o automático
         if nombre_pdf and nombre_pdf.strip():
@@ -554,7 +562,8 @@ def analytics_pendientes_efectivo():
             return jsonify({
                 'resumen': {},
                 'detalle': [],
-                'success': True
+                'success': True,
+                'filter_empty': True,
             })
 
         # Calcular días sin relacionar (diferencia entre fecha actual y fecha del servicio)
@@ -708,7 +717,8 @@ def analytics_pendientes_cobrar():
             return jsonify({
                 'resumen': {},
                 'detalle': [],
-                'success': True
+                'success': True,
+                'filter_empty': True,
             })
 
         # Calcular días de retraso

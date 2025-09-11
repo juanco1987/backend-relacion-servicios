@@ -1,16 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Box, Typography, TextField, Button, Grid, Stepper, Step, StepLabel, 
-  StepContent, Paper, IconButton, Chip, Divider, MenuItem, Select,
-  FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, Grow
-} from '@mui/material';
+import {  Paper, } from '@mui/material';
 
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { ANIMATIONS } from '../../config/animations';
-import { APP_MESSAGES } from '../../config/appConfig';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
 import WorkflowHeader from './WorkflowHeader';
@@ -31,7 +23,6 @@ import planIcon from '../../assets/play.png';
 import actionIcon from '../../assets/flechas_circulo.png';
 import pdfIcon from '../../assets/icono_pdf.png';
 import processIcon from '../../assets/Engrenages.png';
-import RefreshIcon from '@mui/icons-material/Refresh';
 
 dayjs.locale('es');
 
@@ -59,6 +50,7 @@ const UnifiedWorkflowCard = ({
   const prevActiveStepRef = useRef(0);
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [imagenes, setImagenes] = useState([]);
+  const [hasData, setHasData] = useState(false);
 
   // Estados para el selector de fechas
   const currentYear = dayjs().year();
@@ -150,22 +142,94 @@ const UnifiedWorkflowCard = ({
     setShowNewProcessDialog(false);
   };
 
-  // Función personalizada para manejar el procesamiento
-  const handleProcessDataClick = async () => {
-    if (onProcessData) {
-      const result = await onProcessData();
-      
-      // Solo establecer dataProcessed como true si el procesamiento fue exitoso
-      if (result && result.success) {
-        console.log('Procesamiento exitoso, habilitando campo de nombre del PDF');
-        setDataProcessed(true);
-      } else {
-        console.log('Procesamiento falló, manteniendo estado actual del botón de avance');
-        // NO cambiar dataProcessed, mantener el estado actual
-        // Esto mantiene el botón de avance del stepper en su estado original
-      }
+  // 🚀 Función personalizada para manejar el procesamiento con validaciones avanzadas
+const handleProcessDataClick = async () => {
+  try {
+    if (!archivoExcel || !fromDate || !toDate) {
+      alert("Debes seleccionar un archivo y un rango de fechas.");
+      setDataProcessed(false);
+      return;
     }
-  };
+
+    // Validar fechas
+    if (!fromDate.isValid || !fromDate.isValid()) {
+      alert("Error: Fecha de inicio inválida");
+      setDataProcessed(false);
+      return;
+    }
+    if (!toDate.isValid || !toDate.isValid()) {
+      alert("Error: Fecha de fin inválida");
+      setDataProcessed(false);
+      return;
+    }
+
+    console.log("Enviando al backend:", {
+      archivo: archivoExcel?.name,
+      fechaInicio: fromDate.format("YYYY-MM-DD"),
+      fechaFin: toDate.format("YYYY-MM-DD"),
+      workMode,
+    });
+
+    const formData = new FormData();
+    formData.append("file", archivoExcel);
+    formData.append("fecha_inicio", fromDate.format("YYYY-MM-DD"));
+    formData.append("fecha_fin", toDate.format("YYYY-MM-DD"));
+
+    const url =
+      workMode === 0
+        ? "http://localhost:5000/api/relacion_servicios"
+        : "http://localhost:5000/api/procesar_excel";
+
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json();
+    console.log("Respuesta del backend:", result);
+
+    // ✅ Validaciones avanzadas según flags del backend
+    if (result.error) {
+      if (result.empty_range) {
+        alert("No se encontraron datos en el rango de fechas seleccionado.");
+      } else if (result.filter_empty) {
+        const customMessage =
+          workMode === 0
+            ? "No se encontraron servicios en efectivo para relacionar en el rango de fechas."
+            : "No se encontraron servicios pendientes por cobrar en el rango de fechas.";
+        alert(customMessage);
+      } else {
+        alert(result.error || "Error al procesar los datos.");
+      }
+      setDataProcessed(false);
+      return;
+    }
+
+    // Caso: data vacía explícita (seguridad extra)
+    if (!result.data || result.data.length === 0) {
+      alert("No se encontraron datos en el rango de fechas seleccionado.");
+      setDataProcessed(false);
+      return;
+    }
+
+    // ✅ Si llegamos aquí, hay datos válidos
+    console.log("Procesamiento exitoso, habilitando campo de nombre del PDF");
+    setDataProcessed(true);
+
+  } catch (error) {
+    console.error("Error en handleProcessDataClick:", error);
+
+    const customMessage =
+      workMode === 0
+        ? "Error al procesar la relación de servicios en el backend."
+        : "Error al procesar servicios pendientes en el backend.";
+
+    alert(customMessage);
+    setDataProcessed(false);
+  }
+};
+
+
 
   // Resetear dataProcessed cuando cambien los archivos o fechas
   useEffect(() => {
@@ -293,7 +357,7 @@ const UnifiedWorkflowCard = ({
     },
     {
       label: 'Configurar parámetros',
-      description: 'Define el período de tiempo y agrega notas al reporte',
+      description: 'Define el período de tiempo, agrega notas e imágenes de soporte de pago al reporte',
       icon: engraneIcon,
       content: (
         <StepParameters
