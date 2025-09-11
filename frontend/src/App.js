@@ -24,6 +24,7 @@ function App() {
   const [fechaInicio, setFechaInicio] = useState(dayjs().startOf('month'));
   const [fechaFin, setFechaFin] = useState(dayjs().endOf('month'));
   const [note, setNote] = useState('');
+  const [imagenes, setImagenes] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [animationState, setAnimationState] = useState('idle');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -204,6 +205,7 @@ function App() {
           fechaInicio: fechaInicio.format('YYYY-MM-DD'),
           fechaFin: fechaFin.format('YYYY-MM-DD'),
           notas: note,
+          imagenes: imagenes,
           nombrePDF: finalPdfName,
         });
       } else {
@@ -213,6 +215,7 @@ function App() {
           fechaInicio: fechaInicio.format('YYYY-MM-DD'),
           fechaFin: fechaFin.format('YYYY-MM-DD'),
           notas: note,
+          imagenes: imagenes,
           nombrePDF: finalPdfName,
         });
       }
@@ -308,11 +311,13 @@ function App() {
               fechaInicio={fechaInicio}
               fechaFin={fechaFin}
               note={note}
+              imagenes={imagenes}
               onFileChange={handleFileChange}
               onAnalyticsFileChange={handleAnalyticsFileChange}
               onFechaInicioChange={handleFechaInicioChange}
               onFechaFinChange={handleFechaFinChange}
               onNoteChange={handleNoteChange}
+              onImageChange={setImagenes}
               onProcessData={handleProcessData}
               onGeneratePDF={handleGeneratePDF}
               processing={processing}

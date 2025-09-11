@@ -441,6 +441,13 @@ def pdf_relacion_servicios():
         fecha_fin_str = request.form.get('fecha_fin', '2024-12-31')
         notas = request.form.get('notas', '')
         nombre_pdf = request.form.get('nombre_pdf', '')
+        imagenes_json = request.form.get('imagenes', '[]')
+        import json
+        try:
+            imagenes = json.loads(imagenes_json)
+        except Exception:
+                imagenes = []
+
         from datetime import datetime
         try:
             fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
@@ -476,7 +483,7 @@ def pdf_relacion_servicios():
             # Generar nombre automático con fecha y hora
             nombre_pdf_final = f"Relacion_Servicios_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
         
-        exito, mensaje = pdf_generator.generar_pdf_modular(df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback)
+        exito, mensaje = pdf_generator.generar_pdf_modular(df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback, imagenes=imagenes)
         if not exito:
             return jsonify({'error': mensaje, 'logs': logs}), 500
 

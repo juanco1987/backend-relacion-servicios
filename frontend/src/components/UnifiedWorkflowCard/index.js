@@ -31,10 +31,12 @@ const UnifiedWorkflowCard = ({
   fechaInicio,
   fechaFin,
   notas,
+  imagenes,
   onFileChange,
   onFechaInicioChange,
   onFechaFinChange,
   onNoteChange,
+  onImageChange,
   onProcessData,
   onGeneratePDF,
   processing,
@@ -49,7 +51,6 @@ const UnifiedWorkflowCard = ({
   const [shouldClearFile, setShouldClearFile] = useState(false);
   const prevActiveStepRef = useRef(0);
   const [pdfGenerated, setPdfGenerated] = useState(false);
-  const [imagenes, setImagenes] = useState([]);
   const [hasData, setHasData] = useState(false);
 
   // Estados para el selector de fechas
@@ -367,9 +368,9 @@ const handleProcessDataClick = async () => {
           fromDate={fromDate}
           toDate={toDate}
           notas={notas}
-          imagenes={imagenes}
-          onImageChange={setImagenes}
           onNoteChange={onNoteChange}
+          imagenes={imagenes}      
+          onImageChange={onImageChange}          
           onFromDateChange={handleFromDateChange}
           onToDateChange={handleToDateChange}
         />

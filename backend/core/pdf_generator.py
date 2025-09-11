@@ -3,6 +3,8 @@ import datetime
 from fpdf import FPDF
 import pandas as pd
 from utils.date_utils import  fecha_larga
+import base64
+import io
 
 # === CLASE PARA PDF (ORIGINAL RESTAURADO) ===
 class PDF(FPDF):
@@ -30,7 +32,7 @@ class PDF(FPDF):
         self.set_font("Helvetica", '', 8)
         self.set_text_color(0, 0, 0)
 
-    def tabla_servicios(self, df, notas=None, fecha_inicio_analisis=None, fecha_fin_analisis=None):
+    def tabla_servicios(self, df, notas=None, fecha_inicio_analisis=None, fecha_fin_analisis=None, imagenes=None):
         # Ajuste de anchos de columna
         ancho_fecha = 22
         ancho_direccion = 50
@@ -337,14 +339,146 @@ class PDF(FPDF):
         else:
             self.cell(0, 6, "Período analizado: Sin datos", 0, 1)
 
-        if notas and notas.strip():
+        
+
+        if imagenes and len(imagenes) > 0:
+            print(f">>> Imagenes recibidas en PDF: {len(imagenes)}")  # DEBUG
+            
+            # Mostrar notas si existen
+            if notas and notas.strip():
+                self.ln(8)
+                self.set_font("Helvetica", 'I', 10)
+                self.set_text_color(50, 50, 50)
+                self.multi_cell(0, 8, f"NOTAS:\n{notas.strip()}")
+                self.set_text_color(0, 0, 0)
+
+            # CONFIGURACIÓN PROFESIONAL FIJA
+            img_width = 90   # Ancho fijo
+            img_height = 70  # Alto fijo  
+            margin_x = 15    # Margen horizontal entre imágenes
+            margin_y = 15    # Margen vertical entre filas
+            imagenes_por_fila = 2  # Máximo 2 por fila para que se vean bien
+            espacio_etiqueta = 12   # Espacio para etiqueta debajo de cada imagen
+
+            # Calcular dimensiones totales por fila
+            ancho_fila = (img_width * imagenes_por_fila) + (margin_x * (imagenes_por_fila - 1))
+            alto_por_fila = img_height + espacio_etiqueta
+
+            # Verificar si cabe al menos una fila completa
+            espacio_disponible_ancho = self.w - 40  # Márgenes laterales
+            espacio_disponible_alto = self.h - self.get_y() - 20  # Margen inferior
+
+            print(f"🔍 Total imágenes: {len(imagenes)}")
+            print(f"🔍 Imágenes por fila: {imagenes_por_fila}")
+            print(f"🔍 Filas necesarias: {(len(imagenes) + imagenes_por_fila - 1) // imagenes_por_fila}")
+
+            # Si no cabe ni una fila, crear nueva página
+            if (espacio_disponible_ancho < ancho_fila or 
+                espacio_disponible_alto < alto_por_fila + 30):  # 30 para título
+                print("⚠️ No hay suficiente espacio, creando nueva página...")
+                self.add_page()
+
+            # Agregar título de la sección
+            self.set_font("Helvetica", 'B', 12)
+            self.cell(0, 8, "SOPORTE DE PAGO DE LOS SERVICIOS", ln=True, align="L")
+            self.ln(3)
+
+            import tempfile, os, base64
+
+            # Procesar TODAS las imágenes
+            fila_actual = 0
+            y_inicial_fila = self.get_y()
+
+            for idx, img_b64 in enumerate(imagenes):
+                try:
+                    print(f"📸 Procesando imagen {idx + 1}/{len(imagenes)}")
+
+                    # Calcular en qué fila y columna va esta imagen
+                    fila = idx // imagenes_por_fila
+                    columna = idx % imagenes_por_fila
+
+                    # Si empezamos una nueva fila, verificar si cabe
+                    if fila > fila_actual:
+                        # Verificar si hay espacio para otra fila
+                        espacio_restante = self.h - self.get_y() - 20
+                        if espacio_restante < alto_por_fila + margin_y:
+                            print(f"⚠️ No hay espacio para fila {fila + 1}, creando nueva página...")
+                            self.add_page()
+                            # Redibujar título en nueva página
+                            self.set_font("Helvetica", 'B', 12)
+                            self.cell(0, 8, "SOPORTE DE PAGO DE LOS SERVICIOS (Continuación)", ln=True, align="L")
+                            self.ln(3)
+                            y_inicial_fila = self.get_y()
+                            fila_actual = fila
+                        else:
+                            # Mover a la siguiente fila en la misma página
+                            y_inicial_fila = self.get_y() + margin_y
+                            fila_actual = fila
+
+                    # Calcular posición específica de esta imagen
+                    start_x = 20  # Margen izquierdo fijo
+                    x_pos = start_x + (columna * (img_width + margin_x))
+                    y_pos = y_inicial_fila + ((fila - fila_actual) * (alto_por_fila + margin_y))
+
+                    print(f"📍 Imagen {idx + 1}: Fila {fila + 1}, Columna {columna + 1} → Pos ({x_pos}, {y_pos})")
+
+                    # Limpiar y decodificar imagen
+                    if "," in img_b64:
+                        img_b64 = img_b64.split(",")[1]
+
+                    img_bytes = base64.b64decode(img_b64)
+
+                    # Crear archivo temporal
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
+                        tmp_file.write(img_bytes)
+                        tmp_path = tmp_file.name
+
+                    # Insertar imagen
+                    self.image(tmp_path, x=x_pos, y=y_pos, w=img_width, h=img_height)
+
+                    # Agregar borde profesional
+                    self.set_draw_color(150, 150, 150)
+                    self.set_line_width(0.3)
+                    self.rect(x_pos, y_pos, img_width, img_height)
+
+                    # Agregar etiqueta
+                    self.set_xy(x_pos, y_pos + img_height + 2)
+                    self.set_font("Helvetica", '', 9)
+                    self.set_text_color(80, 80, 80)
+                    self.cell(img_width, 4, f"Soporte {idx + 1}", align='C')
+
+                    # Si es la última imagen de la fila, actualizar posición Y
+                    if columna == imagenes_por_fila - 1 or idx == len(imagenes) - 1:
+                        nueva_y = y_pos + alto_por_fila
+                        if nueva_y > self.get_y():
+                            self.set_y(nueva_y)
+
+                    # Limpiar archivo temporal
+                    os.remove(tmp_path)
+                    print(f"✅ Imagen {idx + 1} insertada correctamente")
+
+                except Exception as e:
+                    print(f"❌ Error con imagen {idx + 1}: {e}")
+                    continue
+
+            # Restablecer configuración y agregar espacio final
+            self.set_text_color(0, 0, 0)
+            self.ln(10)
+
+            print(f"🏁 Sección de imágenes completada. Total procesadas: {len(imagenes)}")
+
+        # Si NO hay imágenes pero sí hay notas
+        elif notas and notas.strip():
             self.ln(8)
             self.set_font("Helvetica", 'I', 10)
             self.set_text_color(50, 50, 50)
             self.multi_cell(0, 8, f"NOTAS:\n{notas.strip()}")
             self.set_text_color(0, 0, 0)
 
-def generar_pdf(df_servicios, ruta_pdf, notas="", fecha_inicio_analisis=None, fecha_fin_analisis=None):
+
+        
+
+def generar_pdf(df_servicios, ruta_pdf, notas="", fecha_inicio_analisis=None, fecha_fin_analisis=None, imagenes=None):
     """
     Genera un PDF con los datos de servicios procesados
     """
@@ -371,7 +505,7 @@ def generar_pdf(df_servicios, ruta_pdf, notas="", fecha_inicio_analisis=None, fe
         pdf.add_page()
 
         # Agregar tabla de servicios
-        pdf.tabla_servicios(df_servicios, notas, fecha_inicio_analisis, fecha_fin_analisis)
+        pdf.tabla_servicios(df_servicios, notas, fecha_inicio_analisis, fecha_fin_analisis, imagenes=imagenes)
 
         # Generar archivo
         pdf.output(ruta_pdf)
@@ -382,7 +516,7 @@ def generar_pdf(df_servicios, ruta_pdf, notas="", fecha_inicio_analisis=None, fe
         return False, f"Error al generar el PDF: {str(e)}"
 
 
-def generar_pdf_modular(df, nombre_pdf, notas, fecha_inicio_analisis=None, fecha_fin_analisis=None, log_callback=None):
+def generar_pdf_modular(df, nombre_pdf, notas, fecha_inicio_analisis=None, fecha_fin_analisis=None, log_callback=None, imagenes=None):
     try:
         desktop = os.path.expanduser("~/OneDrive/Escritorio")
         carpeta_pdf = os.path.join(desktop, "pdf-relacion-servicios-en-efectivo")
@@ -391,7 +525,7 @@ def generar_pdf_modular(df, nombre_pdf, notas, fecha_inicio_analisis=None, fecha
             log_callback(f"📄 Intentando guardar PDF en: {ruta_pdf}", "info")
 
         # Llama a la función real que crea el PDF
-        exito, mensaje = generar_pdf(df, ruta_pdf, notas, fecha_inicio_analisis, fecha_fin_analisis)
+        exito, mensaje = generar_pdf(df, ruta_pdf, notas, fecha_inicio_analisis, fecha_fin_analisis, imagenes=imagenes)
 
         if log_callback:
             if exito:

@@ -14,11 +14,13 @@ function ContentArea({
   fechaInicio,
   fechaFin,
   note,
+  imagenes,
   onFileChange,
   onAnalyticsFileChange,
   onFechaInicioChange,
   onFechaFinChange,
   onNoteChange,
+  onImageChange,
   onProcessData,
   onGeneratePDF,
   processing,
@@ -80,10 +82,12 @@ function ContentArea({
             fechaInicio={fechaInicio}
             fechaFin={fechaFin}
             notas={note}
+            imagenes={imagenes}
             onFileChange={onFileChange}
             onFechaInicioChange={onFechaInicioChange}
             onFechaFinChange={onFechaFinChange}
             onNoteChange={onNoteChange}
+            onImageChange={onImageChange}
             onProcessData={onProcessData}
             onGeneratePDF={onGeneratePDF}
             processing={processing}
