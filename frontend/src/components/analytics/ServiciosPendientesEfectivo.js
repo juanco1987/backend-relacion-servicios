@@ -11,6 +11,7 @@ const ServiciosPendientesEfectivo = ({ file }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [mesSeleccionado, setMesSeleccionado] = useState('Total Global');
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     if (!file) return;
@@ -23,7 +24,7 @@ const ServiciosPendientesEfectivo = ({ file }) => {
       formData.append('file', file);
 
       try {
-        const response = await fetch('http://localhost:5000/api/analytics_pendientes_efectivo', {
+        const response = await fetch(`${API_BASE}/api/analytics_pendientes_efectivo`, {
           method: 'POST',
           body: formData,
         });

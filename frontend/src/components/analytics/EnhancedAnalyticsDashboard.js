@@ -6,12 +6,13 @@ import CustomButton from '../common/CustomButton';
 import ServiciosPendientesEfectivo from './ServiciosPendientesEfectivo';
 import ServiciosPendientesCobrar from './ServiciosPendientesCobrar';
 
-const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
+  const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
   const { theme } = useTheme();
   const [selectedView, setSelectedView] = useState('general');
   const [selectedMonth, setSelectedMonth] = useState('Total Global');
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   // Colores del tema
   const COLORS = [theme.textoInfo, theme.textoAdvertencia, theme.terminalRojo, theme.terminalVerde, theme.terminalAmarillo];
@@ -25,7 +26,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
         const formData = new FormData();
         formData.append('file', file);
         
-        const response = await fetch('http://localhost:5000/api/analytics', {
+        const response = await fetch(`${API_BASE}/api/analytics`, {
           method: 'POST',
           body: formData,
         });

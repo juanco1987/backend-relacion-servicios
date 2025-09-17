@@ -9,6 +9,8 @@ function useAnalyticsData(analyticsFile, excelData) {
     pendientes_por_mes: {}
   });
 
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
   useEffect(() => {
     // Usar el archivo específico de Analytics si está disponible, sino usar excelData como fallback
     const fileToUse = analyticsFile || excelData;
@@ -28,8 +30,8 @@ function useAnalyticsData(analyticsFile, excelData) {
       try {
         const formData = new FormData();
         formData.append('file', fileToUse);
-        
-        const response = await fetch('http://localhost:5000/api/analytics', {
+
+        const response = await fetch(`${API_BASE}/api/analytics`, {
           method: 'POST',
           body: formData,
         });
