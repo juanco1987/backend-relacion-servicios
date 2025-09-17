@@ -110,14 +110,16 @@ function App() {
         
         // Determinar el endpoint basado en la ruta actual
         let endpoint = '';
+        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
         if (currentRoute === '/dashboard' || currentRoute === '/servicios-efectivo') {
-          endpoint = 'http://localhost:5000/api/relacion_servicios';
+          endpoint = `${API_BASE}/api/relacion_servicios`;
         } else if (currentRoute === '/pendientes-pago') {
-          endpoint = 'http://localhost:5000/api/procesar_excel';
+          endpoint = `${API_BASE}/api/procesar_excel`;
         } else {
           // Fallback al endpoint de validación básica
-          endpoint = 'http://localhost:5000/api/process';
-        }
+          endpoint = `${API_BASE}/api/process`;
+  }
         
         // Intentar conectar al backend
         const response = await fetch(endpoint, {

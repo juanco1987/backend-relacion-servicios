@@ -179,10 +179,11 @@ const UnifiedWorkflowCard = ({
       formData.append("fecha_inicio", fromDate.format("YYYY-MM-DD"));
       formData.append("fecha_fin", toDate.format("YYYY-MM-DD"));
 
+      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
       const url =
         workMode === 0
-           ? "https://backend-relacion-servicios.onrender.com/api/relacion_servicios"
-           : "https://backend-relacion-servicios.onrender.com/api/procesar_excel";
+          ? `${API_BASE}/api/relacion_servicios`
+          : `${API_BASE}/api/procesar_excel`;
 
       const response = await fetch(url, {
         method: "POST",
