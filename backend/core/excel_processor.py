@@ -8,20 +8,35 @@ def extraer_servicios(excel_path, fecha_inicio, fecha_fin, log_callback=None):
     1. FORMA DE PAGO = "EFECTIVO"
     2. ESTADO DEL SERVICIO = VACÍO
     3. En el rango de fechas especificado
+    
+    Returns:
+        tuple: (DataFrame, dict) donde dict contiene información sobre el proceso:
+            - 'has_data_in_range': bool - Si hay datos en el rango de fechas
+            - 'has_filtered_data': bool - Si hay datos que cumplen el filtro
+            - 'total_in_range': int - Total de registros en el rango de fechas
+            - 'total_filtered': int - Total de registros que pasan el filtro
     """
     if log_callback is None:
         log_callback = print
 
     log_callback("Procesando datos del archivo Excel...")
+    
+    # Información de seguimiento
+    info = {
+        'has_data_in_range': False,
+        'has_filtered_data': False, 
+        'total_in_range': 0,
+        'total_filtered': 0
+    }
 
     try:
         xls = pd.ExcelFile(excel_path)
     except Exception as e:
         log_callback(f"Error al abrir el archivo Excel: {str(e)}", 'error')
-        return pd.DataFrame()
+        return pd.DataFrame(), info
 
     frames = []
-
+    total_registros_en_rango = 0
 
     for hoja in xls.sheet_names:
         try:
@@ -48,8 +63,20 @@ def extraer_servicios(excel_path, fecha_inicio, fecha_fin, log_callback=None):
             # Filtrar filas con fecha no nula
             df = df[df[col_fecha].notnull()]
             df[col_fecha] = pd.to_datetime(df[col_fecha], errors='coerce', dayfirst=True)
-            df = df[df[col_fecha].between(fecha_inicio, fecha_fin)]
-            log_callback(f"Registros después de filtrar por fecha: {len(df)}")
+            
+            # ✅ PUNTO CLAVE: Contar datos en el rango de fechas
+            df_en_rango = df[df[col_fecha].between(fecha_inicio, fecha_fin)]
+            registros_en_rango = len(df_en_rango)
+            total_registros_en_rango += registros_en_rango
+            
+            log_callback(f"Registros después de filtrar por fecha: {registros_en_rango}")
+            
+            if registros_en_rango == 0:
+                log_callback(f"No hay datos en el rango de fechas en hoja {hoja}. Saltando...")
+                continue
+            
+            # Si llegamos aquí, hay datos en el rango
+            df = df_en_rango
 
             # Buscar exactamente la columna FORMA DE PAGO (ignorando espacios al final)
             columna_pago = None
@@ -217,6 +244,16 @@ def extraer_servicios(excel_path, fecha_inicio, fecha_fin, log_callback=None):
             log_callback(f"Error al procesar hoja {hoja}: {str(e)}", 'error')
             continue
 
+    # ✅ ACTUALIZAR INFORMACIÓN DE SEGUIMIENTO
+    info['total_in_range'] = total_registros_en_rango
+    info['has_data_in_range'] = total_registros_en_rango > 0
+    
     result = pd.concat(frames) if frames else pd.DataFrame()
-    log_callback(f"\nSe encontraron {len(result)} servicios en total.", 'success')
-    return result 
+    info['total_filtered'] = len(result)
+    info['has_filtered_data'] = len(result) > 0
+    
+    log_callback(f"\nResumen del procesamiento:", 'info')
+    log_callback(f"- Registros en rango de fechas: {info['total_in_range']}", 'info')
+    log_callback(f"- Registros que cumplen filtro: {info['total_filtered']}", 'info')
+    
+    return result, info

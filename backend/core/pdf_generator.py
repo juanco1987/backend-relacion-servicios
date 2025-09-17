@@ -353,8 +353,8 @@ class PDF(FPDF):
                 self.set_text_color(0, 0, 0)
 
             # CONFIGURACIÓN PROFESIONAL FIJA
-            img_width = 90   # Ancho fijo
-            img_height = 70  # Alto fijo  
+            img_width = 80   # Ancho fijo
+            img_height = 105  # Alto fijo  
             margin_x = 15    # Margen horizontal entre imágenes
             margin_y = 15    # Margen vertical entre filas
             imagenes_por_fila = 2  # Máximo 2 por fila para que se vean bien
@@ -384,10 +384,71 @@ class PDF(FPDF):
             self.ln(3)
 
             import tempfile, os, base64
+            from PIL import Image
+            import io
+
+            # 🚀 FUNCIÓN PARA CONVERTIR CUALQUIER IMAGEN A PNG VÁLIDO
+            def convertir_a_png_valido(img_b64):
+                """Convierte cualquier imagen base64 a PNG válido para FPDF"""
+                try:
+                    # Limpiar base64
+                    if "," in img_b64:
+                        header, img_data = img_b64.split(",", 1)
+                        print(f"🔍 Header detectado: {header}")
+                    else:
+                        img_data = img_b64
+                    
+                    # Decodificar bytes
+                    img_bytes = base64.b64decode(img_data)
+                    
+                    # Detectar formato real por los primeros bytes
+                    if img_bytes.startswith(b'\xff\xd8\xff'):
+                        print("📱 Formato detectado: JPEG")
+                    elif img_bytes.startswith(b'\x89PNG'):
+                        print("📱 Formato detectado: PNG")
+                    elif img_bytes.startswith(b'RIFF') and b'WEBP' in img_bytes[:20]:
+                        print("📱 Formato detectado: WebP")
+                    else:
+                        print("❓ Formato desconocido, intentando procesar...")
+                    
+                    # Abrir con PIL (detecta automáticamente el formato)
+                    img = Image.open(io.BytesIO(img_bytes))
+                    print(f"✅ PIL detectó: {img.format}, Modo: {img.mode}, Tamaño: {img.size}")
+                    
+                    # Convertir a RGB si tiene canal alpha o es modo palette
+                    if img.mode in ('RGBA', 'LA', 'P'):
+                        print("🔄 Convirtiendo imagen con transparencia a RGB...")
+                        # Crear fondo blanco
+                        rgb_img = Image.new('RGB', img.size, (255, 255, 255)) # type: ignore
+                        
+                        if img.mode == 'P':
+                            img = img.convert('RGBA')
+                        
+                        # Pegar sobre fondo blanco manejando transparencia
+                        if img.mode in ('RGBA', 'LA'):
+                            rgb_img.paste(img, mask=img.split()[-1])
+                        else:
+                            rgb_img.paste(img)
+                        
+                        img = rgb_img
+                    elif img.mode != 'RGB':
+                        print(f"🔄 Convirtiendo de {img.mode} a RGB...")
+                        img = img.convert('RGB')
+                    
+                    # Guardar como PNG válido
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
+                        img.save(temp_file, 'PNG', quality=95)
+                        print(f"✅ Imagen convertida a PNG válido: {temp_file.name}")
+                        return temp_file.name
+                        
+                except Exception as e:
+                    print(f"❌ Error al convertir imagen: {e}")
+                    return None
 
             # Procesar TODAS las imágenes
             fila_actual = 0
             y_inicial_fila = self.get_y()
+            archivos_temporales = []  # Lista para limpiar al final
 
             for idx, img_b64 in enumerate(imagenes):
                 try:
@@ -422,16 +483,14 @@ class PDF(FPDF):
 
                     print(f"📍 Imagen {idx + 1}: Fila {fila + 1}, Columna {columna + 1} → Pos ({x_pos}, {y_pos})")
 
-                    # Limpiar y decodificar imagen
-                    if "," in img_b64:
-                        img_b64 = img_b64.split(",")[1]
-
-                    img_bytes = base64.b64decode(img_b64)
-
-                    # Crear archivo temporal
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
-                        tmp_file.write(img_bytes)
-                        tmp_path = tmp_file.name
+                    # 🚀 CONVERTIR IMAGEN A PNG VÁLIDO
+                    tmp_path = convertir_a_png_valido(img_b64)
+                    
+                    if not tmp_path:
+                        print(f"❌ No se pudo convertir la imagen {idx + 1}")
+                        continue
+                    
+                    archivos_temporales.append(tmp_path)  # Agregar a lista de limpieza
 
                     # Insertar imagen
                     self.image(tmp_path, x=x_pos, y=y_pos, w=img_width, h=img_height)
@@ -453,20 +512,24 @@ class PDF(FPDF):
                         if nueva_y > self.get_y():
                             self.set_y(nueva_y)
 
-                    # Limpiar archivo temporal
-                    os.remove(tmp_path)
                     print(f"✅ Imagen {idx + 1} insertada correctamente")
 
                 except Exception as e:
                     print(f"❌ Error con imagen {idx + 1}: {e}")
                     continue
 
+            # 🧹 LIMPIAR TODOS LOS ARCHIVOS TEMPORALES AL FINAL
+            for tmp_file in archivos_temporales:
+                try:
+                    os.remove(tmp_file)
+                except Exception as e:
+                    print(f"⚠️ No se pudo eliminar {tmp_file}: {e}")
+
             # Restablecer configuración y agregar espacio final
             self.set_text_color(0, 0, 0)
             self.ln(10)
 
             print(f"🏁 Sección de imágenes completada. Total procesadas: {len(imagenes)}")
-
         # Si NO hay imágenes pero sí hay notas
         elif notas and notas.strip():
             self.ln(8)

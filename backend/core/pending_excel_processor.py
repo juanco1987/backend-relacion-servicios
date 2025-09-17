@@ -34,16 +34,29 @@ def process_excel_file(file_path, fecha_inicio=None, fecha_fin=None):
 
     Returns:
         tuple: Una tupla que contiene:
-            - pandas.DataFrame: DataFrame consolidado de servicios pendientes, o None si hay errores o no se encuentran pendientes.
+            - pandas.DataFrame: DataFrame consolidado de servicios pendientes, o None si hay errores.
             - list: Una lista de diccionarios con mensajes de log ('level', 'text').
+            - dict: Información sobre el procesamiento con las claves:
+                - 'has_data_in_range': bool - Si hay datos en el rango de fechas
+                - 'has_filtered_data': bool - Si hay datos que cumplen el filtro
+                - 'total_in_range': int - Total de registros en el rango de fechas
+                - 'total_filtered': int - Total de registros que pasan el filtro
     """
     messages = []
     df_resultado = None
+    
+    # Información de seguimiento
+    info = {
+        'has_data_in_range': False,
+        'has_filtered_data': False, 
+        'total_in_range': 0,
+        'total_filtered': 0
+    }
 
     try:
         if not file_path or not os.path.exists(file_path):
             messages.append({'level': 'error', 'text': f"El archivo no existe o no es accesible: {os.path.basename(file_path) if file_path else 'None'}"})
-            return None, messages
+            return None, messages, info
 
         messages.append({'level': 'info', 'text': f"Leyendo archivo Excel: {os.path.basename(file_path)}"})
 
@@ -62,6 +75,7 @@ def process_excel_file(file_path, fecha_inicio=None, fecha_fin=None):
         }
 
         total_pendientes = 0
+        total_registros_en_rango = 0  # ✅ NUEVA VARIABLE PARA TRACKING
 
         # Procesar cada hoja
         for hoja in hojas:
@@ -106,26 +120,35 @@ def process_excel_file(file_path, fecha_inicio=None, fecha_fin=None):
                     messages.append({'level': 'error', 'text': f"Hoja {hoja}: No se encontró columna 'FORMA DE PAGO'. Hoja ignorada."})
                     continue
 
-                # Limpiar y filtrar servicios pendientes SOLO por ESTADO DEL SERVICIO (como en la app de escritorio)
-                col_estado_servicio = EXCEL_COLUMNS['ESTADO_SERVICIO']
-                df_renombrado[col_estado_servicio] = df_renombrado[col_estado_servicio].astype(str).str.strip().str.lower().apply(unidecode)
-                estados_pendientes = ['pendiente cobrar', 'pendiente', 'pendiente de cobro', 'no pagado', 'sin pagar']
-                pendientes = df_renombrado[df_renombrado[col_estado_servicio].isin(estados_pendientes)].copy()
-                # --- prints de depuración eliminados ---
-
-                # 2. Convertir fechas con manejo de errores
-                pendientes['FECHA'] = pd.to_datetime(
-                    pendientes['FECHA'],
+                # ✅ PASO 1: Convertir fechas ANTES de filtrar por rango
+                df_renombrado['FECHA'] = pd.to_datetime(
+                    df_renombrado['FECHA'],
                     dayfirst=True,
                     format='mixed',
                     errors='coerce'
                 )
-                # --- prints de depuración eliminados ---
 
-                # 3. Filtrar por rango de fechas si se proporcionan
+                # ✅ PASO 2: Filtrar por rango de fechas PRIMERO (para saber si hay datos en el rango)
+                df_en_rango = df_renombrado.copy()
                 if fecha_inicio is not None and fecha_fin is not None:
-                    pendientes = pendientes[(pendientes['FECHA'] >= fecha_inicio) & (pendientes['FECHA'] <= fecha_fin)]
-                # --- prints de depuración eliminados ---
+                    df_en_rango = df_renombrado[(df_renombrado['FECHA'] >= fecha_inicio) & (df_renombrado['FECHA'] <= fecha_fin)]
+                
+                registros_en_rango = len(df_en_rango[df_en_rango['FECHA'].notna()])
+                total_registros_en_rango += registros_en_rango
+                
+                messages.append({'level': 'info', 'text': f"Hoja {hoja}: {registros_en_rango} registros en el rango de fechas"})
+
+                if registros_en_rango == 0:
+                    messages.append({'level': 'warning', 'text': f"Hoja {hoja}: No hay datos en el rango de fechas. Hoja ignorada."})
+                    continue
+
+                # ✅ PASO 3: AHORA filtrar por estado pendiente (solo los que están en el rango)
+                col_estado_servicio = EXCEL_COLUMNS['ESTADO_SERVICIO']
+                df_en_rango[col_estado_servicio] = df_en_rango[col_estado_servicio].astype(str).str.strip().str.lower().apply(unidecode)
+                estados_pendientes = ['pendiente cobrar', 'pendiente', 'pendiente de cobro', 'no pagado', 'sin pagar']
+                pendientes = df_en_rango[df_en_rango[col_estado_servicio].isin(estados_pendientes)].copy()
+
+                messages.append({'level': 'info', 'text': f"Hoja {hoja}: {len(pendientes)} servicios pendientes encontrados después del filtro"})
 
                 # Filtrar fechas inválidas y contar cuántas se ignoraron
                 registros_antes = len(pendientes)
@@ -136,7 +159,7 @@ def process_excel_file(file_path, fecha_inicio=None, fecha_fin=None):
                     messages.append({'level': 'warning', 'text': f"Hoja {hoja}: {fechas_invalidas} registros con fechas inválidas fueron ignorados."})
 
                 if pendientes.empty:
-                    messages.append({'level': 'warning', 'text': f"Hoja {hoja}: Todos los registros pendientes tenían fechas inválidas. Hoja ignorada."})
+                    messages.append({'level': 'warning', 'text': f"Hoja {hoja}: No se encontraron servicios pendientes válidos."})
                     continue
 
                 # Calcular días de retraso de forma robusta
@@ -166,10 +189,18 @@ def process_excel_file(file_path, fecha_inicio=None, fecha_fin=None):
             except Exception as e:
                 messages.append({'level': 'error', 'text': f"Error procesando hoja {hoja}: {str(e)}"})
 
+        # ✅ ACTUALIZAR INFORMACIÓN DE SEGUIMIENTO
+        info['total_in_range'] = total_registros_en_rango
+        info['has_data_in_range'] = total_registros_en_rango > 0
+        info['total_filtered'] = total_pendientes
+        info['has_filtered_data'] = total_pendientes > 0
+
+        messages.append({'level': 'info', 'text': f"Resumen: {total_registros_en_rango} registros en rango, {total_pendientes} servicios pendientes"})
+
         # Consolidar resultados
         if not resultados:
             messages.append({'level': 'warning', 'text': "No se encontraron servicios pendientes en ninguna hoja."})
-            return None, messages
+            return None, messages, info
 
         # Asegurar que todos los DataFrames tengan las mismas columnas y tipos de datos
         columnas_finales = [
@@ -197,7 +228,6 @@ def process_excel_file(file_path, fecha_inicio=None, fecha_fin=None):
             df_normalizado = df[columnas_finales].copy()
             resultados_normalizados.append(df_normalizado)
 
-        # --- prints de depuración eliminados ---
         # Concatenar los DataFrames normalizados
         df_consolidado = pd.concat(resultados_normalizados, ignore_index=True)
         messages.append({'level': 'success', 'text': f"Procesamiento completo: {len(df_consolidado)} servicios pendientes encontrados."})
@@ -210,4 +240,4 @@ def process_excel_file(file_path, fecha_inicio=None, fecha_fin=None):
         messages.append({'level': 'error', 'text': f"Error general procesando el archivo: {str(e)}"})
         df_resultado = None
 
-    return df_resultado, messages 
+    return df_resultado, messages, info

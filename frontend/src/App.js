@@ -1,4 +1,4 @@
-// App.js Modificado
+// App.js - Componente principal de la aplicación
 
 import React, { useState, useEffect } from 'react';
 import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '@mui/material';

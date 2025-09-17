@@ -121,28 +121,52 @@ def procesar_excel():
         except Exception:
             return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
 
-        df, messages = pending_excel_processor.process_excel_file(temp_path, fecha_inicio, fecha_fin)
+        # ✅ AHORA USAR LA FUNCIÓN MODIFICADA que retorna información diferenciada
+        df, messages, info = pending_excel_processor.process_excel_file(temp_path, fecha_inicio, fecha_fin)
         
+        # Limpiar archivo temporal
         import time
         import gc
         gc.collect()
-        time.sleep(0.1)  # Espera breve para liberar el archivo
+        time.sleep(0.1)
         try:
             os.remove(temp_path)
         except Exception as e:
             print(f"No se pudo borrar el archivo temporal: {e}")
 
-        if df is None:
-            return jsonify({'error': 'No se pudo procesar el archivo', 'messages': messages, 'empty_range': True}), 400
+        # ✅ LÓGICA DIFERENCIADA BASADA EN LA INFORMACIÓN RETORNADA
         
-        if df.empty:
-            return jsonify({'error': 'No se encontraron servicios pendientes', 'logs': messages, 'filter_empty': True}), 200
-        # Convertir DataFrame a JSON
+        # CASO 1: No hay datos en el rango de fechas
+        if not info['has_data_in_range']:
+            return jsonify({
+                'error': 'No se encontraron datos en el rango de fechas seleccionado.', 
+                'messages': messages, 
+                'empty_range': True,
+                'filter_empty': False
+            }), 400
+        
+        # CASO 2: Hay datos en el rango pero no cumplen el filtro (servicios pendientes)
+        if info['has_data_in_range'] and not info['has_filtered_data']:
+            return jsonify({
+                'error': 'No se encontraron servicios pendientes por cobrar en el rango de fechas.', 
+                'messages': messages, 
+                'empty_range': False,
+                'filter_empty': True
+            }), 400
+
+        # CASO 3: Hay datos válidos
         df = df.replace({np.nan: None})
         data = df.to_dict(orient='records')
-        return jsonify({'data': data, 'messages': messages})
+        return jsonify({
+            'data': data, 
+            'messages': messages,
+            'empty_range': False,
+            'filter_empty': False
+        })
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @bp_excel.route('/relacion_servicios', methods=['POST'])
 def relacion_servicios():
@@ -171,8 +195,11 @@ def relacion_servicios():
         logs = []
         def log_callback(msg, level='info'):
             logs.append({'level': level, 'text': msg})
-        df = excel_processor.extraer_servicios(temp_path, fecha_inicio, fecha_fin, log_callback)
+        
+        # ✅ AQUÍ ESTÁ LA CORRECCIÓN: Usar la nueva función que retorna información
+        df, info = excel_processor.extraer_servicios(temp_path, fecha_inicio, fecha_fin, log_callback)
 
+        # Limpiar archivo temporal
         import time
         import gc
         gc.collect()
@@ -182,14 +209,36 @@ def relacion_servicios():
         except Exception as e:
             print(f"No se pudo borrar el archivo temporal: {e}")
 
-        if df is None or df.empty:
-            return jsonify({'error': 'No se encontraron servicios', 'logs': logs, 'empty_range': True}), 200
+        # ✅ LÓGICA DIFERENCIADA BASADA EN LA INFORMACIÓN RETORNADA
         
-        if df.empty:
-            return jsonify({'error': 'No se encontraron servicios pendientes', 'logs': logs, 'filter_empty': True}), 200
+        # CASO 1: No hay datos en el rango de fechas
+        if not info['has_data_in_range']:
+            return jsonify({
+                'error': 'No se encontraron datos en el rango de fechas seleccionado.', 
+                'logs': logs, 
+                'empty_range': True,
+                'filter_empty': False
+            }), 400
+        
+        # CASO 2: Hay datos en el rango pero no cumplen el filtro (servicios en efectivo)
+        if info['has_data_in_range'] and not info['has_filtered_data']:
+            return jsonify({
+                'error': 'No se encontraron servicios en efectivo para relacionar en el rango de fechas.', 
+                'logs': logs, 
+                'empty_range': False,
+                'filter_empty': True
+            }), 400
+
+        # CASO 3: Hay datos válidos
         df = df.replace({np.nan: None})
         data = df.to_dict(orient='records')
-        return jsonify({'data': data, 'logs': logs})
+        return jsonify({
+            'data': data, 
+            'logs': logs,
+            'empty_range': False,
+            'filter_empty': False
+        })
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -219,8 +268,8 @@ def pdf_pendientes():
         except Exception:
             return jsonify({'error': 'Formato de fecha inválido. Usa YYYY-MM-DD.'}), 400
 
-        # Procesar el archivo para obtener los pendientes
-        df, messages = pending_excel_processor.process_excel_file(temp_path, fecha_inicio, fecha_fin)
+        # ✅ CORRECCIÓN: Ahora la función retorna 3 valores
+        df, messages, info = pending_excel_processor.process_excel_file(temp_path, fecha_inicio, fecha_fin)
 
         import time
         import gc
@@ -231,10 +280,26 @@ def pdf_pendientes():
         except Exception as e:
             print(f"No se pudo borrar el archivo temporal: {e}")
 
-        if df is None or df.empty:
-            return jsonify({'error': 'No se encontraron servicios pendientes', 'logs': messages, 'empty_range': True}), 200
+        # ✅ USAR LA MISMA LÓGICA DE VALIDACIÓN QUE EN /procesar_excel
         
+        # CASO 1: No hay datos en el rango de fechas
+        if not info['has_data_in_range']:
+            return jsonify({
+                'error': 'No se encontraron datos en el rango de fechas seleccionado.', 
+                'logs': messages, 
+                'empty_range': True
+            }), 400
         
+        # CASO 2: Hay datos en el rango pero no cumplen el filtro
+        if info['has_data_in_range'] and not info['has_filtered_data']:
+            return jsonify({
+                'error': 'No se encontraron servicios pendientes por cobrar en el rango de fechas.', 
+                'logs': messages, 
+                'empty_range': False,
+                'filter_empty': True
+            }), 400
+
+        # ✅ CASO 3: Hay datos válidos - CONTINUAR CON LA GENERACIÓN DEL PDF
 
         # Generar el PDF con nombre personalizado o automático
         if nombre_pdf and nombre_pdf.strip():
@@ -459,7 +524,9 @@ def pdf_relacion_servicios():
         logs = []
         def log_callback(msg, level='info'):
             logs.append({'level': level, 'text': msg})
-        df = excel_processor.extraer_servicios(temp_path, fecha_inicio, fecha_fin, log_callback)
+        
+        # ✅ CORRECCIÓN: Ahora la función retorna 2 valores (df, info)
+        df, info = excel_processor.extraer_servicios(temp_path, fecha_inicio, fecha_fin, log_callback)
 
         import time
         import gc
@@ -470,8 +537,26 @@ def pdf_relacion_servicios():
         except Exception as e:
             print(f"No se pudo borrar el archivo temporal: {e}")
 
-        if df is None or df.empty:
-            return jsonify({'error': 'No se encontraron servicios', 'logs': logs, 'empty_range': True}), 200
+        # ✅ USAR LA MISMA LÓGICA DE VALIDACIÓN QUE EN /relacion_servicios
+        
+        # CASO 1: No hay datos en el rango de fechas
+        if not info['has_data_in_range']:
+            return jsonify({
+                'error': 'No se encontraron datos en el rango de fechas seleccionado.', 
+                'logs': logs, 
+                'empty_range': True
+            }), 400
+        
+        # CASO 2: Hay datos en el rango pero no cumplen el filtro
+        if info['has_data_in_range'] and not info['has_filtered_data']:
+            return jsonify({
+                'error': 'No se encontraron servicios en efectivo para relacionar en el rango de fechas.', 
+                'logs': logs, 
+                'empty_range': False,
+                'filter_empty': True
+            }), 400
+
+        # ✅ CASO 3: Hay datos válidos - CONTINUAR CON LA GENERACIÓN DEL PDF
 
         # Generar el PDF con nombre personalizado o automático
         if nombre_pdf and nombre_pdf.strip():
@@ -575,7 +660,7 @@ def analytics_pendientes_efectivo():
 
         # Calcular días sin relacionar (diferencia entre fecha actual y fecha del servicio)
         fecha_actual = datetime.now()
-        df_filtrado['dias_sin_relacionar'] = (fecha_actual - df_filtrado[col_fecha]).dt.days
+        df_filtrado['dias_sin_relacionar'] = (fecha_actual - df_filtrado[col_fecha]).dt.days # type: ignore
 
         # Agregar columna de mes para agrupar
         df_filtrado['MES'] = pd.Series(df_filtrado[col_fecha].dt.to_period('M').astype(str), index=df_filtrado.index)
@@ -730,7 +815,7 @@ def analytics_pendientes_cobrar():
 
         # Calcular días de retraso
         fecha_actual = datetime.now()
-        df_filtrado['dias_de_retraso'] = (fecha_actual - df_filtrado[col_fecha]).dt.days
+        df_filtrado['dias_de_retraso'] = (fecha_actual - df_filtrado[col_fecha]).dt.days # type: ignore
 
         # Agregar columna de mes para agrupar
         df_filtrado['MES'] = pd.Series(df_filtrado[col_fecha].dt.to_period('M').astype(str), index=df_filtrado.index)
