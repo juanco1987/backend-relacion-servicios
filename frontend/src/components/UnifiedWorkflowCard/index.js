@@ -134,6 +134,9 @@ const UnifiedWorkflowCard = ({
     if (onNoteChange) {
       onNoteChange('');
     }
+    if (onImageChange) {
+      onImageChange([]);
+    }
     
     setShowNewProcessDialog(false);
   };
@@ -270,6 +273,9 @@ const UnifiedWorkflowCard = ({
       setUserHasConfiguredDates(false);
       if (onNoteChange) {
         onNoteChange(''); // Limpiar notas también para un reinicio limpio
+      }
+      if (onImageChange) {
+        onImageChange([]); // Limpiar imágenes también para un reinicio limpio
       }
       setReportName(generateDefaultName()); // Resetear nombre del reporte al predeterminado
       setProcessCompleted(false); // Asegurar que el estado de completado del proceso se
