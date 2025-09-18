@@ -8,11 +8,13 @@ export async function generarPDFServiciosEfectivo({ archivo, fechaInicio, fechaF
   formData.append('notas', notas || '');
   formData.append('nombre_pdf', nombrePDF || '');
 
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
   if (imagenes && imagenes.length > 0) {
     formData.append('imagenes', JSON.stringify(imagenes));
   }
 
-  const response = await fetch('http://localhost:5000/api/pdf_relacion_servicios', {
+  const response = await fetch(`${API_BASE}/api/pdf_relacion_servicios`, {
     method: 'POST',
     body: formData,
   });
@@ -41,7 +43,7 @@ export async function generarPDFPendientes({ archivo, fechaInicio, fechaFin, not
     formData.append('imagenes', JSON.stringify(imagenes));
   }
 
-  const response = await fetch('http://localhost:5000/api/pdf_pendientes', {
+  const response = await fetch(`${API_BASE}/api/pdf_pendientes`, {
     method: 'POST',
     body: formData,
   });
