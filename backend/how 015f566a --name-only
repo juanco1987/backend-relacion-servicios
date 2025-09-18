@@ -1,0 +1,7 @@
+[33mcommit 015f566ac265e775e7e52c9c2b9760910294c2d0[m[33m ([m[1;32mbackup-pre-master[m[33m)[m
+Author: juanco1987 <juancarvajal310@gmail.com>
+Date:   Thu Jul 24 21:52:50 2025 -0500
+
+    Funcionalidad de analytics global, fixes de NaN, mejoras en generación de PDF y UX
+
+frontend/src/components/KpiCard.js

@@ -1,0 +1,90 @@
+Listado de rutas de carpetas
+El número de serie del volumen es F405-0BFE
+C:\PROYECTOS\AAP_WEB_REPORTES\FRONTEND\SRC
+¦   App.css
+¦   App.js
+¦   App.test.js
+¦   index.css
+¦   index.js
+¦   logo.svg
+¦   reportWebVitals.js
+¦   setupTests.js
+¦   
++---assets
+¦       antena.png
+¦       arrow_click.png
+¦       calendario.png
+¦       calendario_2.png
+¦       carpeta.png
+¦       document_microsoft_excel.png
+¦       document_write.png
+¦       engrane.png
+¦       Engrenages.png
+¦       flechas_circulo.png
+¦       folder_config.png
+¦       icono.png
+¦       icono_pdf.png
+¦       Konsole.png
+¦       llave.png
+¦       mi_logo.ico
+¦       Notepad.png
+¦       OJO.png
+¦       papelera.png
+¦       PC.png
+¦       play.png
+¦       proceso.png
+¦       punto.png
+¦       
++---components
+¦   ¦   KpiCard.js
+¦   ¦   
+¦   +---analytics
+¦   ¦       Analytics.js
+¦   ¦       AnalyticsResumen.js
+¦   ¦       EnhancedAnalyticsDashboard.js
+¦   ¦       ServiciosPendientesCobrar.js
+¦   ¦       ServiciosPendientesEfectivo.js
+¦   ¦       
+¦   +---animations
+¦   ¦       ModeTransitionAnimation.js
+¦   ¦       
+¦   +---common
+¦   ¦       Header.js
+¦   ¦       
+¦   +---forms
+¦   +---layout
+¦       ¦   ContentArea.js
+¦       ¦   DashboardLayout.js
+¦       ¦   Sidebar.js
+¦       ¦   UnifiedWorkflowCard.js
+¦       ¦   
+¦       +---UnifiedWorkflowCard
+¦               NewProcessDialog.js
+¦               StatusChips.js
+¦               StepConfig.js
+¦               StepGenerate.js
+¦               StepUpload.js
+¦               
++---config
+¦       animations.js
+¦       appConfig.js
+¦       theme.js
+¦       
++---context
+¦       ThemeContext.js
+¦       
++---hooks
++---pages
+¦       DashboardPage.js
+¦       
++---services
+¦       pdfService.js
+¦       
++---src
+¦   +---components
+¦       +---layout
+¦           +---UnifiedWorkflowCard
++---utils
+        dateFormatters.js
+        selectStyles.js
+        
