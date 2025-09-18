@@ -1,0 +1,194 @@
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  min-height: 100vh;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Scrollbar global para toda la app */
+html, body, * {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #00eaff #e3f0fa; /* thumb y track, usa color de acento */
+}
+
+/* Webkit browsers (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #00eaff;
+  border-radius: 6px;
+  transition: background 0.3s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #009ec3;
+}
+
+/* Asegurar que los elementos del sidebar estén en la capa correcta */
+.MuiBox-root[style*="position: fixed"] {
+  z-index: 1000 !important;
+}
+
+/* SOLUCIÓN ESPECÍFICA PARA EL PROBLEMA DE OFFSET DEL CURSOR - VERSIÓN MEJORADA */
+/* El problema está causado por elementos con transform que afectan la posición del cursor */
+
+/* Asegurar que el sidebar tenga prioridad absoluta */
+.MuiBox-root[style*="position: fixed"][style*="z-index: 1000"] {
+  pointer-events: auto !important;
+}
+
+/* Asegurar que los elementos del sidebar no tengan transform que cause offset */
+.MuiListItem-root,
+.MuiListItemButton-root,
+.MuiMenuItem-root {
+  transform: none !important;
+  transition: background-color 0.2s ease !important;
+  pointer-events: auto !important;
+}
+
+/* Asegurar que los elementos del sidebar tengan el área clickeable correcta */
+.MuiList-root .MuiListItem-root,
+.MuiList-root .MuiListItemButton-root {
+  position: relative !important;
+  z-index: 10 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+/* Eliminar cualquier transform que pueda estar causando el offset */
+.MuiListItem-root:hover,
+.MuiListItemButton-root:hover,
+.MuiMenuItem-root:hover {
+  transform: none !important;
+}
+
+/* Asegurar que el área clickeable coincida exactamente con el área visual */
+.MuiListItem-root,
+.MuiListItemButton-root {
+  margin: 0 !important;
+  padding: 8px 16px !important;
+  box-sizing: border-box !important;
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Eliminar cualquier elemento que pueda estar interfiriendo con el cursor */
+.MuiBackdrop-root,
+.MuiModal-backdrop {
+  pointer-events: none !important;
+}
+
+/* SOLUCIÓN ESPECÍFICA PARA EL SIDEBAR */
+/* Asegurar que el sidebar esté en la capa correcta y tenga prioridad */
+.MuiBox-root[style*="position: fixed"] {
+  z-index: 1000 !important;
+  pointer-events: auto !important;
+}
+
+/* Asegurar que los elementos del sidebar tengan el área clickeable correcta */
+.MuiBox-root[style*="position: fixed"] .MuiListItem-root,
+.MuiBox-root[style*="position: fixed"] .MuiListItemButton-root {
+  position: relative !important;
+  z-index: 10 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
+/* Eliminar cualquier transform que pueda estar causando el offset en el sidebar */
+.MuiBox-root[style*="position: fixed"] .MuiListItem-root:hover,
+.MuiBox-root[style*="position: fixed"] .MuiListItemButton-root:hover {
+  transform: none !important;
+}
+
+/* SOLUCIÓN ESPECÍFICA PARA SELECTORES Y MENÚS DE MATERIAL-UI */
+/* Asegurar que los selectores no tengan transform que cause offset */
+.MuiSelect-select,
+.MuiMenuItem-root,
+.MuiFormControl-root {
+  transform: none !important;
+  transition: background-color 0.2s ease !important;
+  pointer-events: auto !important;
+}
+
+/* Asegurar que el área clickeable coincida exactamente con el área visual en selectores */
+.MuiSelect-select {
+  cursor: pointer !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+/* Asegurar que los menús desplegables no tengan offset */
+.MuiPaper-root.MuiMenu-paper,
+.MuiPaper-root.MuiPopover-paper {
+  transform: none !important;
+  z-index: 9999 !important;
+}
+
+/* Asegurar que los elementos del menú no tengan transform */
+.MuiPaper-root .MuiMenuItem-root {
+  transform: none !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+/* Eliminar cualquier transform en hover de elementos del menú */
+.MuiPaper-root .MuiMenuItem-root:hover {
+  transform: none !important;
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* SOLUCIÓN ESPECÍFICA PARA EL VIEWPORT */
+/* Asegurar que no haya offset en el viewport */
+html, body {
+  transform: none !important;
+  overflow-x: hidden !important;
+}
+
+/* Asegurar que los elementos con position fixed no causen offset */
+[style*="position: fixed"] {
+  transform: none !important;
+  pointer-events: auto !important;
+}
+
+/* SOLUCIÓN FINAL PARA EL CURSOR */
+/* Asegurar que todos los elementos interactivos tengan el cursor correcto */
+.MuiListItem-root,
+.MuiListItemButton-root,
+.MuiMenuItem-root,
+.MuiSelect-select,
+.MuiButton-root,
+[role="button"] {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
+/* Asegurar que el área clickeable sea exactamente el área visual */
+.MuiListItem-root,
+.MuiListItemButton-root,
+.MuiMenuItem-root {
+  position: relative !important;
+  z-index: 10 !important;
+  margin: 0 !important;
+  padding: 8px 16px !important;
+  box-sizing: border-box !important;
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+}
