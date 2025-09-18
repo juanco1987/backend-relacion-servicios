@@ -5,14 +5,14 @@ import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../u
 import { formatearMesAnio } from '../../utils/dateFormatters';
 import KpiCard from '../common/KpiCard';
 
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const ServiciosPendientesEfectivo = ({ file }) => {
   const { theme } = useTheme();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [mesSeleccionado, setMesSeleccionado] = useState('Total Global');
-  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
+  
   useEffect(() => {
     if (!file) return;
 

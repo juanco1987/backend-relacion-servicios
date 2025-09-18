@@ -12,6 +12,7 @@ import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from './config/animations';
 import dayjs from 'dayjs';
 import { generarPDFServiciosEfectivo, generarPDFPendientes } from './services/pdfService';
 
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 function App() {
   const { theme } = useTheme();
   
@@ -110,7 +111,7 @@ function App() {
         
         // Determinar el endpoint basado en la ruta actual
         let endpoint = '';
-        const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        
 
         if (currentRoute === '/dashboard' || currentRoute === '/servicios-efectivo') {
           endpoint = `${API_BASE}/api/relacion_servicios`;

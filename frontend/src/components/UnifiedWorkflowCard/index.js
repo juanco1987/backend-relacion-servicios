@@ -26,6 +26,7 @@ import processIcon from '../../assets/Engrenages.png';
 
 dayjs.locale('es');
 
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const UnifiedWorkflowCard = ({
   archivoExcel,
   fechaInicio,
@@ -179,7 +180,7 @@ const UnifiedWorkflowCard = ({
       formData.append("fecha_inicio", fromDate.format("YYYY-MM-DD"));
       formData.append("fecha_fin", toDate.format("YYYY-MM-DD"));
 
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      
       const url =
         workMode === 0
           ? `${API_BASE}/api/relacion_servicios`

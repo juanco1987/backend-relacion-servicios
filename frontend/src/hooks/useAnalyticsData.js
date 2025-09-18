@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 function useAnalyticsData(analyticsFile, excelData) {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -9,7 +11,6 @@ function useAnalyticsData(analyticsFile, excelData) {
     pendientes_por_mes: {}
   });
 
-  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     // Usar el archivo específico de Analytics si está disponible, sino usar excelData como fallback
