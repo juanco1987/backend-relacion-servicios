@@ -1,4 +1,5 @@
 // Servicio para generar PDF de servicios en efectivo
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 export async function generarPDFServiciosEfectivo({ archivo, fechaInicio, fechaFin, notas, imagenes, nombrePDF }) {
   const formData = new FormData();
@@ -8,7 +9,7 @@ export async function generarPDFServiciosEfectivo({ archivo, fechaInicio, fechaF
   formData.append('notas', notas || '');
   formData.append('nombre_pdf', nombrePDF || '');
 
-  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  
 
   if (imagenes && imagenes.length > 0) {
     formData.append('imagenes', JSON.stringify(imagenes));
