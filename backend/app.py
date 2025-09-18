@@ -4,9 +4,7 @@ import os
 
 def create_app():
     app = Flask(__name__)
-
-    # 🔑 Habilitar CORS solo para tu frontend
-    CORS(app, resources={r"/api/*": {"origins": "https://frontend-relacion-servicios-m9e8.vercel.app"}})
+    CORS(app)
 
     # Registrar blueprints
     from core.routes_excel import bp_excel
