@@ -581,8 +581,22 @@ def generar_pdf(df_servicios, ruta_pdf, notas="", fecha_inicio_analisis=None, fe
 
 def generar_pdf_modular(df, nombre_pdf, notas, fecha_inicio_analisis=None, fecha_fin_analisis=None, log_callback=None, imagenes=None):
     try:
-        desktop = os.path.expanduser("~/OneDrive/Escritorio")
-        carpeta_pdf = os.path.join(desktop, "pdf-relacion-servicios-en-efectivo")
+        import tempfile
+        
+        # Usar carpeta temporal del sistema para producción
+        # En desarrollo local, usar el escritorio si existe
+        # En producción (Railway), usar carpeta temporal
+        if os.path.exists(os.path.expanduser("~/OneDrive/Escritorio")):
+            # Desarrollo local - usar escritorio
+            desktop = os.path.expanduser("~/OneDrive/Escritorio")
+            carpeta_pdf = os.path.join(desktop, "pdf-relacion-servicios-en-efectivo")
+        else:
+            # Producción - usar carpeta temporal del sistema
+            carpeta_pdf = tempfile.gettempdir()
+        
+        # Crear la carpeta si no existe
+        os.makedirs(carpeta_pdf, exist_ok=True)
+        
         ruta_pdf = os.path.join(carpeta_pdf, nombre_pdf)
         if log_callback:
             log_callback(f"📄 Intentando guardar PDF en: {ruta_pdf}", "info")
@@ -595,7 +609,12 @@ def generar_pdf_modular(df, nombre_pdf, notas, fecha_inicio_analisis=None, fecha
                 log_callback("✅ PDF generado exitosamente! - Listo para abrir", "success")
             else:
                 log_callback(f"❌ {mensaje}", "error")
-        return exito, mensaje
+        
+        # Retornar también la ruta del archivo generado
+        if exito:
+            return exito, mensaje, ruta_pdf
+        else:
+            return exito, mensaje, None
 
     except Exception as e:
         if log_callback:
@@ -608,9 +627,18 @@ def _abrir_pdf(ruta_pdf, log_callback=None):
             if log_callback:
                 log_callback(f"❌ No se encontró el archivo PDF en: {ruta_pdf}", "error")
             return False
-        os.startfile(ruta_pdf)
-        if log_callback:
-            log_callback("👁️ Abriendo archivo PDF...", "success")
+        
+        # Solo intentar abrir en desarrollo local (Windows)
+        # En producción, el PDF se descarga automáticamente
+        if os.name == 'nt':  # Windows
+            os.startfile(ruta_pdf)
+            if log_callback:
+                log_callback("👁️ Abriendo archivo PDF...", "success")
+        else:
+            # En producción (Linux/Unix), solo confirmar que existe
+            if log_callback:
+                log_callback("✅ PDF generado y listo para descarga", "success")
+        
         return True
     except Exception as e:
         if log_callback:

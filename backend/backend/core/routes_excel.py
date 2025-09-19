@@ -568,16 +568,11 @@ def pdf_relacion_servicios():
             # Generar nombre automático con fecha y hora
             nombre_pdf_final = f"Relacion_Servicios_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
         
-        exito, mensaje = pdf_generator.generar_pdf_modular(df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback, imagenes=imagenes)
-        if not exito:
+        exito, mensaje, ruta_pdf = pdf_generator.generar_pdf_modular(df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback, imagenes=imagenes)
+        if not exito or not ruta_pdf:
             return jsonify({'error': mensaje, 'logs': logs}), 500
 
-        # Ruta donde se guardó el PDF
-        desktop = os.path.expanduser("~/OneDrive/Escritorio")
-        carpeta_pdf = os.path.join(desktop, "pdf-relacion-servicios-en-efectivo")
-        ruta_pdf = os.path.join(carpeta_pdf, nombre_pdf_final)
-
-        # Enviar el PDF como archivo descargable
+        # Enviar el PDF como archivo descargable usando la ruta retornada
         return send_file(ruta_pdf, as_attachment=True)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
