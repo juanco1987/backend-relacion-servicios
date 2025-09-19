@@ -32,9 +32,7 @@ FILTER_CRITERIA = {
 # --- Configuración del PDF ---
 PDF_CONFIG = {
     "DEFAULT_NAME": "Informe_Servicios.pdf",
-    # Ruta base para guardar los PDFs (por ejemplo, en el escritorio del usuario)
-    # Adapta esta ruta si tu OneDrive/Escritorio tiene otro nombre o ubicación.
-    "OUTPUT_BASE_FOLDER_NAME": "pdf-relacion-servicios-en-efectivo"
+    
 }
 
 # --- Rutas de Recursos (Icons, Logos) ---
@@ -166,8 +164,4 @@ APP_MESSAGES = {
     "NOTES_ENTRY_PLACEHOLDER": "Escribe tus notas aquí...",
 }
 
-# --- Funciones de Utilidad para Rutas (No se exportan, solo para uso interno si se requiere) ---
-def hex_to_rgb(hex_color):
-    """Convierte un color HEX a una tupla RGB (R, G, B)."""
-    hex_color = hex_color.lstrip('#')
-    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
