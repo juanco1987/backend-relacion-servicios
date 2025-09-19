@@ -167,15 +167,6 @@ APP_MESSAGES = {
 }
 
 # --- Funciones de Utilidad para Rutas (No se exportan, solo para uso interno si se requiere) ---
-def get_pdf_output_path(pdf_name):
-    """
-    Construye la ruta completa para guardar un PDF en la carpeta predefinida.
-    """
-    desktop = os.path.expanduser("~/OneDrive/Escritorio")
-    base_folder_path = os.path.join(desktop, PDF_CONFIG["OUTPUT_BASE_FOLDER_NAME"])
-    os.makedirs(base_folder_path, exist_ok=True) # Asegura que la carpeta exista
-    return os.path.join(base_folder_path, pdf_name)
-
 def hex_to_rgb(hex_color):
     """Convierte un color HEX a una tupla RGB (R, G, B)."""
     hex_color = hex_color.lstrip('#')

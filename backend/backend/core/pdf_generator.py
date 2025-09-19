@@ -600,28 +600,4 @@ def generar_pdf_modular(df, nombre_pdf, notas, fecha_inicio_analisis=None, fecha
     except Exception as e:
         if log_callback:
             log_callback(f"❌ Error al generar PDF: {e}", "error")
-        return False, str(e)
-        
-def _abrir_pdf(ruta_pdf, log_callback=None):
-    try:
-        if not os.path.exists(ruta_pdf):
-            if log_callback:
-                log_callback(f"❌ No se encontró el archivo PDF en: {ruta_pdf}", "error")
-            return False
-        
-        # Solo intentar abrir en desarrollo local (Windows)
-        # En producción, el PDF se descarga automáticamente
-        if os.name == 'nt':  # Windows
-            os.startfile(ruta_pdf)
-            if log_callback:
-                log_callback("👁️ Abriendo archivo PDF...", "success")
-        else:
-            # En producción (Linux/Unix), solo confirmar que existe
-            if log_callback:
-                log_callback("✅ PDF generado y listo para descarga", "success")
-        
-        return True
-    except Exception as e:
-        if log_callback:
-            log_callback(f"❌ Error al abrir PDF: {e}", "error")
-        return False 
+        return False, str(e) 
