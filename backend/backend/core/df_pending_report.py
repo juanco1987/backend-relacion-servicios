@@ -174,7 +174,7 @@ def generate_pdf_report(data, base_file_path, fecha_inicio=None, fecha_fin=None,
             pdf.set_font('Helvetica', '', 9)
             pdf.multi_cell(0, 5, notas.strip(), 0, 'L')
 
-        # Generar nombre de archivo y ruta
+        # Generar nombre de archivo (solo para el nombre de descarga)
         if nombre_pdf and nombre_pdf.strip():
             nombre_pdf_final = nombre_pdf.strip()
             if not nombre_pdf_final.endswith('.pdf'):
@@ -182,25 +182,11 @@ def generate_pdf_report(data, base_file_path, fecha_inicio=None, fecha_fin=None,
         else:
             nombre_pdf_final = f"Servicios_Pendientes_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.pdf"
         
-        # Usar el directorio del archivo base para guardar el PDF
-        output_dir = r"C:\Users\usuario\OneDrive\Escritorio\pendientes-de-pago-a-JG"
-        ruta_pdf_generado = os.path.join(output_dir, nombre_pdf_final)
-
-        # Asegurarse de que el directorio de salida exista
-        os.makedirs(output_dir, exist_ok=True)
-
-        # Guardar archivo con manejo de errores
-        try:
-            pdf.output(ruta_pdf_generado)
-            messages.append({'level': 'success', 'text': f"PDF guardado en: {ruta_pdf_generado}"})
-            return True, ruta_pdf_generado, messages
-        except PermissionError:
-            messages.append({'level': 'error', 'text': f"Error de permisos: El archivo PDF '{os.path.basename(ruta_pdf_generado)}' está siendo utilizado por otro programa."})
-            return False, None, messages
-        except Exception as e:
-            messages.append({'level': 'error', 'text': f"Error al guardar el PDF: {str(e)}"})
-            return False, None, messages
+        # Generar el PDF en memoria como una cadena de bytes
+        pdf_bytes = pdf.output(dest='S').encode('latin-1')
+        messages.append({'level': 'success', 'text': "PDF generado exitosamente en memoria."})
+        return True, nombre_pdf_final, pdf_bytes, messages
 
     except Exception as e:
         messages.append({'level': 'error', 'text': f"Error al generar el PDF: {str(e)}"})
-        return False, None, messages 
+        return False, None, None, messages 

@@ -311,13 +311,20 @@ def pdf_pendientes():
             # Generar nombre automático con fecha y hora
             nombre_pdf_final = f"Servicios_Pendientes_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
         
-        exito, ruta_pdf, logs_pdf = df_pending_report.generate_pdf_report(df, temp_path, fecha_inicio, fecha_fin, nombre_pdf_final, notas)
+        # Ahora la función generate_pdf_report retorna exito, nombre_archivo, pdf_bytes, logs
+        exito, nombre_archivo_descarga, pdf_bytes, logs_pdf = df_pending_report.generate_pdf_report(df, None, fecha_inicio, fecha_fin, nombre_pdf_final, notas)
         messages.extend(logs_pdf)
-        if not exito or not ruta_pdf:
+        if not exito or pdf_bytes is None:
             return jsonify({'error': 'No se pudo generar el PDF', 'logs': messages}), 500
 
-        # Enviar el PDF como archivo descargable
-        return send_file(ruta_pdf, as_attachment=True)
+        # Enviar el PDF como archivo descargable directamente desde la memoria
+        import io
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=nombre_archivo_descarga
+        )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -368,7 +375,6 @@ def analytics():
         col_xporc = find_column_variant(df, ['X50%/X25%', 'X50%', 'X25%', 'PORCENTAJE', 'PORCENTAJE PAGO'])
         col_fecha = find_column_variant(df, ['FECHA', 'Fecha', 'fecha', 'FECHA SERVICIO', 'Fecha Servicio'])
         col_para_jg = find_column_variant(df, ['PARA JG', 'Para JG', 'para jg', 'JG', 'J.G.', 'PARA J.G.'])
-        col_forma_pago = find_column_variant(df, ['FORMA DE PAGO', 'FORMA_PAGO', 'FORMA PAGO'])
 
         if not col_estado or not col_xporc or not col_fecha or not col_para_jg:
             return jsonify({'error': f'No se encontraron columnas requeridas. Estado: {col_estado}, X50%/X25%: {col_xporc}, Fecha: {col_fecha}, PARA JG: {col_para_jg}'}), 400
@@ -568,12 +574,19 @@ def pdf_relacion_servicios():
             # Generar nombre automático con fecha y hora
             nombre_pdf_final = f"Relacion_Servicios_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
         
-        exito, mensaje, ruta_pdf = pdf_generator.generar_pdf_modular(df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback, imagenes=imagenes)
-        if not exito or not ruta_pdf:
+        exito, mensaje, pdf_bytes = pdf_generator.generar_pdf_modular(df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback, imagenes=imagenes)
+        if not exito or pdf_bytes is None:
             return jsonify({'error': mensaje, 'logs': logs}), 500
 
-        # Enviar el PDF como archivo descargable usando la ruta retornada
-        return send_file(ruta_pdf, as_attachment=True)
+        # Enviar el PDF como archivo descargable directamente desde la memoria
+        # Se envían los bytes del PDF y se especifica el mimetype y el nombre del archivo
+        import io
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=nombre_pdf_final
+        )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
