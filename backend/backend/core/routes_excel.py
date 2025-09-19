@@ -514,7 +514,6 @@ def pdf_relacion_servicios():
                 imagenes = []
 
         from datetime import datetime
-        import tempfile
         try:
             fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
             fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
@@ -526,7 +525,7 @@ def pdf_relacion_servicios():
         def log_callback(msg, level='info'):
             logs.append({'level': level, 'text': msg})
         
-        # Corregir: Ahora la función retorna 2 valores (df, info)
+        # ✅ CORRECCIÓN: Ahora la función retorna 2 valores (df, info)
         df, info = excel_processor.extraer_servicios(temp_path, fecha_inicio, fecha_fin, log_callback)
 
         import time
@@ -538,6 +537,8 @@ def pdf_relacion_servicios():
         except Exception as e:
             print(f"No se pudo borrar el archivo temporal: {e}")
 
+        # ✅ USAR LA MISMA LÓGICA DE VALIDACIÓN QUE EN /relacion_servicios
+        
         # CASO 1: No hay datos en el rango de fechas
         if not info['has_data_in_range']:
             return jsonify({
@@ -555,46 +556,32 @@ def pdf_relacion_servicios():
                 'filter_empty': True
             }), 400
 
-        # CASO 3: Hay datos válidos - CONTINUAR CON LA GENERACIÓN DEL PDF
+        # ✅ CASO 3: Hay datos válidos - CONTINUAR CON LA GENERACIÓN DEL PDF
 
         # Generar el PDF con nombre personalizado o automático
         if nombre_pdf and nombre_pdf.strip():
+            # Usar el nombre enviado desde el frontend
             nombre_pdf_final = nombre_pdf.strip()
             if not nombre_pdf_final.endswith('.pdf'):
                 nombre_pdf_final += '.pdf'
         else:
+            # Generar nombre automático con fecha y hora
             nombre_pdf_final = f"Relacion_Servicios_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
         
-        # Crear directorio temporal para el PDF
-        temp_dir = tempfile.mkdtemp()
-        ruta_pdf_final = os.path.join(temp_dir, nombre_pdf_final)
-        
-        # LLAMAR DIRECTAMENTE A generar_pdf EN LUGAR DE generar_pdf_modular
-        # Esto evita el problema de la ruta hardcodeada en generar_pdf_modular
-        exito, mensaje = pdf_generator.generar_pdf(
-            df, 
-            ruta_pdf_final, 
-            notas, 
-            fecha_inicio, 
-            fecha_fin, 
-            imagenes=imagenes
-        )
-        
+        exito, mensaje = pdf_generator.generar_pdf_modular(df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback, imagenes=imagenes)
         if not exito:
             return jsonify({'error': mensaje, 'logs': logs}), 500
 
-        # Verificar que el archivo existe
-        if not os.path.exists(ruta_pdf_final):
-            return jsonify({'error': 'No se pudo generar el archivo PDF', 'logs': logs}), 500
-
-        # Agregar logs de éxito
-        logs.append({'level': 'success', 'text': 'PDF generado exitosamente en directorio temporal'})
+        # Ruta donde se guardó el PDF
+        desktop = os.path.expanduser("~/OneDrive/Escritorio")
+        carpeta_pdf = os.path.join(desktop, "pdf-relacion-servicios-en-efectivo")
+        ruta_pdf = os.path.join(carpeta_pdf, nombre_pdf_final)
 
         # Enviar el PDF como archivo descargable
-        return send_file(ruta_pdf_final, as_attachment=True, download_name=nombre_pdf_final)
-        
+        return send_file(ruta_pdf, as_attachment=True)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 @bp_excel.route('/analytics_pendientes_efectivo', methods=['POST'])
 def analytics_pendientes_efectivo():
     if 'file' not in request.files:
