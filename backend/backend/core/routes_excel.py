@@ -514,7 +514,7 @@ def pdf_relacion_servicios():
                 imagenes = []
 
         from datetime import datetime
-        import tempfile  # Agregar import
+        import tempfile
         try:
             fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d')
             fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d')
@@ -538,8 +538,6 @@ def pdf_relacion_servicios():
         except Exception as e:
             print(f"No se pudo borrar el archivo temporal: {e}")
 
-        # Usar la misma lógica de validación que en /relacion_servicios
-        
         # CASO 1: No hay datos en el rango de fechas
         if not info['has_data_in_range']:
             return jsonify({
@@ -568,45 +566,32 @@ def pdf_relacion_servicios():
             nombre_pdf_final = f"Relacion_Servicios_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
         
         # Crear directorio temporal para el PDF
-        import tempfile
         temp_dir = tempfile.mkdtemp()
+        ruta_pdf_final = os.path.join(temp_dir, nombre_pdf_final)
         
-        # Modificar temporalmente la función generar_pdf para usar directorio temporal
-        import shutil
+        # LLAMAR DIRECTAMENTE A generar_pdf EN LUGAR DE generar_pdf_modular
+        # Esto evita el problema de la ruta hardcodeada en generar_pdf_modular
+        exito, mensaje = pdf_generator.generar_pdf(
+            df, 
+            ruta_pdf_final, 
+            notas, 
+            fecha_inicio, 
+            fecha_fin, 
+            imagenes=imagenes
+        )
         
-        # Guardar la función original para restaurarla después
-        original_generar_pdf = pdf_generator.generar_pdf
-        
-        def generar_pdf_temp(df_servicios, ruta_pdf, notas="", fecha_inicio_analisis=None, fecha_fin_analisis=None, imagenes=None):
-            # Usar directorio temporal en lugar de la ruta original
-            temp_ruta = os.path.join(temp_dir, os.path.basename(ruta_pdf))
-            return original_generar_pdf(df_servicios, temp_ruta, notas, fecha_inicio_analisis, fecha_fin_analisis, imagenes)
-        
-        # Reemplazar temporalmente la función
-        pdf_generator.generar_pdf = generar_pdf_temp
-        
-        try:
-            # Usar la función original con solo 2 valores de retorno
-            exito, mensaje = pdf_generator.generar_pdf_modular(
-                df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback, imagenes=imagenes
-            )
-            
-            if not exito:
-                return jsonify({'error': mensaje, 'logs': logs}), 500
+        if not exito:
+            return jsonify({'error': mensaje, 'logs': logs}), 500
 
-            # La ruta real del PDF generado
-            ruta_pdf = os.path.join(temp_dir, nombre_pdf_final)
-            
-            # Verificar que el archivo existe
-            if not os.path.exists(ruta_pdf):
-                return jsonify({'error': 'No se pudo generar el archivo PDF', 'logs': logs}), 500
+        # Verificar que el archivo existe
+        if not os.path.exists(ruta_pdf_final):
+            return jsonify({'error': 'No se pudo generar el archivo PDF', 'logs': logs}), 500
 
-            # Enviar el PDF como archivo descargable
-            return send_file(ruta_pdf, as_attachment=True, download_name=nombre_pdf_final)
-            
-        finally:
-            # Restaurar la función original
-            pdf_generator.generar_pdf = original_generar_pdf
+        # Agregar logs de éxito
+        logs.append({'level': 'success', 'text': 'PDF generado exitosamente en directorio temporal'})
+
+        # Enviar el PDF como archivo descargable
+        return send_file(ruta_pdf_final, as_attachment=True, download_name=nombre_pdf_final)
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
