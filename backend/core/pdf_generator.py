@@ -579,22 +579,13 @@ def generar_pdf(df_servicios, ruta_pdf, notas="", fecha_inicio_analisis=None, fe
         return False, f"Error al generar el PDF: {str(e)}"
 
 
-def generar_pdf_modular(df, nombre_pdf, notas, fecha_inicio_analisis=None, fecha_fin_analisis=None, log_callback=None, imagenes=None, ruta_destino=None):
+def generar_pdf_modular(df, nombre_pdf, notas, fecha_inicio_analisis=None, fecha_fin_analisis=None, log_callback=None, imagenes=None):
     try:
-        if ruta_destino:
-            # Usar la ruta proporcionada (para deployment)
-            ruta_pdf = ruta_destino
-        else:
-            # Usar la ruta original (para local)
-            desktop = os.path.expanduser("~/OneDrive/Escritorio")
-            carpeta_pdf = os.path.join(desktop, "pdf-relacion-servicios-en-efectivo")
-            ruta_pdf = os.path.join(carpeta_pdf, nombre_pdf)
-            
+        desktop = os.path.expanduser("~/OneDrive/Escritorio")
+        carpeta_pdf = os.path.join(desktop, "pdf-relacion-servicios-en-efectivo")
+        ruta_pdf = os.path.join(carpeta_pdf, nombre_pdf)
         if log_callback:
             log_callback(f"📄 Intentando guardar PDF en: {ruta_pdf}", "info")
-
-        # Crear directorio si no existe
-        os.makedirs(os.path.dirname(ruta_pdf), exist_ok=True)
 
         # Llama a la función real que crea el PDF
         exito, mensaje = generar_pdf(df, ruta_pdf, notas, fecha_inicio_analisis, fecha_fin_analisis, imagenes=imagenes)
@@ -604,12 +595,12 @@ def generar_pdf_modular(df, nombre_pdf, notas, fecha_inicio_analisis=None, fecha
                 log_callback("✅ PDF generado exitosamente! - Listo para abrir", "success")
             else:
                 log_callback(f"❌ {mensaje}", "error")
-        return exito, mensaje, ruta_pdf  # Ahora retorna 3 valores
+        return exito, mensaje
 
     except Exception as e:
         if log_callback:
             log_callback(f"❌ Error al generar PDF: {e}", "error")
-        return False, str(e), None
+        return False, str(e)
         
 def _abrir_pdf(ruta_pdf, log_callback=None):
     try:
