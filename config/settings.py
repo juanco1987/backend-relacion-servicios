@@ -32,9 +32,7 @@ FILTER_CRITERIA = {
 # --- Configuración del PDF ---
 PDF_CONFIG = {
     "DEFAULT_NAME": "Informe_Servicios.pdf",
-    # Ruta base para guardar los PDFs (por ejemplo, en el escritorio del usuario)
-    # Adapta esta ruta si tu OneDrive/Escritorio tiene otro nombre o ubicación.
-    "OUTPUT_BASE_FOLDER_NAME": "pdf-relacion-servicios-en-efectivo"
+    
 }
 
 # --- Rutas de Recursos (Icons, Logos) ---
@@ -166,17 +164,4 @@ APP_MESSAGES = {
     "NOTES_ENTRY_PLACEHOLDER": "Escribe tus notas aquí...",
 }
 
-# --- Funciones de Utilidad para Rutas (No se exportan, solo para uso interno si se requiere) ---
-def get_pdf_output_path(pdf_name):
-    """
-    Construye la ruta completa para guardar un PDF en la carpeta predefinida.
-    """
-    desktop = os.path.expanduser("~/OneDrive/Escritorio")
-    base_folder_path = os.path.join(desktop, PDF_CONFIG["OUTPUT_BASE_FOLDER_NAME"])
-    os.makedirs(base_folder_path, exist_ok=True) # Asegura que la carpeta exista
-    return os.path.join(base_folder_path, pdf_name)
 
-def hex_to_rgb(hex_color):
-    """Convierte un color HEX a una tupla RGB (R, G, B)."""
-    hex_color = hex_color.lstrip('#')
-    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))

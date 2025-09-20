@@ -549,11 +549,9 @@ def generar_pdf(df_servicios, ruta_pdf, notas="", fecha_inicio_analisis=None, fe
         return False, "No hay datos para generar el informe"
 
     try:
-        # Verificar si podemos escribir en la carpeta
-        carpeta = os.path.dirname(ruta_pdf)
-        if not os.access(carpeta, os.W_OK):
-            return False, f"No hay permisos de escritura en la carpeta: {carpeta}"
-
+        # Ya no necesitamos verificar permisos de escritura en una ruta de archivo.
+        # El PDF se generará en memoria.
+        
         # Crear PDF con orientación horizontal (landscape) para tener más espacio
         pdf = PDF(orientation='L')
         pdf.alias_nb_pages()
@@ -570,49 +568,36 @@ def generar_pdf(df_servicios, ruta_pdf, notas="", fecha_inicio_analisis=None, fe
         # Agregar tabla de servicios
         pdf.tabla_servicios(df_servicios, notas, fecha_inicio_analisis, fecha_fin_analisis, imagenes=imagenes)
 
-        # Generar archivo
-        pdf.output(ruta_pdf)
+        # Generar el PDF en memoria como una cadena de bytes
+        pdf_bytes = pdf.output(dest='S').encode('latin-1')
 
-        return True, f"PDF generado exitosamente: {ruta_pdf}"
+        return True, "PDF generado exitosamente en memoria", pdf_bytes
     except Exception as e:
         print(f"Error detallado al generar PDF: {str(e)}")  # Para depuración
-        return False, f"Error al generar el PDF: {str(e)}"
+        return False, f"Error al generar el PDF: {str(e)}", None
 
 
 def generar_pdf_modular(df, nombre_pdf, notas, fecha_inicio_analisis=None, fecha_fin_analisis=None, log_callback=None, imagenes=None):
     try:
-        desktop = os.path.expanduser("~/OneDrive/Escritorio")
-        carpeta_pdf = os.path.join(desktop, "pdf-relacion-servicios-en-efectivo")
-        ruta_pdf = os.path.join(carpeta_pdf, nombre_pdf)
-        if log_callback:
-            log_callback(f"📄 Intentando guardar PDF en: {ruta_pdf}", "info")
-
+        import tempfile
+        
+        # En el entorno de producción (Railway), no se guardará en un archivo local.
+        # Solo necesitamos el nombre para el PDF.
+        # La ruta_pdf ya no es necesaria para guardar el archivo.
+        
         # Llama a la función real que crea el PDF
-        exito, mensaje = generar_pdf(df, ruta_pdf, notas, fecha_inicio_analisis, fecha_fin_analisis, imagenes=imagenes)
+        exito, mensaje, pdf_bytes = generar_pdf(df, None, notas, fecha_inicio_analisis, fecha_fin_analisis, imagenes=imagenes)
 
         if log_callback:
             if exito:
-                log_callback("✅ PDF generado exitosamente! - Listo para abrir", "success")
+                log_callback("✅ PDF generado exitosamente! - Listo para enviar al cliente", "success")
             else:
                 log_callback(f"❌ {mensaje}", "error")
-        return exito, mensaje
+        
+        # Retornar los bytes del PDF
+        return exito, mensaje, pdf_bytes
 
     except Exception as e:
         if log_callback:
             log_callback(f"❌ Error al generar PDF: {e}", "error")
-        return False, str(e)
-        
-def _abrir_pdf(ruta_pdf, log_callback=None):
-    try:
-        if not os.path.exists(ruta_pdf):
-            if log_callback:
-                log_callback(f"❌ No se encontró el archivo PDF en: {ruta_pdf}", "error")
-            return False
-        os.startfile(ruta_pdf)
-        if log_callback:
-            log_callback("👁️ Abriendo archivo PDF...", "success")
-        return True
-    except Exception as e:
-        if log_callback:
-            log_callback(f"❌ Error al abrir PDF: {e}", "error")
-        return False 
+        return False, str(e) 
