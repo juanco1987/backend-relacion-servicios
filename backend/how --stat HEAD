@@ -1,5 +1,0 @@
-[33ma012871c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m feat: Corregir filtrado por mes en analytics - Arreglar formato de fechas YYYY-MM en frontend para coincidir con backend - Eliminar logs de debug innecesarios - Tabla ahora se actualiza correctamente según mes seleccionado
-[33me840267f[m feat: modularización completa y mejoras de Analytics
-[33ma4216dbc[m[33m ([m[1;32mrediseño-dashboard[m[33m)[m Backup: guardando todos los cambios antes de actualizar master
-[33m554bbc20[m Backup: guardando todo el progreso estable antes de actualizar master
-[33m015f566a[m[33m ([m[1;32mbackup-pre-master[m[33m)[m Funcionalidad de analytics global, fixes de NaN, mejoras en generación de PDF y UX
