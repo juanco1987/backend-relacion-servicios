@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Box, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
-import { formatearMesAnio } from '../../utils/dateFormatters';
+import { generateMonthsUntilNow, formatMonth } from '../../utils/dateUtils';
 import KpiCard from '../common/KpiCard';
+import { formatCurrency, formatInteger } from '../../utils/numberFormatters';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const ServiciosPendientesEfectivo = ({ file }) => {
@@ -81,31 +82,27 @@ const ServiciosPendientesEfectivo = ({ file }) => {
 
   const { resumen, detalle } = data;
 
-  const mesesOrdenados = Object.keys(resumen || {})
-    .filter(key => {
-      if (!key) return false;
-      const normalizado = String(key).trim().toLowerCase();
-      return normalizado &&
-        normalizado !== 'null' &&
-        normalizado !== 'undefined' &&
-        normalizado !== 'invalid date' &&
-        !/^nat$/i.test(normalizado);
-    })
-    .sort((a, b) => {
-      const [yearA, monthA] = a.split('-').map(Number);
-      const [yearB, monthB] = b.split('-').map(Number);
-      if (yearA !== yearB) return yearA - yearB;
-      return monthA - monthB;
-    });
+  const mesesOrdenados = generateMonthsUntilNow();
 
+  // Calcular total global y encontrar el mensaje más crítico
   const totalGlobal = mesesOrdenados.reduce((acc, mesKey) => {
     const datosMes = resumen[mesKey] || {};
+    const serviciosNuevos = datosMes.total_servicios || 0;
+    const valorNuevo = datosMes.total_valor || 0;
+    const diasNuevos = datosMes.dias_sin_relacionar || 0;
+    
+    // Si este mes tiene advertencia, actualizar el mensaje solo si es más crítico
+    const mensajeActual = acc.advertencia;
+    const mensajeNuevo = datosMes.advertencia;
+    const usarMensajeNuevo = datosMes.tiene_pendientes && 
+      (!acc.tiene_pendientes || diasNuevos > acc.dias_sin_relacionar);
+
     return {
-      total_servicios: acc.total_servicios + (datosMes.total_servicios || 0),
-      total_valor: acc.total_valor + (datosMes.total_valor || 0),
-      dias_sin_relacionar: Math.max(acc.dias_sin_relacionar, datosMes.dias_sin_relacionar || 0),
-      tiene_pendientes: acc.tiene_pendientes || datosMes.tiene_pendientes || false,
-      advertencia: datosMes.tiene_pendientes ? datosMes.advertencia : acc.advertencia
+      total_servicios: acc.total_servicios + serviciosNuevos,
+      total_valor: acc.total_valor + valorNuevo,
+      dias_sin_relacionar: Math.max(acc.dias_sin_relacionar, diasNuevos),
+      tiene_pendientes: acc.tiene_pendientes || datosMes.tiene_pendientes,
+      advertencia: usarMensajeNuevo ? mensajeNuevo : mensajeActual
     };
   }, {
     total_servicios: 0,
@@ -117,19 +114,22 @@ const ServiciosPendientesEfectivo = ({ file }) => {
 
   const datosSeleccionados = mesSeleccionado === 'Total Global'
     ? totalGlobal
-    : resumen[mesSeleccionado] || {};
+    : resumen[mesSeleccionado] || {
+      total_servicios: 0,
+      total_valor: 0,
+      dias_sin_relacionar: 0,
+      tiene_pendientes: false,
+      advertencia: "✅ ¡Excelente! No hay servicios pendientes por relacionar para este mes"
+    };
 
   const detalleFiltrado = detalle ? detalle.filter(servicio => {
     if (mesSeleccionado === 'Total Global') return true;
-    const fechaServicio = new Date(servicio.fecha);
-    if (isNaN(fechaServicio.getTime())) return false;
-    const año = fechaServicio.getFullYear();
-    const mes = String(fechaServicio.getMonth() + 1).padStart(2, '0');
-    return `${año}-${mes}` === mesSeleccionado;
+    const [año, mes] = servicio.fecha.split('-');
+    const mesAñoCalculado = `${año}-${mes}`;
+    return mesAñoCalculado === mesSeleccionado;
   }) : [];
 
-  const formatCurrency = (value) =>
-    `$${Number(value || 0).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  // Usando la función de utilidad formatCurrency importada
 
   const getStatusBadge = (dias, esAntiguo) => {
     let color = theme.terminalVerde;
@@ -171,7 +171,7 @@ const ServiciosPendientesEfectivo = ({ file }) => {
             <MenuItem value="Total Global">Total Global</MenuItem>
             {mesesOrdenados.map((mesKey) => (
               <MenuItem key={mesKey} value={mesKey}>
-                {formatearMesAnio(mesKey)}
+                {formatMonth(mesKey)}
               </MenuItem>
             ))}
           </Select>
@@ -199,7 +199,7 @@ const ServiciosPendientesEfectivo = ({ file }) => {
       }}>
         <KpiCard color={theme.terminalOliva} variant='elevated'>
           <div style={{ color: theme.terminalOliva, fontWeight: 'bold', fontSize: '28px' }}>
-            {datosSeleccionados.total_servicios}
+            {formatInteger(datosSeleccionados.total_servicios)}
           </div>
           <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
             Total Servicios
@@ -358,17 +358,17 @@ const ServiciosPendientesEfectivo = ({ file }) => {
       )}
 
       {/* Mensaje cuando no hay datos filtrados */}
-      {detalleFiltrado.length === 0 && mesSeleccionado !== 'Total Global' && detalle && detalle.length > 0 && (
+      {detalleFiltrado.length === 0 && mesSeleccionado !== 'Total Global' && (
         <div style={{
           padding: '1rem',
           backgroundColor: theme.fondoContenedor,
           border: `1px solid ${theme.bordePrincipal}`,
           borderRadius: '8px',
-          color: theme.textoInfo,
+          color: theme.terminalVerde,
           marginTop: '1rem',
           textAlign: 'center'
         }}>
-          No hay servicios pendientes para el mes de <strong>{formatearMesAnio(mesSeleccionado)}</strong>.
+          ✅ ¡Excelente! No hay servicios pendientes para el mes de <strong>{formatMonth(mesSeleccionado)}</strong>.
         </div>
       )}
     </div>

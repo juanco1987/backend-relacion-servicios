@@ -1,6 +1,7 @@
 import React from 'react';
 import { Typography, Paper } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { formatCurrency } from '../../../utils/numberFormatters';
 import { useTheme } from '../../../context/ThemeContext';
 import CustomTooltip from './CustomTooltip';
 
@@ -34,6 +35,7 @@ function AnalyticsChart({ dataGrafica }) {
           <YAxis 
             tick={{ fill: theme.textoPrincipal }}
             axisLine={{ stroke: theme.bordePrincipal }}
+            tickFormatter={(value) => formatCurrency(value)}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />

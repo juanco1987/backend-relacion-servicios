@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
+import { formatCurrency } from '../../utils/numberFormatters';
 import KpiCard from '../common/KpiCard';
 import CustomButton from '../common/CustomButton';
 import ServiciosPendientesEfectivo from './ServiciosPendientesEfectivo';
@@ -48,9 +49,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
     fetchAnalytics();
   }, [file]);
 
-  const formatCurrency = (value) => {
-    return `$${Number(value || 0).toLocaleString('es-CO')}`;
-  };
+  // Usando la función de utilidad formatCurrency importada
 
   // ❌ ELIMINAR - Ya no necesitamos el KpiCard inline
   // const KpiCard = ({ title, value, subtitle, color = theme.textoInfo, icon }) => (

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Box, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
-import { formatearMesAnio } from '../../utils/dateFormatters';
+import { generateMonthsUntilNow, formatMonth } from '../../utils/dateUtils';
 import KpiCard from '../common/KpiCard';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -85,33 +85,10 @@ const ServiciosPendientesCobrar = ({ file }) => {
 
     const { resumen, detalle } = data;
 
-    // === Obtener keys del resumen y ordenarlas cronológicamente (esperando formato YYYY-MM) ===
-    const mesesOrdenados = Object.keys(resumen || {})
-        .filter(key => {
-            if (!key) return false;
-            const normalizado = String(key).trim().toLowerCase();
-            return normalizado &&
-                normalizado !== 'null' &&
-                normalizado !== 'undefined' &&
-                normalizado !== 'invalid date' &&
-                !/^nat$/i.test(normalizado);
-        })
-        .sort((a, b) => {
-            // Intentamos parsear "YYYY-MM"
-            const pa = a.split('-');
-            const pb = b.split('-');
-            const yearA = parseInt(pa[0], 10);
-            const monthA = parseInt(pa[1], 10);
-            const yearB = parseInt(pb[0], 10);
-            const monthB = parseInt(pb[1], 10);
+    // Generar todos los meses hasta la fecha actual
+    const mesesOrdenados = generateMonthsUntilNow();
 
-            if (!isNaN(yearA) && !isNaN(yearB) && yearA !== yearB) return yearA - yearB;
-            if (!isNaN(monthA) && !isNaN(monthB)) return monthA - monthB;
-            // Fallback al orden alfabético estable si no son YYYY-MM
-            return String(a).localeCompare(String(b));
-        });
-
-    // Calcular total global sobre las keys crudas (YYYY-MM)
+    // Calcular total global
     const totalGlobal = mesesOrdenados.reduce((acc, mesKey) => {
         const datosMes = resumen[mesKey] || {};
         return {
@@ -127,23 +104,21 @@ const ServiciosPendientesCobrar = ({ file }) => {
         fecha_mas_antigua: '9999-12-31'
     });
 
-    // === Datos seleccionados: ahora mesSeleccionado guarda la key cruda (YYYY-MM) o 'Total Global' ===
+    // Datos seleccionados con valores por defecto para meses sin datos
     const datosSeleccionados = mesSeleccionado === 'Total Global'
         ? totalGlobal
-        : resumen[mesSeleccionado] || {};
+        : resumen[mesSeleccionado] || {
+            total_servicios: 0,
+            servicios_retraso: 0,
+            max_dias_retraso: 0,
+            fecha_mas_antigua: '9999-12-31'
+        };
 
-    // Filtrar detalle: comparamos con la key YYYY-MM
+    // Filtrar detalle usando el formato de fecha directo
     const detalleFiltrado = detalle ? detalle.filter(servicio => {
         if (mesSeleccionado === 'Total Global') return true;
-
-        const fechaServicio = new Date(servicio.fecha);
-        if (isNaN(fechaServicio.getTime())) return false;
-
-        const año = fechaServicio.getFullYear();
-        const mes = String(fechaServicio.getMonth() + 1).padStart(2, '0');
-        const mesFormatoBackend = `${año}-${mes}`;
-
-        return mesFormatoBackend === mesSeleccionado;
+        const [año, mes] = servicio.fecha.split('-');
+        return `${año}-${mes}` === mesSeleccionado;
     }) : [];
 
     return (
@@ -152,13 +127,10 @@ const ServiciosPendientesCobrar = ({ file }) => {
                 💸 Servicios Pendientes por Cobrar
             </h2>
 
-            {/* Selector de mes: value = key cruda (YYYY-MM), label = mes bonito */}
+            {/* Selector de mes */}
             <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
                 <FormControl variant="outlined" sx={{ minWidth: 200 }}>
-                    <InputLabel
-                        id="mes-selector-label"
-                        sx={getCustomLabelSx(theme)}
-                    >
+                    <InputLabel id="mes-selector-label" sx={getCustomLabelSx(theme)}>
                         Seleccionar Mes
                     </InputLabel>
                     <Select
@@ -172,14 +144,14 @@ const ServiciosPendientesCobrar = ({ file }) => {
                         <MenuItem value="Total Global">Total Global</MenuItem>
                         {mesesOrdenados.map((mesKey) => (
                             <MenuItem key={mesKey} value={mesKey}>
-                                {formatearMesAnio(mesKey)}
+                                {formatMonth(mesKey)}
                             </MenuItem>
                         ))}
                     </Select>
                 </FormControl>
             </Box>
 
-            {/* Tarjetas de KPIs usando KpiCard */}
+            {/* Tarjetas de KPIs */}
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -225,7 +197,7 @@ const ServiciosPendientesCobrar = ({ file }) => {
                 </KpiCard>
             </div>
 
-            {/* Tabla de detalle */}
+            {/* Tabla de detalle o mensaje de éxito */}
             {detalleFiltrado && detalleFiltrado.length > 0 ? (
                 <div style={{
                     padding: '1rem',
@@ -236,7 +208,9 @@ const ServiciosPendientesCobrar = ({ file }) => {
                     width: '100%',
                     margin: '0 auto'
                 }}>
-                    <h3 style={{ margin: '0 0 1rem 0', color: theme.textoPrincipal }}>Detalle de Servicios Pendientes por Cobrar</h3>
+                    <h3 style={{ margin: '0 0 1rem 0', color: theme.textoPrincipal }}>
+                        Detalle de Servicios Pendientes por Cobrar
+                    </h3>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{
                             width: '100%',
@@ -269,8 +243,16 @@ const ServiciosPendientesCobrar = ({ file }) => {
                     </div>
                 </div>
             ) : (
-                <div style={{ padding: '1rem', backgroundColor: theme.fondoContenedor, border: `1px solid ${theme.bordePrincipal}`, borderRadius: '8px', color: theme.textoInfo, marginTop: '1rem' }}>
-                    No hay servicios pendientes por cobrar en el rango de fechas seleccionado.
+                <div style={{ 
+                    padding: '1rem', 
+                    backgroundColor: theme.fondoContenedor, 
+                    border: `1px solid ${theme.bordePrincipal}`, 
+                    borderRadius: '8px', 
+                    color: theme.terminalVerde, 
+                    marginTop: '1rem',
+                    textAlign: 'center'
+                }}>
+                    ✅ ¡Excelente! No hay servicios pendientes por cobrar para {mesSeleccionado === 'Total Global' ? 'ningún mes' : `el mes de ${formatMonth(mesSeleccionado)}`}.
                 </div>
             )}
         </div>

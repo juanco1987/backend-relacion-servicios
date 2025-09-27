@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import KpiCard from '../common/KpiCard';
+import { formatCurrency } from '../../utils/numberFormatters';
 
 function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar: 0, total_pendientes_cobrar: 0 } }) {
   const { theme } = useTheme();
@@ -88,7 +89,7 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
               fontWeight: 'bold',
               marginBottom: '4px'
             }}>
-              ${item.total.toLocaleString('es-CO')}
+              {formatCurrency(item.total)}
             </div>
             <div style={{
               color: theme.textoSecundario,
@@ -103,10 +104,10 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
               fontSize: '12px'
             }}>
               <span style={{ color: theme.terminalVerde }}>
-                💰 ${item.efectivo.toLocaleString('es-CO')}
+                💰 {formatCurrency(item.efectivo)}
               </span>
               <span style={{ color: theme.textoInfo }}>
-                💳 ${item.transferencia.toLocaleString('es-CO')}
+                💳 {formatCurrency(item.transferencia)}
               </span>
             </div>
           </KpiCard>
@@ -135,7 +136,7 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
         }}>
           <KpiCard color={theme.terminalVerde} variant='elevated'>
             <div style={{ color: theme.terminalVerde, fontWeight: 'bold' }}>
-              ${dataGrafica.reduce((sum, item) => sum + item.efectivo, 0).toLocaleString('es-CO')}
+              {formatCurrency(dataGrafica.reduce((sum, item) => sum + item.efectivo, 0))}
             </div>
             <div style={{ color: theme.textoSecundario, fontSize: '12px' }}>
               Total Efectivo
@@ -143,7 +144,7 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
           </KpiCard>
           <KpiCard color={theme.textoInfo} variant='elevated'>
             <div style={{ color: theme.textoInfo, fontWeight: 'bold' }}>
-              ${dataGrafica.reduce((sum, item) => sum + item.transferencia, 0).toLocaleString('es-CO')}
+              {formatCurrency(dataGrafica.reduce((sum, item) => sum + item.transferencia, 0))}
             </div>
             <div style={{ color: theme.textoSecundario, fontSize: '12px' }}>
               Total Transferencia
@@ -151,7 +152,7 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
           </KpiCard>
           <KpiCard color={theme.terminalVerdeNeon} variant='elevated'>
             <div style={{ color: theme.terminalVerdeNeon, fontWeight: 'bold' }}>
-              ${dataGrafica.reduce((sum, item) => sum + item.total, 0).toLocaleString('es-CO')}
+              {formatCurrency(dataGrafica.reduce((sum, item) => sum + item.total, 0))}
             </div>
             <div style={{ color: theme.textoSecundario, fontSize: '12px' }}>
               Total General

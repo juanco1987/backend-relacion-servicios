@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
+import { formatNumber, formatCurrency } from '../../../utils/numberFormatters';
 import { useTheme } from '../../../context/ThemeContext';
 import KpiCard from '../../common/KpiCard';
 
@@ -50,19 +51,19 @@ function KpiSection({ kpi, pendientesSeleccionados }) {
       }}>
         <KpiCard
           title="Total Efectivo"
-          value={`${kpi.efectivo_total.toLocaleString('es-CO')}`}
+          value={formatCurrency(kpi.efectivo_total)}
           subtitle={`${kpi.efectivo_cantidad} servicios en efectivo`}
           color={theme.terminalVerde}
         />
         <KpiCard
           title="Total Transferencia"
-          value={`${kpi.transferencia_total.toLocaleString('es-CO')}`}
+          value={formatCurrency(kpi.transferencia_total)}
           subtitle={`${kpi.transferencia_cantidad} servicios por transferencia`}
           color={theme.textoInfo}
         />
         <KpiCard
           title="Total General"
-          value={`${kpi.total_general.toLocaleString('es-CO')}`}
+          value={formatCurrency(kpi.total_general)}
           subtitle={`${kpi.efectivo_cantidad + kpi.transferencia_cantidad} servicios totales`}
           color={theme.terminalVerdeNeon}
         />

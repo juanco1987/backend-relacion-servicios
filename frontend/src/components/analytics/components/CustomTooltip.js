@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '../../../context/ThemeContext';
+import { formatCurrency } from '../../../utils/numberFormatters';
 
 function CustomTooltip({ active, payload, label }) {
   const { theme } = useTheme();
@@ -21,7 +22,7 @@ function CustomTooltip({ active, payload, label }) {
           if (entry.name === 'precio') return null;
           return (
             <Typography key={index} variant="body2" sx={{ color: entry.color }}>
-              {entry.name}: ${entry.value.toLocaleString('es-CO', { minimumFractionDigits: 0 })}
+              {entry.name}: {formatCurrency(entry.value)}
             </Typography>
           );
         })}
