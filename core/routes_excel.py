@@ -381,24 +381,15 @@ def analytics():
         if col_forma_pago:
             df[col_forma_pago] = df[col_forma_pago].astype(str).str.strip().str.upper().apply(unidecode)
 
-        # Filtrar solo YA RELACIONADO
-        df_filtrado = df[df[col_estado] == 'YA RELACIONADO'].copy()
-        df_filtrado = df_filtrado[df_filtrado[col_fecha].notna()].copy()
         # Convertir formato de mes de "2025-01" a "Enero 2025"
         meses_espanol = {
             1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
             5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
             9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
         }
-        df_filtrado['MES'] = df_filtrado[col_fecha].apply(lambda x: f"{meses_espanol[x.month]} {x.year}" if pd.notna(x) else None)
-        
-        # Filtrar solo EFECTIVO
-        df_efectivo = df[df[col_forma_pago] == 'EFECTIVO'].copy() if col_forma_pago else df.iloc[0:0].copy()
-        df_efectivo = df_efectivo[df_efectivo[col_fecha].notna()].copy()
-        df_efectivo['MES'] = df_efectivo[col_fecha].apply(lambda x: f"{meses_espanol[x.month]} {x.year}" if pd.notna(x) else None)
+        df['MES'] = df[col_fecha].apply(lambda x: f"{meses_espanol[x.month]} {x.year}" if pd.notna(x) else None)
         
         # Calcular resumen por mes según condiciones solicitadas
-        df['MES'] = df[col_fecha].apply(lambda x: f"{meses_espanol[x.month]} {x.year}" if pd.notna(x) else None)
         resumen = {}
         meses = set(df['MES'][df['MES'].notna()].unique())
         for mes in meses:
@@ -434,6 +425,20 @@ def analytics():
                 'total_general': total_general,
                 'cantidad_general': cantidad_general
             }
+        
+        # ✅ NUEVA SECCIÓN: Calcular estados especiales por mes
+        estados_especiales_por_mes = {}
+        for mes in meses:
+            grupo_mes = df[df['MES'] == mes]
+            
+            estados_especiales_por_mes[mes] = {
+                'no_pagaron_domicilio': len(grupo_mes[grupo_mes[col_estado] == 'NO PAGARON DOMICILIO']),
+                'garantia': len(grupo_mes[grupo_mes[col_estado] == 'GARANTIA']),
+                'cancelado': len(grupo_mes[grupo_mes[col_estado] == 'CANCELADO']),
+                'no_se_cobra_domicilio': len(grupo_mes[grupo_mes[col_estado] == 'NO SE COBRA DOMICILIO']),
+                'cotizacion': len(grupo_mes[grupo_mes[col_estado] == 'COTIZACION'])
+            }
+        
         # Calcular totales de servicios pendientes por mes
         pendientes_por_mes = {}
         
@@ -468,6 +473,54 @@ def analytics():
         total_pendientes_relacionar_global = sum(pendientes_por_mes[mes]['total_pendientes_relacionar'] for mes in pendientes_por_mes)
         total_pendientes_cobrar_global = sum(pendientes_por_mes[mes]['total_pendientes_cobrar'] for mes in pendientes_por_mes)
         
+        # ✅ Calcular totales globales de estados especiales
+        total_no_pagaron_domicilio = sum(estados_especiales_por_mes[mes]['no_pagaron_domicilio'] for mes in estados_especiales_por_mes)
+        total_garantia = sum(estados_especiales_por_mes[mes]['garantia'] for mes in estados_especiales_por_mes)
+        total_cancelado = sum(estados_especiales_por_mes[mes]['cancelado'] for mes in estados_especiales_por_mes)
+        total_no_se_cobra_domicilio = sum(estados_especiales_por_mes[mes]['no_se_cobra_domicilio'] for mes in estados_especiales_por_mes)
+        total_cotizacion = sum(estados_especiales_por_mes[mes]['cotizacion'] for mes in estados_especiales_por_mes)
+        
+        # Calcular totales por estado para el gráfico circular (todos los datos del Excel)
+        estados_grafico = {}
+        
+        # Total de servicios (todos los que tienen fecha)
+        total_servicios = len(df[df[col_fecha].notna()])
+        estados_grafico['TOTAL_SERVICIOS'] = total_servicios
+        
+        # YA RELACIONADO
+        ya_relacionado = df[df[col_estado] == 'YA RELACIONADO']
+        estados_grafico['YA_RELACIONADO'] = len(ya_relacionado)
+        
+        # PENDIENTE COBRAR
+        pendiente_cobrar = df[df[col_estado] == 'PENDIENTE COBRAR']
+        estados_grafico['PENDIENTE_COBRAR'] = len(pendiente_cobrar)
+        
+        # COTIZACION
+        cotizacion = df[df[col_estado] == 'COTIZACION']
+        estados_grafico['COTIZACION'] = len(cotizacion)
+        
+        # NO PAGARON DOMICILIO
+        no_pagaron_domicilio = df[df[col_estado] == 'NO PAGARON DOMICILIO']
+        estados_grafico['NO_PAGARON_DOMICILIO'] = len(no_pagaron_domicilio)
+        
+        # GARANTIA
+        garantia = df[df[col_estado] == 'GARANTIA']
+        estados_grafico['GARANTIA'] = len(garantia)
+        
+        # NO SE COBRA DOMICILIO
+        no_se_cobra_domicilio = df[df[col_estado] == 'NO SE COBRA DOMICILIO']
+        estados_grafico['NO_SE_COBRA_DOMICILIO'] = len(no_se_cobra_domicilio)
+        
+        # CANCELADO
+        cancelado = df[df[col_estado] == 'CANCELADO']
+        estados_grafico['CANCELADO'] = len(cancelado)
+        
+        # OTROS (estados que no coinciden con los anteriores)
+        estados_conocidos = ['YA RELACIONADO', 'PENDIENTE COBRAR', 'COTIZACION', 
+                           'NO PAGARON DOMICILIO', 'GARANTIA', 'NO SE COBRA DOMICILIO', 'CANCELADO']
+        otros = df[~df[col_estado].isin(estados_conocidos) & df[col_estado].notna()]
+        estados_grafico['OTROS'] = len(otros)
+        
         try:
             os.remove(temp_path)
         except Exception as e:
@@ -476,12 +529,24 @@ def analytics():
         # Convertir tipos de numpy antes de serializar a JSON
         resumen_convertido = convert_numpy_types(resumen)
         pendientes_por_mes_convertido = convert_numpy_types(pendientes_por_mes)
+        estados_grafico_convertido = convert_numpy_types(estados_grafico)
+        estados_especiales_por_mes_convertido = convert_numpy_types(estados_especiales_por_mes)
         
+        # ✅ RETURN CON TODOS LOS DATOS
         return jsonify({
             'resumen': resumen_convertido, 
             'pendientes_por_mes': pendientes_por_mes_convertido,
             'total_pendientes_relacionar': total_pendientes_relacionar_global,
             'total_pendientes_cobrar': total_pendientes_cobrar_global,
+            'estados_grafico': estados_grafico_convertido,
+            'estados_especiales_por_mes': estados_especiales_por_mes_convertido,
+            'totales_estados_especiales': {
+                'no_pagaron_domicilio': total_no_pagaron_domicilio,
+                'garantia': total_garantia,
+                'cancelado': total_cancelado,
+                'no_se_cobra_domicilio': total_no_se_cobra_domicilio,
+                'cotizacion': total_cotizacion
+            },
             'success': True
         })
     except Exception as e:
@@ -568,7 +633,19 @@ def pdf_relacion_servicios():
             # Generar nombre automático con fecha y hora
             nombre_pdf_final = f"Relacion_Servicios_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
         
-        exito, mensaje, pdf_bytes = pdf_generator.generar_pdf_modular(df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback, imagenes=imagenes)
+        result = pdf_generator.generar_pdf_modular(df, nombre_pdf_final, notas, fecha_inicio, fecha_fin, log_callback, imagenes=imagenes)
+        # Manejar tanto tuplas de 2 como de 3 elementos
+        if isinstance(result, tuple):
+            if len(result) == 3:
+                exito, mensaje, pdf_bytes = result
+            elif len(result) == 2:
+                exito, mensaje = result
+                pdf_bytes = None
+            else:
+                return jsonify({'error': 'Formato de respuesta inesperado del generador PDF', 'logs': logs}), 500
+        else:
+            return jsonify({'error': 'Respuesta inválida del generador PDF', 'logs': logs}), 500
+
         if not exito or pdf_bytes is None:
             return jsonify({'error': mensaje, 'logs': logs}), 500
 
