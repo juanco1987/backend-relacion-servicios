@@ -118,6 +118,8 @@ const TEMA_CLARO = {
   terminalAzul: "#1E90FF",
   terminalOliva: "#808000",
   terminalRosa: "#FF1493",
+  terminalMorado: "#9333EA",           
+  terminalRojoEncendido: "#e00d0dff",
   
   // Gradientes y efectos
   gradientes: {
