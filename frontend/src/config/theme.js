@@ -131,7 +131,7 @@ const TEMA_CLARO = {
   neon: {
     servicios: '0 0 8px 2px #00eaff',
     pendientes: '0 0 8px 2px #e040fb',
-    exito: '#39ff14', // verde neón para animación de éxito
+    exito: '#39ff14', 
   },
 };
 

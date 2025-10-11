@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart, Line } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../utils/numberFormatters';
 import KpiCard from '../common/KpiCard';
 import CustomButton from '../common/CustomButton';
+import CustomTooltip from '../common/CustomTooltip';
 import ServiciosPendientesEfectivo from './ServiciosPendientesEfectivo';
 import ServiciosPendientesCobrar from './ServiciosPendientesCobrar';
 
@@ -260,7 +261,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {/* KPIs Principales */}
+        {/* KPIs Principales - Usando KpiCard */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
           <KpiCard
             title="Total Servicios"
@@ -304,7 +305,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
               <KpiCard
                 title="Garantía"
                 value={totalesEstadosEspeciales.garantia?.toString() || '0'}
-                subtitle="Servicios en garantía"
+                subtitle="Garantias realizadas"
                 color={theme.terminalAmarillo}
               />
               <KpiCard
@@ -322,7 +323,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
               <KpiCard
                 title="Cotización"
                 value={totalesEstadosEspeciales.cotizacion?.toString() || '0'}
-                subtitle="En cotización"
+                subtitle="Cotizaciones realizadas"
                 color={theme.textoInfo}
               />
             </div>
@@ -341,23 +342,27 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
             Tendencia de Servicios e Ingresos
           </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={dataToUse.tendenciaMensual}>
+            <ComposedChart data={dataToUse.tendenciaMensual}>
               <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
               <XAxis dataKey="mes" stroke={theme.textoPrincipal} />
               <YAxis yAxisId="left" stroke={theme.textoPrincipal} />
               <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} />
               <Tooltip 
-                formatter={(value, name) => name === 'ingresos' ? formatCurrency(value) : value}
-                contentStyle={{
-                  backgroundColor: theme.fondoContenedor,
-                  border: `1px solid ${theme.bordePrincipal}`,
-                  color: theme.textoPrincipal
-                }}
+                content={
+                  <CustomTooltip 
+                    formatter={(value, name) => {
+                      if (name === 'Ingresos') {
+                        return formatCurrency(value);
+                      }
+                      return value;
+                    }} 
+                  />
+                } 
               />
               <Legend />
-              <Bar yAxisId="left" dataKey="servicios" fill={theme.textoInfo} name="Servicios" />
+              <Bar yAxisId="left" dataKey="servicios" fill={theme.textoInfo} name="Servicios" maxBarSize={40}  radius={[16, 16, 16, 16]} />
               <Line yAxisId="right" type="monotone" dataKey="ingresos" stroke={theme.terminalVerde} strokeWidth={3} name="Ingresos" />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
 
@@ -374,109 +379,163 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
               Estados Especiales por Mes
             </h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={Object.entries(estadosEspecialesPorMes).map(([mes, datos]) => ({
-                mes,
-                'No Pagaron': datos.no_pagaron_domicilio || 0,
-                'Garantía': datos.garantia || 0,
-                'Cancelado': datos.cancelado || 0,
-                'No se Cobra': datos.no_se_cobra_domicilio || 0,
-                'Cotización': datos.cotizacion || 0
-              }))}>
+              <BarChart 
+                data={Object.entries(estadosEspecialesPorMes)
+                  .sort(([mesA], [mesB]) => {
+                    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                    const [mesTextA, yearA] = mesA.split(' ');
+                    const [mesTextB, yearB] = mesB.split(' ');
+                    if (yearA !== yearB) return yearA.localeCompare(yearB);
+                    return meses.indexOf(mesTextA) - meses.indexOf(mesTextB);
+                  })
+                  .map(([mes, datos]) => ({
+                    mes: mes.split(' ')[0],
+                    'No Pagaron Domicilio': datos.no_pagaron_domicilio || 0,
+                    'Garantía': datos.garantia || 0,
+                    'Cancelado': datos.cancelado || 0,
+                    'No se Cobra': datos.no_se_cobra_domicilio || 0,
+                    'Cotización': datos.cotizacion || 0
+                  }))}
+                maxBarSize={40}
+                margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
                 <XAxis dataKey="mes" stroke={theme.textoPrincipal} />
                 <YAxis stroke={theme.textoPrincipal} />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: theme.fondoContenedor,
-                    border: `1px solid ${theme.bordePrincipal}`,
-                    color: theme.textoPrincipal
-                  }}
-                />
+                <Tooltip content={<CustomTooltip formatter={(value,)=> `${value}`}/>} />
+                 
                 <Legend />
-                <Bar dataKey="No Pagaron" stackId="a" fill={COLORS.NO_PAGARON_DOMICILIO} />
-                <Bar dataKey="Garantía" stackId="a" fill={COLORS.GARANTIA} />
-                <Bar dataKey="Cancelado" stackId="a" fill={COLORS.CANCELADO} />
-                <Bar dataKey="No se Cobra" stackId="a" fill={COLORS.NO_SE_COBRA_DOMICILIO} />
-                <Bar dataKey="Cotización" stackId="a" fill={COLORS.COTIZACION} />
+                <Bar dataKey="No Pagaron Domicilio" stackId="a" fill={COLORS.NO_PAGARON_DOMICILIO} radius={[16, 16, 16, 16]} />
+                <Bar dataKey="Garantía" stackId="a" fill={COLORS.GARANTIA} radius={[16, 16, 16, 16]} />
+                <Bar dataKey="Cancelado" stackId="a" fill={COLORS.CANCELADO} radius={[16, 16, 16, 16]} />
+                <Bar dataKey="No se Cobra Domicilio" stackId="a" fill={COLORS.NO_SE_COBRA_DOMICILIO} radius={[16, 16, 16, 16]} />
+                <Bar dataKey="Cotización" stackId="a" fill={COLORS.COTIZACION} radius={[16, 16, 16, 16]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         )}
 
-        {/* Gráfico de Dona - Estados de Servicios - CORREGIDO PORCENTAJES */}
+        {/* Gráfico de Dona - MATERIAL DESIGN 3 MEJORADO */}
         <div style={{ 
           background: theme.fondoContenedor, 
           borderRadius: '16px', 
           padding: '20px', 
           boxShadow: theme.sombraComponente,
-          border: `1px solid ${theme.bordePrincipal}`
+          border: `2px solid ${theme.bordePrincipal}`,
+          animation: 'fadeIn 0.5s ease-in'
         }}>
-          <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; transform: translateY(10px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .donut-segment:hover {
+              filter: brightness(1.15) drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+              transition: all 0.3s ease;
+            }
+            .legend-item {
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .legend-item:hover {
+              transform: translateY(-4px) scale(1.02);
+              box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
+            }
+          `}</style>
+          
+          <h3 style={{ marginBottom: '24px', color: theme.textoPrincipal, fontSize: '1.2rem', fontWeight: '600' }}>
             Distribución de Estados de Servicios
           </h3>
-          <ResponsiveContainer width="100%" height={400}>
+          
+          <ResponsiveContainer width="100%" height={320}>
             <PieChart>
               <Pie
                 data={getEstadosParaDona()}
                 cx="50%"
                 cy="50%"
-                labelLine={true}
-                label={({ estado, cantidad, percent }) => {
-                  const porcentaje = (percent * 100).toFixed(1);
-                  return `${estado}: ${cantidad} (${porcentaje}%)`;
-                }}
-                outerRadius={120}
-                fill={theme.textoInfo}
+                innerRadius={70}
+                outerRadius={110}
+                paddingAngle={2}
+                labelLine={false}
+                label={false}
                 dataKey="cantidad"
+                nameKey="estado"
               >
                 {getEstadosParaDona().map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.color}
+                    className="donut-segment"
+                  />
                 ))}
               </Pie>
-              <Tooltip 
-                formatter={(value) => {
-                  const estadosData = getEstadosParaDona();
-                  const total = estadosData.reduce((sum, item) => sum + item.cantidad, 0);
-                  const porcentaje = ((value / total) * 100).toFixed(1);
-                  return `${value} servicios (${porcentaje}%)`;
-                }}
-                contentStyle={{
-                  backgroundColor: theme.fondoContenedor,
-                  border: `1px solid ${theme.bordePrincipal}`,
-                  color: theme.textoPrincipal
-                }}
+              <Tooltip
+                content={
+                  <CustomTooltip
+                    formatter={(value) => {
+                      const estadosData = getEstadosParaDona();
+                      const total = estadosData.reduce((sum, item) => sum + item.cantidad, 0);
+                      const porcentaje = ((value / total) * 100).toFixed(1);
+                      return `${value} servicios (${porcentaje}%)`;
+                    }}
+                  />
+                }
               />
             </PieChart>
           </ResponsiveContainer>
 
-          {/* Leyenda personalizada */}
+          {/* Leyenda compacta - Badges con elevación */}
           <div style={{ 
-            marginTop: '20px', 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-            gap: '10px' 
+            marginTop: '32px', 
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '12px',
+            justifyContent: 'center'
           }}>
             {getEstadosParaDona().map((item, index) => {
               const total = getEstadosParaDona().reduce((sum, i) => sum + i.cantidad, 0);
               const porcentaje = ((item.cantidad / total) * 100).toFixed(1);
+              
               return (
-                <div key={index} style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px',
-                  padding: '8px',
-                  background: theme.fondoMenu,
-                  borderRadius: '8px',
-                  border: `1px solid ${theme.bordePrincipal}`
-                }}>
-                  <div style={{ 
-                    width: '16px', 
-                    height: '16px', 
-                    background: item.color,
-                    borderRadius: '4px'
-                  }} />
-                  <span style={{ color: theme.textoPrincipal, fontSize: '0.9rem' }}>
-                    {item.estado}: {item.cantidad} ({porcentaje}%)
+                <div
+                  key={index}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 16px',
+                    background: theme.fondoContenedor,
+                    borderRadius: '20px',
+                    border: `2px solid ${item.color}`,
+                    boxShadow: theme.sombraComponente,
+                    fontSize: '0.85rem',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = theme.sombraHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = theme.sombraComponente;
+                  }}
+                >
+                  <div 
+                    style={{ 
+                      width: '10px', 
+                      height: '10px', 
+                      background: item.color,
+                      borderRadius: '50%'
+                    }} 
+                  />
+                  <span style={{ color: theme.textoPrincipal, fontWeight: '600' }}>
+                    {item.estado}
+                  </span>
+                  <span style={{ color: item.color, fontWeight: '700' }}>
+                    {item.cantidad}
+                  </span>
+                  <span style={{ color: theme.textoSecundario }}>
+                    ({porcentaje}%)
                   </span>
                 </div>
               );
@@ -503,18 +562,23 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
           <BarChart data={dataToUse.clientesRecurrentes}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
             <XAxis dataKey="cliente" stroke={theme.textoPrincipal} />
-            <YAxis stroke={theme.textoPrincipal} />
+            <YAxis yAxisId="left" stroke={theme.textoPrincipal} />
+            <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} />
             <Tooltip 
-              formatter={(value, name) => name === 'valor' ? formatCurrency(value) : value}
-              contentStyle={{
-                backgroundColor: theme.fondoContenedor,
-                border: `1px solid ${theme.bordePrincipal}`,
-                color: theme.textoPrincipal
-              }}
-            />
+                content={
+                  <CustomTooltip 
+                    formatter={(value, name) => {
+                      if (name === 'Valor Total') {
+                        return formatCurrency(value);
+                      }
+                      return value;
+                    }} 
+                  />
+                } 
+              />
             <Legend />
-            <Bar dataKey="servicios" fill={theme.textoInfo} name="Servicios" />
-            <Bar dataKey="valor" fill={theme.terminalVerde} name="Valor Total" />
+            <Bar yAxisId="left" dataKey="servicios" fill={theme.textoInfo} radius={[16, 16, 16, 16]} name="Servicios" />
+            <Bar yAxisId="right" dataKey="valor" fill={theme.terminalVerde} radius={[16, 16, 16, 16]} name="Valor Total" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -554,25 +618,51 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
         boxShadow: theme.sombraComponente,
         border: `1px solid ${theme.bordePrincipal}`
       }}>
-        <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>Servicios por Tipo</h3>
+        <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>
+          Servicios por Tipo
+        </h3>
+
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={dataToUse.serviciosPorTipo}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
             <XAxis dataKey="tipo" stroke={theme.textoPrincipal} />
-            <YAxis stroke={theme.textoPrincipal} />
-            <Tooltip 
-              formatter={(value, name) => name === 'valor' ? formatCurrency(value) : value}
-              contentStyle={{
-                backgroundColor: theme.fondoContenedor,
-                border: `1px solid ${theme.bordePrincipal}`,
-                color: theme.textoPrincipal
-              }}
+            <YAxis yAxisId="left" stroke={theme.textoPrincipal} />     
+            <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} /> 
+
+            <Tooltip
+              content={
+                <CustomTooltip
+                  formatter={(value, name) => {
+                    if (name === 'Valor') return formatCurrency(value);
+                    if (name === 'Cantidad') return `${value} servicios`;
+                    return value;
+                  }}
+                />
+              }
             />
+
             <Legend />
-            <Bar dataKey="cantidad" fill={theme.textoInfo} name="Cantidad" />
-            <Bar dataKey="valor" fill={theme.terminalVerde} name="Valor" />
+
+            {/* Cantidad de servicios (escala izquierda) */}
+            <Bar
+              yAxisId="left"
+              dataKey="cantidad"
+              fill={theme.textoInfo}
+              radius={[16, 16, 16, 16]}
+              name="Cantidad"
+            />
+
+            {/* Valor total (escala derecha) */}
+            <Bar
+              yAxisId="right"
+              dataKey="valor"
+              fill={theme.terminalVerde}
+              radius={[16, 16, 16, 16]}
+              name="Valor"
+            />
           </BarChart>
         </ResponsiveContainer>
+
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>

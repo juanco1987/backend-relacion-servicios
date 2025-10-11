@@ -3,7 +3,7 @@ import { Typography, Paper } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatCurrency } from '../../../utils/numberFormatters';
 import { useTheme } from '../../../context/ThemeContext';
-import CustomTooltip from './CustomTooltip';
+import CustomTooltip from '../../common/CustomTooltip';
 
 function AnalyticsChart({ dataGrafica }) {
   const { theme } = useTheme();
