@@ -3,6 +3,8 @@ import os
 import tempfile
 import locale
 import traceback
+import base64 # NUEVA IMPORTACIÓN PARA BASE64
+from pathlib import Path
 from datetime import datetime
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, letter
@@ -23,6 +25,44 @@ try:
 except:
     locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
+
+# =========================================================================
+# FUNCIÓN AUXILIAR PARA MANEJO DE IMÁGENES BASE64 (SOLUCIÓN AL PROBLEMA DE IMAGEN)
+# =========================================================================
+
+def guardar_imagen_base64_temp(base64_data):
+    """Decodifica una cadena Base64 y la guarda en un archivo temporal. Retorna la ruta."""
+    # Solo procesamos si es una cadena y contiene el separador de Base64
+    if not isinstance(base64_data, str) or "," not in base64_data:
+        return None 
+
+    try:
+        header, encoded_data = base64_data.split(",", 1)
+        data = base64.b64decode(encoded_data)
+        
+        # Determinar la extensión del archivo a partir del header
+        if 'image/jpeg' in header:
+            extension = '.jpg'
+        elif 'image/png' in header:
+            extension = '.png'
+        else:
+            extension = '.bin'
+
+        # Crear un archivo temporal
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=extension)
+        with open(temp_file.name, 'wb') as f:
+            f.write(data)
+            
+        return temp_file.name
+    except Exception as e:
+        # En caso de error, no falla el programa, solo imprime en consola
+        print(f"Error decodificando Base64: {e}")
+        return None
+
+
+# =========================================================================
+# CLASE PDF GASTO
+# =========================================================================
 
 class PDFGasto:
     def __init__(self, filename):
@@ -79,26 +119,31 @@ class PDFGasto:
         self.elements.append(Paragraph(titulo, self.estilo_titulo))
         self.elements.append(Spacer(1, 10))
     
-    # --- MÉTODO MODIFICADO: CONSIGNACIONES CON CAMPO "TRANSFERIDO O ENTREGADO" ---
+    # --- MÉTODO MODIFICADO: CONSIGNACIONES CON CAMPO "ENTREGADO O TRANSFERIDO" ---
     def tabla_consignaciones(self, consignaciones):
         """Dibuja la tabla con todas las consignaciones registradas, incluyendo el tipo."""
         self.elements.append(Paragraph("BALANCE CONSIGNACIÓN Y GASTOS (Detalle de Consignaciones)", self.estilo_subtitulo))
 
-        # Se agregó la columna "Transferido o Entregado" (usando el campo 'descripcion')
-        data = [["Fecha", "Transferido o Entregado", "Valor"]]
+        # Se agregó la columna "Entregado o Transferido" usando 'entregadoPor'
+        data = [["Fecha", "Entregado o Transferido", "Descripción (Nota)", "Valor"]]
         total_consignaciones = 0
         for c in consignaciones:
             fecha = c.get("fecha", "")
-            # Usamos el campo 'descripcion' para representar 'Transferido o Entregado'
-            descripcion = c.get("descripcion", "N/A") 
+            # FIX CLAVE: Usamos 'entregadoPor' para la columna solicitada
+            entregado_por = c.get("entregadoPor", "N/A")
+            # Usamos 'descripcion' para cualquier nota adicional
+            descripcion = c.get("descripcion", "") 
             monto = float(c.get("monto", 0))
             total_consignaciones += monto
-            data.append([fecha, descripcion, self.formatear_moneda(monto)])
+            
+            # Se incluye 'entregado_por' en la fila
+            data.append([fecha, entregado_por, descripcion, self.formatear_moneda(monto)])
 
         # Fila total
         data.append(
             [
                 "",
+                "", # Columna vacía
                 Paragraph("<b>TOTAL CONSIGNADO</b>", self.estilo_normal),
                 Paragraph(
                     f"<b>{self.formatear_moneda(total_consignaciones)}</b>",
@@ -112,16 +157,17 @@ class PDFGasto:
             ]
         )
 
-        # Se ajustó el ancho de las columnas para acomodar la nueva.
-        tabla = Table(data, colWidths=[1.3 * inch, 5.2 * inch, 1.3 * inch])
+        # Se ajustó el ancho de las columnas (ahora son 4)
+        tabla = Table(data, colWidths=[1.3 * inch, 2.0 * inch, 3.2 * inch, 1.3 * inch])
         tabla.setStyle(
             TableStyle(
                 [
                     ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E3F2FD")),
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0D47A1")),
                     ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("ALIGN", (2, 1), (2, -1), "RIGHT"),
-                    ("ALIGN", (0, 0), (1, -1), "LEFT"),
+                    ("ALIGN", (-1, 1), (-1, -1), "RIGHT"), # Columna de valor a la derecha
+                    ("ALIGN", (1, 1), (1, -1), "CENTER"), # Columna Entregado a centro
+                    ("ALIGN", (0, 0), (0, -1), "LEFT"), # Columna fecha a izquierda
                     ("LINEABOVE", (0, -1), (-1, -1), 1, colors.HexColor("#90CAF9")),
                     ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -194,7 +240,7 @@ class PDFGasto:
         total_gastos = sum(float(g.get("monto", 0)) for g in gastos)
         total_consignaciones = sum(float(c.get("monto", 0)) for c in consignaciones)
 
-        # Lógica contable según lo que definiste
+        # Lógica contable
         if total_gastos < total_consignaciones:
             vueltas_abrecar = total_consignaciones - total_gastos
             excedente_jg = 0
@@ -250,7 +296,6 @@ class PDFGasto:
         self.elements.append(tabla)
         self.elements.append(Spacer(1, 20))
 
-    # --- MÉTODO MODIFICADO: IMÁGENES MÁS ROBUSTAS ---
     def seccion_imagenes(self, imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones):
         """Muestra miniaturas de imágenes por categoría con los títulos solicitados."""
         
@@ -260,31 +305,27 @@ class PDFGasto:
             self.elements.append(Spacer(1, 6))
             
             fila = []
-            # Ajustamos el tamaño a 1.8x1.4 para dejar más espacio y evitar saltos
             img_width = 1.8 * inch  
             img_height = 1.4 * inch 
 
             if not lista:
                  self.elements.append(Paragraph("No se adjuntaron comprobantes para esta sección.", self.estilo_normal))
             
-            # Usaremos una lista para contener todas las imágenes o errores
             content_row = []
 
             for idx, img_path in enumerate(lista):
                 try:
-                    # ReportLab necesita la ruta de archivo para cargar la imagen
+                    # ReportLab usa la ruta de archivo temporal generada
                     img = Image(img_path, width=img_width, height=img_height)
                     img.hAlign = 'CENTER'
                     content_row.append(img)
                     
-                    # Máximo 4 imágenes por fila (ajustar si el PDF en paisaje no lo soporta)
                     if len(content_row) == 4: 
                         self.elements.append(Table([content_row], hAlign="CENTER", spaceBefore=6))
                         content_row = []
                 except Exception as e:
-                    # En caso de error (ruta inválida), se añade un texto al PDF
                     error_text = Paragraph(
-                        f"ERROR: Imagen no cargada de la ruta: {img_path}",
+                        f"ERROR: Imagen no cargada (Ruta temporal: {img_path})",
                         ParagraphStyle(
                             "ErrorImage",
                             parent=self.estilo_normal,
@@ -292,10 +333,8 @@ class PDFGasto:
                             fontSize=8
                         )
                     )
-                    # Si hay un error, lo ponemos en la fila y pasamos a la siguiente
                     content_row.append(error_text) 
                     
-                    # Si el error completa la fila, se imprime y se resetea
                     if len(content_row) == 4:
                         self.elements.append(Table([content_row], hAlign="CENTER", spaceBefore=6))
                         content_row = []
@@ -318,6 +357,7 @@ class PDFGasto:
 
 
     def generar_pdf(self, data):
+        # ... (Obtención de datos) ...
         gastos = data.get("gastos", [])
         consignaciones = data.get("consignaciones", [])
         imagenes_gastos = data.get("imagenesGastos", [])
@@ -344,20 +384,25 @@ class PDFGasto:
         print(f"✅ PDF generado correctamente: {self.filename}")
 
 
-# ------------------------------------------------------------------------
-# Función compatible con tu endpoint actual /gastos/generar-pdf (Sin cambios críticos)
-# ------------------------------------------------------------------------
+# =========================================================================
+# FUNCIÓN DE ENTRADA (COMPATIBLE CON FLASK ROUTE)
+# =========================================================================
 
 def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
     """
-    Compatible con routes_excel.py
+    Función principal llamada desde routes_excel.py
     Retorna (exito, pdf_bytes)
     """
+    
+    # Lista para rastrear todos los archivos temporales generados (IMAGENES + PDF)
+    rutas_temp_generadas = [] 
+
     try:
-        # Crear archivo temporal
+        # Crear archivo temporal para el PDF
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
         tmp_path = tmp.name
         tmp.close()
+        rutas_temp_generadas.append(tmp_path) # Agregar el PDF a la lista de limpieza
 
         # --- Detección de gastos y consignaciones ---
         if isinstance(gasto_data_formateado, list):
@@ -367,15 +412,35 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
             gastos = gasto_data_formateado.get("gastos", [])
             consignaciones = gasto_data_formateado.get("consignaciones", [])
 
-        # --- Detección de imágenes (Robusto ante formato lista o dict) ---
-        if isinstance(imagenes, list):
-            imagenes_gastos = imagenes
-            imagenes_consignaciones = []
-            imagenes_devoluciones = []
-        else:
-            imagenes_gastos = imagenes.get("imagenesGastos", [])
-            imagenes_consignaciones = imagenes.get("imagenesConsignaciones", [])
-            imagenes_devoluciones = imagenes.get("imagenesDevoluciones", [])
+        # --- FUNCIÓN AUXILIAR DE DECODIFICACIÓN ---
+        def decodificar_y_guardar(lista_base64):
+            rutas = []
+            for b64_str in lista_base64:
+                ruta = guardar_imagen_base64_temp(b64_str)
+                if ruta:
+                    rutas.append(ruta)
+            return rutas
+
+        # --- Detección y DECODIFICACIÓN de imágenes BASE64 ---
+        imagenes_dict = {}
+        if isinstance(imagenes, dict):
+            imagenes_dict = imagenes
+        
+        # 1. Decodificar y guardar: Gastos
+        imagenes_gastos_b64 = imagenes_dict.get("imagenesGastos", [])
+        imagenes_gastos = decodificar_y_guardar(imagenes_gastos_b64)
+        rutas_temp_generadas.extend(imagenes_gastos)
+        
+        # 2. Decodificar y guardar: Consignaciones
+        imagenes_consignaciones_b64 = imagenes_dict.get("imagenesConsignaciones", [])
+        imagenes_consignaciones = decodificar_y_guardar(imagenes_consignaciones_b64)
+        rutas_temp_generadas.extend(imagenes_consignaciones)
+        
+        # 3. Decodificar y guardar: Devoluciones
+        imagenes_devoluciones_b64 = imagenes_dict.get("imagenesDevoluciones", [])
+        imagenes_devoluciones = decodificar_y_guardar(imagenes_devoluciones_b64)
+        rutas_temp_generadas.extend(imagenes_devoluciones)
+
 
         # --- Estructura de datos final para el PDF ---
         data = {
@@ -395,15 +460,18 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         with open(tmp_path, "rb") as f:
             pdf_bytes = f.read()
 
-        # --- Limpiar archivo temporal ---
-        try:
-            os.remove(tmp_path)
-        except Exception:
-            pass
-
         return True, pdf_bytes
 
     except Exception as e:
         traceback.print_exc()
         print(f"❌ Error generando PDF ({nombre_pdf}):", e)
         return False, None
+        
+    finally:
+        # --- Limpiar TODOS los archivos temporales (PDF e Imágenes) ---
+        for ruta in rutas_temp_generadas:
+            try:
+                os.remove(ruta)
+            except Exception:
+                # No importa si falla la limpieza, lo importante es que se intente
+                pass
