@@ -128,7 +128,7 @@ class PDFGastoSideBySide:
         self.estilo_titulo_seccion = ParagraphStyle(
             "TituloSeccion",
             parent=self.styles["Heading3"],
-            alignment=0,
+            alignment=1,
             textColor=colors.HexColor("#0D47A1"),
             fontName=FONTE_PRINCIPAL_BOLD, 
             fontSize=10,
@@ -304,8 +304,9 @@ class PDFGastoSideBySide:
         titulo_consignaciones = Paragraph("ABRECAR DIO PARA MATERIALES", self.estilo_titulo_seccion)
         
         titulos_row = Table([[titulo_gastos, titulo_consignaciones]], 
-                           colWidths=[3.5*inch, 3.5*inch])
-        titulos_row.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "LEFT")]))
+                            colWidths=[4*inch, 4*inch],  # Aumentado de 3.5 a 4 para mejor balance
+                            hAlign='CENTER')  # Nuevo: Centra la tabla en la página
+        titulos_row.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER")]))  # Cambiado a CENTER para títulos
         self.elements.append(titulos_row)
         self.elements.append(Spacer(1, 6))
         
@@ -343,10 +344,12 @@ class PDFGastoSideBySide:
         for i in range(max_imgs):
             imagenes_data.append([gastos_row[i], consignaciones_row[i]])
         
-        tabla_imagenes = Table(imagenes_data, colWidths=[3.5*inch, 3.5*inch])
+        tabla_imagenes = Table(imagenes_data, colWidths=[4*inch, 4*inch], hAlign='CENTER')  # Nuevo: Centra la tabla
         tabla_imagenes.setStyle(TableStyle([
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING", (0,0), (-1,-1), 0),
+            ("RIGHTPADDING", (0,0), (-1,-1), 0),
         ]))
         self.elements.append(tabla_imagenes)
         self.elements.append(Spacer(1, 20))
@@ -354,7 +357,7 @@ class PDFGastoSideBySide:
         # ========== ROW 2: DEVOLUCIONES (CENTRADO ABAJO) ==========
         
         if imagenes_devoluciones:
-            self.elements.append(Paragraph("SOPORTE DEVOLUCIÓN VUELTAS PARA ABRECAR", self.estilo_titulo_seccion))
+            self.elements.append(Paragraph("SOPORTE DEVOLUCIÓN VUELTAS PARA ABRECAR", self.estilo_titulo_seccion))  # Ahora centrado por el estilo
             self.elements.append(Spacer(1, 6))
             
             devoluciones_row = []
@@ -367,7 +370,9 @@ class PDFGastoSideBySide:
                     logger.error(f"Error cargando imagen devolución: {e}")
                     devoluciones_row.append(Paragraph(f"Error img {idx+1}", self.estilo_normal))
             
-            tabla_devoluciones = Table([devoluciones_row], hAlign="CENTER")
+            # Si quieres que ocupe full width centrado, ajusta colWidths según el número de imágenes
+            col_width = 8*inch / max(1, len(devoluciones_row))  # Divide el ancho disponible
+            tabla_devoluciones = Table([devoluciones_row], colWidths=[col_width] * len(devoluciones_row), hAlign="CENTER")
             tabla_devoluciones.setStyle(TableStyle([
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
