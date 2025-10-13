@@ -284,7 +284,7 @@ class PDFGastoSideBySide:
 
     def seccion_imagenes_sidebyside(self, imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones):
         """
-        Posiciona imágenes lado a lado con máximo 2 por fila, tercera y siguientes debajo.
+        Posiciona imágenes lado a lado.
         """
         
         # Agregar página si es necesario
@@ -294,8 +294,8 @@ class PDFGastoSideBySide:
         self.elements.append(Paragraph("ARCHIVOS ADJUNTOS", self.estilo_subtitulo))
         self.elements.append(Spacer(1, 10))
         
-        img_width = 1.2 * inch  # Reducido de 1.8 a 1.2 para hacerlas más delgadas
-        img_height = 1.4 * inch  # Altura se mantiene
+        img_width = 1.8 * inch
+        img_height = 1.4 * inch
         
         # ========== ROW 1: IZQUIERDA Y DERECHA ==========
         
@@ -304,61 +304,47 @@ class PDFGastoSideBySide:
         titulo_consignaciones = Paragraph("ABRECAR DIO PARA MATERIALES", self.estilo_titulo_seccion)
         
         titulos_row = Table([[titulo_gastos, titulo_consignaciones]], 
-                            colWidths=[4*inch, 4*inch],
-                            hAlign='CENTER')
-        titulos_row.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER")]))
+                            colWidths=[4*inch, 4*inch],  # Aumentado de 3.5 a 4 para mejor balance
+                            hAlign='CENTER')  # Nuevo: Centra la tabla en la página
+        titulos_row.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER")]))  # Cambiado a CENTER para títulos
         self.elements.append(titulos_row)
-        self.elements.append(Spacer(1, 4))  # Reducido de 6 a 4 para menos separación
+        self.elements.append(Spacer(1, 6))
         
         # Imágenes IZQUIERDA (Gastos)
-        gastos_rows = []
-        for i in range(0, len(imagenes_gastos or []), 2):  # Iterar de 2 en 2
-            row = []
-            for j in range(2):
-                idx = i + j
-                if idx < len(imagenes_gastos):
-                    try:
-                        img = Image(imagenes_gastos[idx], width=img_width, height=img_height)
-                        img.hAlign = 'CENTER'
-                        row.append(img)
-                    except Exception as e:
-                        logger.error(f"Error cargando imagen gasto: {e}")
-                        row.append(Paragraph(f"Error img {idx+1}", self.estilo_normal))
-                else:
-                    row.append(Spacer(img_width, img_height))  # Rellenar si falta
-            gastos_rows.append(row)
+        gastos_row = []
+        for idx, img_path in enumerate(imagenes_gastos or []):
+            try:
+                img = Image(img_path, width=img_width, height=img_height)
+                img.hAlign = 'CENTER'
+                gastos_row.append(img)
+            except Exception as e:
+                logger.error(f"Error cargando imagen gasto: {e}")
+                gastos_row.append(Paragraph(f"Error img {idx+1}", self.estilo_normal))
         
         # Imágenes DERECHA (Consignaciones)
-        consignaciones_rows = []
-        for i in range(0, len(imagenes_consignaciones or []), 2):  # Iterar de 2 en 2
-            row = []
-            for j in range(2):
-                idx = i + j
-                if idx < len(imagenes_consignaciones):
-                    try:
-                        img = Image(imagenes_consignaciones[idx], width=img_width, height=img_height)
-                        img.hAlign = 'CENTER'
-                        row.append(img)
-                    except Exception as e:
-                        logger.error(f"Error cargando imagen consignación: {e}")
-                        row.append(Paragraph(f"Error img {idx+1}", self.estilo_normal))
-                else:
-                    row.append(Spacer(img_width, img_height))  # Rellenar si falta
-            consignaciones_rows.append(row)
+        consignaciones_row = []
+        for idx, img_path in enumerate(imagenes_consignaciones or []):
+            try:
+                img = Image(img_path, width=img_width, height=img_height)
+                img.hAlign = 'CENTER'
+                consignaciones_row.append(img)
+            except Exception as e:
+                logger.error(f"Error cargando imagen consignación: {e}")
+                consignaciones_row.append(Paragraph(f"Error img {idx+1}", self.estilo_normal))
         
-        # Asegurar que ambas secciones tengan el mismo número de filas
-        max_rows = max(len(gastos_rows), len(consignaciones_rows))
-        while len(gastos_rows) < max_rows:
-            gastos_rows.append([Spacer(img_width, img_height), Spacer(img_width, img_height)])
-        while len(consignaciones_rows) < max_rows:
-            consignaciones_rows.append([Spacer(img_width, img_height), Spacer(img_width, img_height)])
+        # Rellenar con celdas vacías si un lado tiene menos imágenes
+        max_imgs = max(len(gastos_row), len(consignaciones_row))
+        while len(gastos_row) < max_imgs:
+            gastos_row.append(Spacer(img_width, img_height))
+        while len(consignaciones_row) < max_imgs:
+            consignaciones_row.append(Spacer(img_width, img_height))
         
-        # Crear tabla lado a lado con máximo 2 por fila
+        # Crear tabla lado a lado
         imagenes_data = []
-        for i in range(max_rows):
-            imagenes_data.append([gastos_rows[i][0], consignaciones_rows[i][0]])
+        for i in range(max_imgs):
+            imagenes_data.append([gastos_row[i], consignaciones_row[i]])
         
-        tabla_imagenes = Table(imagenes_data, colWidths=[4*inch, 4*inch], hAlign='CENTER')
+        tabla_imagenes = Table(imagenes_data, colWidths=[4*inch, 4*inch], hAlign='CENTER')  # Nuevo: Centra la tabla
         tabla_imagenes.setStyle(TableStyle([
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -366,38 +352,33 @@ class PDFGastoSideBySide:
             ("RIGHTPADDING", (0,0), (-1,-1), 0),
         ]))
         self.elements.append(tabla_imagenes)
-        self.elements.append(Spacer(1, 10))  # Reducido de 20 a 10 para menos separación
+        self.elements.append(Spacer(1, 20))
         
         # ========== ROW 2: DEVOLUCIONES (CENTRADO ABAJO) ==========
         
         if imagenes_devoluciones:
-            self.elements.append(Paragraph("SOPORTE DEVOLUCIÓN VUELTAS PARA ABRECAR", self.estilo_titulo_seccion))
-            self.elements.append(Spacer(1, 4))  # Reducido de 6 a 4
+            self.elements.append(Paragraph("SOPORTE DEVOLUCIÓN VUELTAS PARA ABRECAR", self.estilo_titulo_seccion))  # Ahora centrado por el estilo
+            self.elements.append(Spacer(1, 6))
             
-            devoluciones_rows = []
-            for i in range(0, len(imagenes_devoluciones), 2):  # Iterar de 2 en 2
-                row = []
-                for j in range(2):
-                    idx = i + j
-                    if idx < len(imagenes_devoluciones):
-                        try:
-                            img = Image(imagenes_devoluciones[idx], width=img_width, height=img_height)
-                            img.hAlign = 'CENTER'
-                            row.append(img)
-                        except Exception as e:
-                            logger.error(f"Error cargando imagen devolución: {e}")
-                            row.append(Paragraph(f"Error img {idx+1}", self.estilo_normal))
-                    else:
-                        row.append(Spacer(img_width, img_height))  # Rellenar si falta
-                devoluciones_rows.append(row)
+            devoluciones_row = []
+            for idx, img_path in enumerate(imagenes_devoluciones):
+                try:
+                    img = Image(img_path, width=img_width, height=img_height)
+                    img.hAlign = 'CENTER'
+                    devoluciones_row.append(img)
+                except Exception as e:
+                    logger.error(f"Error cargando imagen devolución: {e}")
+                    devoluciones_row.append(Paragraph(f"Error img {idx+1}", self.estilo_normal))
             
-            col_width = 8 * inch / 2  # Ancho total dividido entre 2
-            tabla_devoluciones = Table(devoluciones_rows, colWidths=[col_width] * 2, hAlign="CENTER")
+            # Si quieres que ocupe full width centrado, ajusta colWidths según el número de imágenes
+            col_width = 8*inch / max(1, len(devoluciones_row))  # Divide el ancho disponible
+            tabla_devoluciones = Table([devoluciones_row], colWidths=[col_width] * len(devoluciones_row), hAlign="CENTER")
             tabla_devoluciones.setStyle(TableStyle([
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ]))
             self.elements.append(tabla_devoluciones)
+
     def generar_pdf(self, data):
         # AQUI NO DEBEMOS BORRAR LAS IMÁGENES. ESO SE HACE EN EL 'FINALLY' DE generar_pdf_gasto.
         gastos = data.get("gastos", [])
