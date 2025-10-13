@@ -252,3 +252,48 @@ if __name__ == "__main__":
 
     pdf = PDFGasto("demo_relacion_gastos.pdf")
     pdf.generar_pdf(data_demo)
+
+import tempfile
+import os
+import io
+
+def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
+    """
+    Compatible con routes_excel.py
+    Retorna (exito, pdf_bytes)
+    """
+    try:
+        # Crear archivo temporal
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+        tmp_path = tmp.name
+        tmp.close()
+
+        # Preparar estructura esperada por PDFGasto
+        data = {
+            "gastos": gasto_data_formateado.get("gastos", []),
+            "consignaciones": gasto_data_formateado.get("consignaciones", []),
+            "imagenesGastos": imagenes.get("imagenesGastos", []),
+            "imagenesConsignaciones": imagenes.get("imagenesConsignaciones", []),
+            "imagenesDevoluciones": imagenes.get("imagenesDevoluciones", []),
+            "calculos": calculos,
+        }
+
+        # Generar PDF
+        pdf = PDFGasto(tmp_path)
+        pdf.generar_pdf(data)
+
+        # Leer PDF en memoria
+        with open(tmp_path, "rb") as f:
+            pdf_bytes = f.read()
+
+        # Limpiar archivo temporal
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
+
+        return True, pdf_bytes
+
+    except Exception as e:
+        print(f"❌ Error generando PDF ({nombre_pdf}):", e)
+        return False, None    
