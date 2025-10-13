@@ -74,17 +74,10 @@ class PDFGasto:
             descripcion = g.get("descripcion", "")
             monto = float(g.get("monto", 0))
             total_gastos += monto
-            data.append(
-                [
-                    fecha,
-                    categoria,
-                    descripcion,
-                    self.formatear_moneda(monto),
-                ]
-            )
+            data.append([fecha, categoria, descripcion, self.formatear_moneda(monto)])
 
         # Fila total
-        data.append(  # typo: ignore
+        data.append(  # type: ignore
             [
                 "",
                 "",
@@ -235,27 +228,13 @@ class PDFGasto:
         print(f"✅ PDF generado correctamente: {self.filename}")
 
 
-# Ejemplo de uso directo
-if __name__ == "__main__":
-    data_demo = {
-        "gastos": [
-            {"fecha": "2025-10-12", "categoria": "Transporte", "descripcion": "Taxi aeropuerto", "monto": 45000},
-            {"fecha": "2025-10-12", "categoria": "Alimentación", "descripcion": "Almuerzo equipo", "monto": 80000},
-        ],
-        "consignaciones": [
-            {"fecha": "2025-10-12", "entregadoPor": "NEQUI", "descripcion": "Consignación principal", "monto": 120000},
-        ],
-        "imagenesGastos": [],
-        "imagenesConsignaciones": [],
-        "imagenesDevoluciones": [],
-    }
-
-    pdf = PDFGasto("demo_relacion_gastos.pdf")
-    pdf.generar_pdf(data_demo)
-
+# ------------------------------------------------------------------------
+# Función compatible con tu endpoint actual /gastos/generar-pdf
+# ------------------------------------------------------------------------
 import tempfile
 import os
 import io
+import traceback
 
 def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
     """
@@ -268,10 +247,18 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         tmp_path = tmp.name
         tmp.close()
 
-        # Preparar estructura esperada por PDFGasto
+        # Detectar si gasto_data_formateado es lista o dict
+        if isinstance(gasto_data_formateado, list):
+            gastos = gasto_data_formateado
+            consignaciones = []
+        else:
+            gastos = gasto_data_formateado.get("gastos", [])
+            consignaciones = gasto_data_formateado.get("consignaciones", [])
+
+        # Preparar estructura esperada
         data = {
-            "gastos": gasto_data_formateado.get("gastos", []),
-            "consignaciones": gasto_data_formateado.get("consignaciones", []),
+            "gastos": gastos,
+            "consignaciones": consignaciones,
             "imagenesGastos": imagenes.get("imagenesGastos", []),
             "imagenesConsignaciones": imagenes.get("imagenesConsignaciones", []),
             "imagenesDevoluciones": imagenes.get("imagenesDevoluciones", []),
@@ -286,7 +273,7 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         with open(tmp_path, "rb") as f:
             pdf_bytes = f.read()
 
-        # Limpiar archivo temporal
+        # Eliminar archivo temporal
         try:
             os.remove(tmp_path)
         except Exception:
@@ -295,5 +282,6 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         return True, pdf_bytes
 
     except Exception as e:
+        traceback.print_exc()
         print(f"❌ Error generando PDF ({nombre_pdf}):", e)
-        return False, None    
+        return False, None
