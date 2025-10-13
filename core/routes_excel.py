@@ -954,28 +954,31 @@ def generar_pdf_gasto():
         data = request.get_json()
         
         # 1. RECUPERAR LAS LISTAS COMPLETAS DE DATOS
-        # Asumiendo que el frontend envía la lista de gastos y consignaciones.
-        # Si solo se envía un gasto, asume que 'gasto_data' es la lista completa de gastos.
-        gastos = data.get('gastos', [])  # Si el frontend envía la lista de gastos
-        consignaciones = data.get('consignaciones', []) # Si el frontend envía la lista de consignaciones
+        gastos = data.get('gastos', [])
+        consignaciones = data.get('consignaciones', [])
         
-        # Fallback si solo se pasa un objeto 'gastoData' (como estaba antes)
+        # Fallback si solo se pasa un objeto 'gastoData' (se mantiene por compatibilidad)
         gasto_data_single = data.get('gastoData', {}) 
         if not gastos and gasto_data_single:
-            # Si 'gastos' es vacío pero 'gastoData' no, usa 'gastoData' como el único gasto.
             gastos = [gasto_data_single]
             
         monto_consignado = float(data.get('montoConsignado', 0))
-        imagenes = data.get('imagenes', {}) # ¡CORRECCIÓN! Usar {} por defecto
         nombre_pdf = data.get('nombrePDF', 'Reporte_Gastos')
+
+        # === CORRECCIÓN CRÍTICA: Extraer las listas de imágenes de la raíz del JSON ===
+        imagenes = {
+            "imagenesGastos": data.get("imagenesGastos", []),
+            "imagenesConsignaciones": data.get("imagenesConsignaciones", []),
+            "imagenesDevoluciones": data.get("imagenesDevoluciones", []),
+        }
+        # ==============================================================================
         
         # 2. CALCULAR TOTALES BASADO EN LAS LISTAS COMPLETAS
         total_gastos = sum(float(g.get('monto', 0)) for g in gastos)
         total_consignado = sum(float(c.get('monto', 0)) for c in consignaciones)
         
-        # Si el frontend aún pasa 'montoConsignado' solo, lo usamos para el total consignado
         if not consignaciones and monto_consignado > 0:
-             total_consignado = monto_consignado # Se mantiene por compatibilidad
+             total_consignado = monto_consignado
         
         diferencia = total_consignado - total_gastos
         
@@ -987,14 +990,12 @@ def generar_pdf_gasto():
         }
         
         # 3. CREAR LA ESTRUCTURA ESPERADA POR EL GENERADOR PDF
-        # Esto es lo que permite que el PDF se llene con múltiples gastos y consignaciones.
         data_para_pdf = {
             'gastos': gastos,
             'consignaciones': consignaciones,
         }
         
         # 4. LLAMAR AL GENERADOR PDF
-        # Ahora pasamos el diccionario que contiene las listas de gastos/consignaciones
         exito, pdf_bytes = gasto_pdf_generator.generar_pdf_gasto(data_para_pdf, calculos, imagenes, nombre_pdf)
         
         if exito and pdf_bytes:
