@@ -6,6 +6,7 @@ import traceback
 import base64
 from pathlib import Path
 from datetime import datetime
+import logging # NUEVA IMPORTACIÓN
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.units import inch
@@ -18,6 +19,10 @@ from reportlab.platypus import (
     Spacer,
     Image,
 )
+
+# Configurar logging para asegurar la visibilidad en Railway
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Asegurar formato de moneda local
 try:
@@ -32,40 +37,41 @@ except:
 
 def guardar_imagen_base64_temp(base64_data):
     """Decodifica una cadena Base64 y la guarda en un archivo temporal. Retorna la ruta."""
-    if not isinstance(base64_data, str) or "," not in base64_data:
+    if not isinstance(base64_data, str) or len(base64_data) < 100:
         return None 
 
     try:
-        # Extraer header (para tipo de archivo) y data
-        if "data:" in base64_data:
+        # 1. Separar el encabezado 'data:image/...' de la data pura
+        if "data:" in base64_data and "," in base64_data:
              header, encoded_data = base64_data.split(",", 1)
         else:
-             # Si falta el header, asumimos que es una cadena Base64 pura (menos probable)
              encoded_data = base64_data
              header = ""
              
+        # 2. Decodificar
         data = base64.b64decode(encoded_data)
         
-        # Determinar la extensión del archivo
+        # 3. Determinar la extensión
         if 'image/jpeg' in header:
             extension = '.jpg'
         elif 'image/png' in header:
             extension = '.png'
         else:
-            # Si el tipo no es claro, usamos png por defecto ya que tu JSON indica png
-            extension = '.png'
-
-        # Crear un archivo temporal
+            extension = '.png' 
+            
+        # 4. Crear un archivo temporal
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=extension)
-        temp_file.close() # Cerrar el descriptor para que otros procesos puedan acceder
-        
+        temp_file.close() 
+
+        # 5. Escribir los bytes
         with open(temp_file.name, 'wb') as f:
             f.write(data)
             
-        print(f"DEBUG: Imagen temporal creada en: {temp_file.name}") # <- LÍNEA DE DEBUG CLAVE
+        # Logging que debe ser visible en Railway
+        logger.info(f"DECODIFICACIÓN ÉXITO: Imagen temp creada en: {temp_file.name}") 
         return temp_file.name
     except Exception as e:
-        print(f"ERROR CRÍTICO decodificando Base64: {e}. Data: {base64_data[:50]}...")
+        logger.error(f"ERROR CRÍTICO decodificando Base64: {e}.")
         return None
 
 
@@ -132,12 +138,11 @@ class PDFGasto:
         """Dibuja la tabla con todas las consignaciones registradas, incluyendo el tipo."""
         self.elements.append(Paragraph("BALANCE CONSIGNACIÓN Y GASTOS (Detalle de Consignaciones)", self.estilo_subtitulo))
 
-        # Se agregó la columna "Entregado o Transferido" usando 'entregadoPor'
         data = [["Fecha", "Entregado o Transferido", "Descripción (Nota)", "Valor"]]
         total_consignaciones = 0
         for c in consignaciones:
             fecha = c.get("fecha", "")
-            entregado_por = c.get("entregadoPor", "N/A") # USANDO EL CAMPO CORRECTO
+            entregado_por = c.get("entregadoPor", "N/A") 
             descripcion = c.get("descripcion", "") 
             monto = float(c.get("monto", 0))
             total_consignaciones += monto
@@ -162,7 +167,6 @@ class PDFGasto:
             ]
         )
 
-        # Se ajustó el ancho de las columnas (ahora son 4)
         tabla = Table(data, colWidths=[1.3 * inch, 2.0 * inch, 3.2 * inch, 1.3 * inch])
         tabla.setStyle(
             TableStyle(
@@ -217,7 +221,6 @@ class PDFGasto:
             ]
         )
 
-        # Estilo visual de la tabla
         tabla = Table(data, colWidths=[1.3 * inch, 1.5 * inch, 4.5 * inch, 1.3 * inch])
         tabla.setStyle(
             TableStyle(
@@ -303,12 +306,10 @@ class PDFGasto:
     def seccion_imagenes(self, imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones):
         """Muestra miniaturas de imágenes por categoría con los títulos solicitados."""
         
-        # Función auxiliar para construir la sección de imágenes
         def build_imagenes(titulo, lista):
             self.elements.append(Paragraph(titulo, self.estilo_imagen_titulo))
             self.elements.append(Spacer(1, 6))
             
-            fila = []
             img_width = 1.8 * inch  
             img_height = 1.4 * inch 
 
@@ -328,7 +329,7 @@ class PDFGasto:
                         content_row = []
                 except Exception as e:
                     error_text = Paragraph(
-                        f"ERROR: No se pudo cargar la imagen desde la ruta temporal: {img_path}",
+                        f"ERROR PDF: No se pudo cargar la imagen desde la ruta temporal: {img_path}",
                         ParagraphStyle(
                             "ErrorImage",
                             parent=self.estilo_normal,
@@ -336,6 +337,7 @@ class PDFGasto:
                             fontSize=8
                         )
                     )
+                    logger.error(f"Falló ReportLab al intentar cargar {img_path}. Error: {e}") 
                     content_row.append(error_text) 
                     
                     if len(content_row) == 4:
@@ -376,7 +378,6 @@ class PDFGasto:
         self.seccion_imagenes(imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones)
 
         doc.build(self.elements)
-        # print(f"✅ PDF generado correctamente: {self.filename}") # Se evita este print para evitar duplicados
 
 
 # =========================================================================
@@ -421,16 +422,19 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         
         # 1. Decodificar y guardar: Gastos
         imagenes_gastos_b64 = imagenes_dict.get("imagenesGastos", [])
+        logger.info(f"RECIBIDO: {len(imagenes_gastos_b64)} imágenes Base64 para Gastos.")
         imagenes_gastos = decodificar_y_guardar(imagenes_gastos_b64)
         rutas_temp_generadas.extend(imagenes_gastos)
         
         # 2. Decodificar y guardar: Consignaciones
         imagenes_consignaciones_b64 = imagenes_dict.get("imagenesConsignaciones", [])
+        logger.info(f"RECIBIDO: {len(imagenes_consignaciones_b64)} imágenes Base64 para Consignaciones.")
         imagenes_consignaciones = decodificar_y_guardar(imagenes_consignaciones_b64)
         rutas_temp_generadas.extend(imagenes_consignaciones)
         
         # 3. Decodificar y guardar: Devoluciones
         imagenes_devoluciones_b64 = imagenes_dict.get("imagenesDevoluciones", [])
+        logger.info(f"RECIBIDO: {len(imagenes_devoluciones_b64)} imágenes Base64 para Devoluciones.")
         imagenes_devoluciones = decodificar_y_guardar(imagenes_devoluciones_b64)
         rutas_temp_generadas.extend(imagenes_devoluciones)
 
@@ -439,9 +443,9 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         data = {
             "gastos": gastos,
             "consignaciones": consignaciones,
-            "imagenesGastos": imagenes_gastos, # Ahora contiene RUTAS TEMPORALES
-            "imagenesConsignaciones": imagenes_consignaciones, # Ahora contiene RUTAS TEMPORALES
-            "imagenesDevoluciones": imagenes_devoluciones, # Ahora contiene RUTAS TEMPORALES
+            "imagenesGastos": imagenes_gastos,
+            "imagenesConsignaciones": imagenes_consignaciones,
+            "imagenesDevoluciones": imagenes_devoluciones,
             "calculos": calculos,
         }
 
@@ -453,11 +457,12 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         with open(tmp_path, "rb") as f:
             pdf_bytes = f.read()
 
+        logger.info(f"ÉXITO FINAL: PDF generado con {len(imagenes_gastos) + len(imagenes_consignaciones) + len(imagenes_devoluciones)} imágenes.")
         return True, pdf_bytes
 
     except Exception as e:
         traceback.print_exc()
-        print(f"❌ Error grave al generar el PDF ({nombre_pdf}):", e)
+        logger.error(f"ERROR GRAVE en generar_pdf_gasto ({nombre_pdf}): {e}")
         return False, None
         
     finally:
