@@ -1,3 +1,9 @@
+import io
+import os
+import tempfile
+import locale
+import traceback
+from datetime import datetime
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.units import inch
@@ -10,8 +16,6 @@ from reportlab.platypus import (
     Spacer,
     Image,
 )
-from datetime import datetime
-import locale
 
 # Asegurar formato de moneda local
 try:
@@ -25,10 +29,12 @@ class PDFGasto:
         self.filename = filename
         self.elements = []
         self.styles = getSampleStyleSheet()
+        
+        # --- ESTILOS MEJORADOS Y CENTRADOS ---
         self.estilo_titulo = ParagraphStyle(
             "Titulo",
             parent=self.styles["Heading1"],
-            alignment=1,
+            alignment=1,  # 1: CENTRADO
             textColor=colors.HexColor("#1565C0"),
             fontName="Helvetica-Bold",
             fontSize=16,
@@ -37,7 +43,7 @@ class PDFGasto:
         self.estilo_subtitulo = ParagraphStyle(
             "Subtitulo",
             parent=self.styles["Heading2"],
-            alignment=0,
+            alignment=1,  # 1: CENTRADO (Corregido)
             textColor=colors.HexColor("#0D47A1"),
             fontName="Helvetica-Bold",
             fontSize=12,
@@ -49,6 +55,16 @@ class PDFGasto:
             fontName="Helvetica",
             fontSize=10,
             leading=14,
+        )
+        # Estilo para títulos de imagen
+        self.estilo_imagen_titulo = ParagraphStyle(
+            "ImagenTitulo",
+            parent=self.styles["Heading3"],
+            alignment=1,  # 1: CENTRADO
+            textColor=colors.HexColor("#0D47A1"),
+            fontName="Helvetica-Bold",
+            fontSize=11,
+            spaceAfter=6,
         )
 
     def formatear_moneda(self, valor):
@@ -62,6 +78,61 @@ class PDFGasto:
         titulo = f"RELACIÓN DE GASTOS Y CONSIGNACIONES – {fecha}"
         self.elements.append(Paragraph(titulo, self.estilo_titulo))
         self.elements.append(Spacer(1, 10))
+    
+    # --- NUEVA SECCIÓN: TABLA DE CONSIGNACIONES DETALLADA ---
+    def tabla_consignaciones(self, consignaciones):
+        """Dibuja la tabla con todas las consignaciones registradas"""
+        self.elements.append(Paragraph("BALANCE CONSIGNACIÓN Y GASTOS (Detalle de Consignaciones)", self.estilo_subtitulo))
+
+        data = [["Fecha", "Descripción", "Valor"]]
+        total_consignaciones = 0
+        for c in consignaciones:
+            fecha = c.get("fecha", "")
+            # Asumiendo que 'descripcion' es el campo para "Entregado o Transferido"
+            descripcion = c.get("descripcion", "") 
+            monto = float(c.get("monto", 0))
+            total_consignaciones += monto
+            data.append([fecha, descripcion, self.formatear_moneda(monto)])
+
+        # Fila total
+        data.append(# type: ignore
+            [
+                "",
+                Paragraph("<b>TOTAL CONSIGNADO</b>", self.estilo_normal),
+                Paragraph(
+                    f"<b>{self.formatear_moneda(total_consignaciones)}</b>",
+                    ParagraphStyle(
+                        "ValorTotal",
+                        parent=self.estilo_normal,
+                        textColor=colors.HexColor("#1565C0"),
+                        alignment=2,
+                    ),
+                ),
+            ]
+        )
+
+        # Estilo visual de la tabla
+        tabla = Table(data, colWidths=[1.3 * inch, 5.2 * inch, 1.3 * inch])
+        tabla.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E3F2FD")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0D47A1")),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("ALIGN", (2, 1), (2, -1), "RIGHT"),
+                    ("ALIGN", (0, 0), (1, -1), "LEFT"),
+                    ("LINEABOVE", (0, -1), (-1, -1), 1, colors.HexColor("#90CAF9")),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ]
+            )
+        )
+
+        self.elements.append(tabla)
+        self.elements.append(Spacer(1, 20))
+        
+        return total_consignaciones
+
 
     def tabla_gastos(self, gastos):
         """Dibuja la tabla con todos los gastos registrados"""
@@ -103,6 +174,7 @@ class PDFGasto:
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0D47A1")),
                     ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                     ("ALIGN", (3, 1), (3, -1), "RIGHT"),
+                    ("ALIGN", (0, 0), (1, -1), "LEFT"),
                     ("LINEABOVE", (0, -1), (-1, -1), 1, colors.HexColor("#90CAF9")),
                     ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -130,7 +202,7 @@ class PDFGasto:
             excedente_jg = total_gastos - total_consignaciones
 
         data = [
-            ["", "MONTO"],
+            ["RESUMEN", "MONTO"],
             ["Total consignado", self.formatear_moneda(total_consignaciones)],
             ["Total gastos", self.formatear_moneda(total_gastos)],
             [
@@ -173,34 +245,59 @@ class PDFGasto:
             )
         )
 
-        self.elements.append(Paragraph("BALANCE CONSIGNACIÓN Y GASTOS", self.estilo_subtitulo))
+        self.elements.append(Paragraph("BALANCE CONSIGNACIÓN Y GASTOS (Resumen)", self.estilo_subtitulo))
         self.elements.append(tabla)
         self.elements.append(Spacer(1, 20))
 
+    # --- SECCIÓN DE IMÁGENES MODIFICADA CON TÍTULOS ESPECÍFICOS ---
     def seccion_imagenes(self, imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones):
-        """Muestra miniaturas de imágenes por categoría"""
+        """Muestra miniaturas de imágenes por categoría con los títulos solicitados."""
+        
+        # Función auxiliar para construir la sección de imágenes
         def build_imagenes(titulo, lista):
-            self.elements.append(Paragraph(titulo, self.estilo_subtitulo))
+            self.elements.append(Paragraph(titulo, self.estilo_imagen_titulo))
+            self.elements.append(Spacer(1, 6))
+            
             fila = []
+            img_width = 2.0 * inch  # Ancho de la imagen (ajustable)
+            img_height = 1.5 * inch # Altura de la imagen (ajustable)
+
+            if not lista:
+                 self.elements.append(Paragraph("No se adjuntaron comprobantes para esta sección.", self.estilo_normal))
+            
             for idx, img_path in enumerate(lista):
                 try:
-                    img = Image(img_path, width=1.8 * inch, height=1.4 * inch)
+                    # Intenta cargar la imagen. ReportLab levanta una excepción si la ruta es inválida.
+                    img = Image(img_path, width=img_width, height=img_height)
+                    img.hAlign = 'CENTER'
+
                     fila.append(img)
-                    if len(fila) == 4:
+                    
+                    # Máximo 4 imágenes por fila
+                    if len(fila) == 4: 
                         self.elements.append(Table([fila], hAlign="CENTER", spaceBefore=6))
                         fila = []
                 except Exception as e:
-                    print("Error cargando imagen:", e)
+                    # Muestra un mensaje de error legible en el PDF si la imagen no se carga
+                    error_text = f"Error al cargar imagen en la ruta '{img_path}'. Verifique la ruta del archivo. Error: {e}"
+                    self.elements.append(Paragraph(error_text, self.estilo_normal))
+                    print(error_text) # Imprimir también en consola/logs
+
+            # Agrega los elementos restantes en la última fila
             if fila:
                 self.elements.append(Table([fila], hAlign="CENTER"))
-            self.elements.append(Spacer(1, 12))
+            
+            self.elements.append(Spacer(1, 20))
 
-        if imagenes_gastos:
-            build_imagenes("Comprobantes de Gastos", imagenes_gastos)
-        if imagenes_consignaciones:
-            build_imagenes("Comprobantes de Consignaciones", imagenes_consignaciones)
-        if imagenes_devoluciones:
-            build_imagenes("Comprobantes de Devoluciones", imagenes_devoluciones)
+        # 1. ABRECAR DIO PARA MATERIALES (Consignaciones)
+        build_imagenes("ABRECAR DIO PARA MATERIALES", imagenes_consignaciones)
+        
+        # 2. SOPORTE DE PAGOS DE MATERIALES (Gastos)
+        build_imagenes("SOPORTE DE PAGOS DE MATERIALES", imagenes_gastos)
+        
+        # 3. SOPORTE DEVOLUCIÓN VUELTAS PARA ABRECAR (Devoluciones)
+        build_imagenes("SOPORTE DEVOLUCIÓN VUELTAS PARA ABRECAR", imagenes_devoluciones)
+
 
     def generar_pdf(self, data):
         gastos = data.get("gastos", [])
@@ -218,8 +315,9 @@ class PDFGasto:
             bottomMargin=40,
         )
 
-        # Secciones del PDF
+        # --- ORDEN DE SECCIONES CORREGIDO ---
         self.header()
+        self.tabla_consignaciones(consignaciones) # NUEVO: Detalle de consignaciones
         self.tabla_gastos(gastos)
         self.tabla_balance(gastos, consignaciones)
         self.seccion_imagenes(imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones)
@@ -229,12 +327,8 @@ class PDFGasto:
 
 
 # ------------------------------------------------------------------------
-# Función compatible con tu endpoint actual /gastos/generar-pdf
+# Función compatible con tu endpoint actual /gastos/generar-pdf (Sin cambios críticos)
 # ------------------------------------------------------------------------
-import tempfile
-import os
-import io
-import traceback
 
 def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
     """
@@ -247,7 +341,8 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         tmp_path = tmp.name
         tmp.close()
 
-        # --- Detectar si los datos vienen como lista o dict ---
+        # --- Detección de gastos y consignaciones ---
+        # Esta lógica se queda porque routes_excel.py pasa la data aquí.
         if isinstance(gasto_data_formateado, list):
             gastos = gasto_data_formateado
             consignaciones = []
@@ -255,7 +350,7 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
             gastos = gasto_data_formateado.get("gastos", [])
             consignaciones = gasto_data_formateado.get("consignaciones", [])
 
-        # --- Detectar si las imágenes vienen como lista o dict ---
+        # --- Detección de imágenes (Robusto ante formato lista o dict) ---
         if isinstance(imagenes, list):
             imagenes_gastos = imagenes
             imagenes_consignaciones = []
@@ -295,4 +390,3 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         traceback.print_exc()
         print(f"❌ Error generando PDF ({nombre_pdf}):", e)
         return False, None
-
