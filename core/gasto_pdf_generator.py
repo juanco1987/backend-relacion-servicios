@@ -1,5 +1,5 @@
 import io
-import os # Necesario para manejar rutas de archivos
+import os 
 import tempfile
 import locale
 import traceback
@@ -13,7 +13,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import ( SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak,)
 from reportlab.pdfgen import canvas    
-
+    
 # === IMPORTS NECESARIOS PARA FUENTES ===
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont, TTFError 
@@ -26,29 +26,27 @@ logger = logging.getLogger(__name__)
 # === CONFIGURACIÓN DE RUTAS Y REGISTRO DE FUENTES ===
 
 # 1. Definir la base: la carpeta donde se encuentra este script (gasto_pdf_generator.py)
-# Esto garantiza que la ruta sea correcta (e.g., /app/core/fonts/)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-FONTS_DIR = os.path.join(SCRIPT_DIR, 'fonts') # <<-- RUTA A TU CARPETA 'fonts'
+FONTS_DIR = os.path.join(SCRIPT_DIR, 'fonts') 
 
 ROBOTO_REGULAR_PATH = os.path.join(FONTS_DIR, 'RobotoCondensed-Regular.ttf')
 ROBOTO_BOLD_PATH = os.path.join(FONTS_DIR, 'RobotoCondensed-Bold.ttf')
 
-# La fuente que se usará. Por defecto, ReportLab usará Helvetica/Times-Roman (FALLBACK).
 FONTE_PRINCIPAL_BOLD = "Helvetica-Bold" 
 FONTE_PRINCIPAL_REGULAR = "Helvetica"
 
 try:
-    # 2. Intentar registrar las fuentes. Si el archivo no existe, saltará a la excepción.
+    # 2. Intentar registrar las fuentes. 
     pdfmetrics.registerFont(TTFont('Roboto-Cond', ROBOTO_REGULAR_PATH))
     pdfmetrics.registerFont(TTFont('Roboto-Cond-Bold', ROBOTO_BOLD_PATH))
     
-    # 3. Si tiene éxito, actualizamos las variables de la fuente a Roboto Condensed
+    # 3. Si tiene éxito, actualizamos las variables de la fuente
     FONTE_PRINCIPAL_BOLD = "Roboto-Cond-Bold"
     FONTE_PRINCIPAL_REGULAR = "Roboto-Cond"
     logger.info("Fuentes Roboto Condensed registradas exitosamente.")
 
 except (TTFError, FileNotFoundError) as e:
-    # 4. Fallback: Si falla, la aplicación NO se rompe. Usa las fuentes por defecto (Helvetica)
+    # 4. Fallback: Si falla, la aplicación NO se rompe y usa fuentes por defecto
     logger.error(f"FALLO CRÍTICO DE FUENTE: No se pudo abrir el archivo de fuente en '{ROBOTO_REGULAR_PATH}'. {e}")
     logger.error("Asegúrese de que los archivos TTF estén en la carpeta 'core/fonts/'.")
     pass
@@ -101,13 +99,13 @@ class PDFGastoSideBySide:
         self.elements = []
         self.styles = getSampleStyleSheet()
         
-        # --- ESTILOS ACTUALIZADOS USANDO LAS VARIABLES DE FUENTE ---
+        # --- ESTILOS USANDO LAS VARIABLES DE FUENTE ---
         self.estilo_titulo = ParagraphStyle(
             "Titulo",
             parent=self.styles["Heading1"],
             alignment=1,
             textColor=colors.HexColor("#1565C0"),
-            fontName=FONTE_PRINCIPAL_BOLD, # USA VARIABLE DE FUENTE
+            fontName=FONTE_PRINCIPAL_BOLD, 
             fontSize=16,
             spaceAfter=12,
         )
@@ -116,14 +114,14 @@ class PDFGastoSideBySide:
             parent=self.styles["Heading2"],
             alignment=1,
             textColor=colors.HexColor("#0D47A1"),
-            fontName=FONTE_PRINCIPAL_BOLD, # USA VARIABLE DE FUENTE
+            fontName=FONTE_PRINCIPAL_BOLD, 
             fontSize=12,
             spaceAfter=8,
         )
         self.estilo_normal = ParagraphStyle(
             "Normal",
             parent=self.styles["BodyText"],
-            fontName=FONTE_PRINCIPAL_REGULAR, # USA VARIABLE DE FUENTE
+            fontName=FONTE_PRINCIPAL_REGULAR, 
             fontSize=10,
             leading=14,
         )
@@ -132,7 +130,7 @@ class PDFGastoSideBySide:
             parent=self.styles["Heading3"],
             alignment=0,
             textColor=colors.HexColor("#0D47A1"),
-            fontName=FONTE_PRINCIPAL_BOLD, # USA VARIABLE DE FUENTE
+            fontName=FONTE_PRINCIPAL_BOLD, 
             fontSize=10,
             spaceAfter=4,
         )
@@ -172,7 +170,7 @@ class PDFGastoSideBySide:
             Paragraph(
                 f"<b>{self.formatear_moneda(total_consignaciones)}</b>",
                 ParagraphStyle("ValorTotal", parent=self.estilo_normal,
-                    textColor=colors.HexColor("#1565C0"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), # USA VARIABLE DE FUENTE
+                    textColor=colors.HexColor("#1565C0"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), 
             ),
         ])
 
@@ -180,8 +178,8 @@ class PDFGastoSideBySide:
         tabla.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E3F2FD")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0D47A1")),
-            ("FONTNAME", (0, 0), (-1, 0), FONTE_PRINCIPAL_BOLD), # USA VARIABLE DE FUENTE
-            ("FONTNAME", (0, 1), (-1, -2), FONTE_PRINCIPAL_REGULAR), # USA VARIABLE DE FUENTE para contenido
+            ("FONTNAME", (0, 0), (-1, 0), FONTE_PRINCIPAL_BOLD), 
+            ("FONTNAME", (0, 1), (-1, -2), FONTE_PRINCIPAL_REGULAR), 
             ("ALIGN", (-1, 1), (-1, -1), "RIGHT"),
             ("ALIGN", (1, 1), (1, -1), "CENTER"),
             ("LINEABOVE", (0, -1), (-1, -1), 1, colors.HexColor("#90CAF9")),
@@ -214,7 +212,7 @@ class PDFGastoSideBySide:
             Paragraph(
                 f"<b>{self.formatear_moneda(total_gastos)}</b>",
                 ParagraphStyle("ValorTotal", parent=self.estilo_normal,
-                    textColor=colors.HexColor("#C62828"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), # USA VARIABLE DE FUENTE
+                    textColor=colors.HexColor("#C62828"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), 
             ),
         ])
 
@@ -222,8 +220,8 @@ class PDFGastoSideBySide:
         tabla.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E3F2FD")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0D47A1")),
-            ("FONTNAME", (0, 0), (-1, 0), FONTE_PRINCIPAL_BOLD), # USA VARIABLE DE FUENTE
-            ("FONTNAME", (0, 1), (-1, -2), FONTE_PRINCIPAL_REGULAR), # USA VARIABLE DE FUENTE para contenido
+            ("FONTNAME", (0, 0), (-1, 0), FONTE_PRINCIPAL_BOLD), 
+            ("FONTNAME", (0, 1), (-1, -2), FONTE_PRINCIPAL_REGULAR), 
             ("ALIGN", (3, 1), (3, -1), "RIGHT"),
             ("ALIGN", (0, 0), (1, -1), "LEFT"),
             ("LINEABOVE", (0, -1), (-1, -1), 1, colors.HexColor("#90CAF9")),
@@ -256,7 +254,7 @@ class PDFGastoSideBySide:
                 Paragraph(
                     f"<b>{self.formatear_moneda(vueltas_abrecar)}</b>",
                     ParagraphStyle("Abrecar", parent=self.estilo_normal,
-                        textColor=colors.HexColor("#1565C0"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), # USA VARIABLE DE FUENTE
+                        textColor=colors.HexColor("#1565C0"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), 
                 ),
             ],
             [
@@ -264,7 +262,7 @@ class PDFGastoSideBySide:
                 Paragraph(
                     f"<b>{self.formatear_moneda(excedente_jg)}</b>",
                     ParagraphStyle("JG", parent=self.estilo_normal,
-                        textColor=colors.HexColor("#C62828"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), # USA VARIABLE DE FUENTE
+                        textColor=colors.HexColor("#C62828"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), 
                 ),
             ],
         ]
@@ -273,8 +271,8 @@ class PDFGastoSideBySide:
         tabla.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E3F2FD")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0D47A1")),
-            ("FONTNAME", (0, 0), (-1, 0), FONTE_PRINCIPAL_BOLD), # USA VARIABLE DE FUENTE
-            ("FONTNAME", (0, 1), (0, -1), FONTE_PRINCIPAL_REGULAR), # USA VARIABLE DE FUENTE para etiquetas
+            ("FONTNAME", (0, 0), (-1, 0), FONTE_PRINCIPAL_BOLD), 
+            ("FONTNAME", (0, 1), (0, -1), FONTE_PRINCIPAL_REGULAR), 
             ("ALIGN", (1, 1), (1, -1), "RIGHT"),
             ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -286,10 +284,7 @@ class PDFGastoSideBySide:
 
     def seccion_imagenes_sidebyside(self, imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones):
         """
-        Posiciona imágenes lado a lado:
-        - IZQUIERDA: Soporte de pago de gastos
-        - DERECHA: ABRECAR dio para materiales
-        - ABAJO (CENTRADO): Soporte devolución vueltas
+        Posiciona imágenes lado a lado.
         """
         
         # Agregar página si es necesario
@@ -380,6 +375,7 @@ class PDFGastoSideBySide:
             self.elements.append(tabla_devoluciones)
 
     def generar_pdf(self, data):
+        # AQUI NO DEBEMOS BORRAR LAS IMÁGENES. ESO SE HACE EN EL 'FINALLY' DE generar_pdf_gasto.
         gastos = data.get("gastos", [])
         consignaciones = data.get("consignaciones", [])
         imagenes_gastos = data.get("imagenesGastos", [])
@@ -401,18 +397,11 @@ class PDFGastoSideBySide:
         self.tabla_balance(gastos, consignaciones)
         self.seccion_imagenes_sidebyside(imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones)
         
-        # La clase se encarga de borrar las imágenes temporales
-        self._borrar_imagenes_temp(imagenes_gastos + imagenes_consignaciones + imagenes_devoluciones)
+        # Línea de borrado de imágenes eliminada.
         doc.build(self.elements)
         
-    def _borrar_imagenes_temp(self, rutas):
-        """Función auxiliar para borrar las imágenes decodificadas"""
-        for ruta in rutas:
-            try:
-                os.remove(ruta)
-            except Exception:
-                pass
-
+    # MÉTODO _borrar_imagenes_temp ELIMINADO DE LA CLASE
+    
 
 def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
     """
@@ -427,6 +416,7 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         tmp.close()
         rutas_temp_generadas.append(tmp_path) 
 
+        # --- Obtener Gastos y Consignaciones ---
         if isinstance(gasto_data_formateado, list):
             gastos = gasto_data_formateado
             consignaciones = []
@@ -434,6 +424,7 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
             gastos = gasto_data_formateado.get("gastos", [])
             consignaciones = gasto_data_formateado.get("consignaciones", [])
 
+        # --- Funciones de Manejo de Imágenes ---
         def decodificar_y_guardar(lista_base64):
             rutas = []
             for b64_str in lista_base64:
@@ -446,20 +437,23 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         if isinstance(imagenes, dict):
             imagenes_dict = imagenes
         
+        # Decodificar y guardar GASTOS
         imagenes_gastos_b64 = imagenes_dict.get("imagenesGastos", [])
         logger.info(f"Recibidas {len(imagenes_gastos_b64)} imágenes para Gastos")
         imagenes_gastos = decodificar_y_guardar(imagenes_gastos_b64)
-        rutas_temp_generadas.extend(imagenes_gastos)
+        rutas_temp_generadas.extend(imagenes_gastos) # <--- AÑADIDO A LA LISTA DE BORRADO FINAL
         
+        # Decodificar y guardar CONSIGNACIONES
         imagenes_consignaciones_b64 = imagenes_dict.get("imagenesConsignaciones", [])
         logger.info(f"Recibidas {len(imagenes_consignaciones_b64)} imágenes para Consignaciones")
         imagenes_consignaciones = decodificar_y_guardar(imagenes_consignaciones_b64)
-        rutas_temp_generadas.extend(imagenes_consignaciones)
+        rutas_temp_generadas.extend(imagenes_consignaciones) # <--- AÑADIDO A LA LISTA DE BORRADO FINAL
         
+        # Decodificar y guardar DEVOLUCIONES
         imagenes_devoluciones_b64 = imagenes_dict.get("imagenesDevoluciones", [])
         logger.info(f"Recibidas {len(imagenes_devoluciones_b64)} imágenes para Devoluciones")
         imagenes_devoluciones = decodificar_y_guardar(imagenes_devoluciones_b64)
-        rutas_temp_generadas.extend(imagenes_devoluciones)
+        rutas_temp_generadas.extend(imagenes_devoluciones) # <--- AÑADIDO A LA LISTA DE BORRADO FINAL
 
         data = {
             "gastos": gastos,
@@ -469,9 +463,11 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
             "imagenesDevoluciones": imagenes_devoluciones,
         }
 
+        # Generar PDF
         pdf = PDFGastoSideBySide(tmp_path)
         pdf.generar_pdf(data)
 
+        # Leer PDF en memoria
         with open(tmp_path, "rb") as f:
             pdf_bytes = f.read()
 
@@ -484,6 +480,7 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         return False, None
         
     finally:
+        # AQUI SE GARANTIZA EL BORRADO DE TODOS LOS ARCHIVOS TEMPORALES CREADOS
         for ruta in rutas_temp_generadas:
             try:
                 os.remove(ruta)
