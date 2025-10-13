@@ -30,11 +30,11 @@ class PDFGasto:
         self.elements = []
         self.styles = getSampleStyleSheet()
         
-        # --- ESTILOS MEJORADOS Y CENTRADOS ---
+        # --- ESTILOS ---
         self.estilo_titulo = ParagraphStyle(
             "Titulo",
             parent=self.styles["Heading1"],
-            alignment=1,  # 1: CENTRADO
+            alignment=1,
             textColor=colors.HexColor("#1565C0"),
             fontName="Helvetica-Bold",
             fontSize=16,
@@ -43,7 +43,7 @@ class PDFGasto:
         self.estilo_subtitulo = ParagraphStyle(
             "Subtitulo",
             parent=self.styles["Heading2"],
-            alignment=1,  # 1: CENTRADO (Corregido)
+            alignment=1,
             textColor=colors.HexColor("#0D47A1"),
             fontName="Helvetica-Bold",
             fontSize=12,
@@ -60,7 +60,7 @@ class PDFGasto:
         self.estilo_imagen_titulo = ParagraphStyle(
             "ImagenTitulo",
             parent=self.styles["Heading3"],
-            alignment=1,  # 1: CENTRADO
+            alignment=1,
             textColor=colors.HexColor("#0D47A1"),
             fontName="Helvetica-Bold",
             fontSize=11,
@@ -79,23 +79,24 @@ class PDFGasto:
         self.elements.append(Paragraph(titulo, self.estilo_titulo))
         self.elements.append(Spacer(1, 10))
     
-    # --- NUEVA SECCIÓN: TABLA DE CONSIGNACIONES DETALLADA ---
+    # --- MÉTODO MODIFICADO: CONSIGNACIONES CON CAMPO "TRANSFERIDO O ENTREGADO" ---
     def tabla_consignaciones(self, consignaciones):
-        """Dibuja la tabla con todas las consignaciones registradas"""
+        """Dibuja la tabla con todas las consignaciones registradas, incluyendo el tipo."""
         self.elements.append(Paragraph("BALANCE CONSIGNACIÓN Y GASTOS (Detalle de Consignaciones)", self.estilo_subtitulo))
 
-        data = [["Fecha", "Descripción", "Valor"]]
+        # Se agregó la columna "Transferido o Entregado" (usando el campo 'descripcion')
+        data = [["Fecha", "Transferido o Entregado", "Valor"]]
         total_consignaciones = 0
         for c in consignaciones:
             fecha = c.get("fecha", "")
-            # Asumiendo que 'descripcion' es el campo para "Entregado o Transferido"
-            descripcion = c.get("descripcion", "") 
+            # Usamos el campo 'descripcion' para representar 'Transferido o Entregado'
+            descripcion = c.get("descripcion", "N/A") 
             monto = float(c.get("monto", 0))
             total_consignaciones += monto
             data.append([fecha, descripcion, self.formatear_moneda(monto)])
 
         # Fila total
-        data.append(# type: ignore
+        data.append(
             [
                 "",
                 Paragraph("<b>TOTAL CONSIGNADO</b>", self.estilo_normal),
@@ -111,7 +112,7 @@ class PDFGasto:
             ]
         )
 
-        # Estilo visual de la tabla
+        # Se ajustó el ancho de las columnas para acomodar la nueva.
         tabla = Table(data, colWidths=[1.3 * inch, 5.2 * inch, 1.3 * inch])
         tabla.setStyle(
             TableStyle(
@@ -249,7 +250,7 @@ class PDFGasto:
         self.elements.append(tabla)
         self.elements.append(Spacer(1, 20))
 
-    # --- SECCIÓN DE IMÁGENES MODIFICADA CON TÍTULOS ESPECÍFICOS ---
+    # --- MÉTODO MODIFICADO: IMÁGENES MÁS ROBUSTAS ---
     def seccion_imagenes(self, imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones):
         """Muestra miniaturas de imágenes por categoría con los títulos solicitados."""
         
@@ -259,33 +260,50 @@ class PDFGasto:
             self.elements.append(Spacer(1, 6))
             
             fila = []
-            img_width = 2.0 * inch  # Ancho de la imagen (ajustable)
-            img_height = 1.5 * inch # Altura de la imagen (ajustable)
+            # Ajustamos el tamaño a 1.8x1.4 para dejar más espacio y evitar saltos
+            img_width = 1.8 * inch  
+            img_height = 1.4 * inch 
 
             if not lista:
                  self.elements.append(Paragraph("No se adjuntaron comprobantes para esta sección.", self.estilo_normal))
             
+            # Usaremos una lista para contener todas las imágenes o errores
+            content_row = []
+
             for idx, img_path in enumerate(lista):
                 try:
-                    # Intenta cargar la imagen. ReportLab levanta una excepción si la ruta es inválida.
+                    # ReportLab necesita la ruta de archivo para cargar la imagen
                     img = Image(img_path, width=img_width, height=img_height)
                     img.hAlign = 'CENTER'
-
-                    fila.append(img)
+                    content_row.append(img)
                     
-                    # Máximo 4 imágenes por fila
-                    if len(fila) == 4: 
-                        self.elements.append(Table([fila], hAlign="CENTER", spaceBefore=6))
-                        fila = []
+                    # Máximo 4 imágenes por fila (ajustar si el PDF en paisaje no lo soporta)
+                    if len(content_row) == 4: 
+                        self.elements.append(Table([content_row], hAlign="CENTER", spaceBefore=6))
+                        content_row = []
                 except Exception as e:
-                    # Muestra un mensaje de error legible en el PDF si la imagen no se carga
-                    error_text = f"Error al cargar imagen en la ruta '{img_path}'. Verifique la ruta del archivo. Error: {e}"
-                    self.elements.append(Paragraph(error_text, self.estilo_normal))
-                    print(error_text) # Imprimir también en consola/logs
+                    # En caso de error (ruta inválida), se añade un texto al PDF
+                    error_text = Paragraph(
+                        f"ERROR: Imagen no cargada de la ruta: {img_path}",
+                        ParagraphStyle(
+                            "ErrorImage",
+                            parent=self.estilo_normal,
+                            textColor=colors.red,
+                            fontSize=8
+                        )
+                    )
+                    # Si hay un error, lo ponemos en la fila y pasamos a la siguiente
+                    content_row.append(error_text) 
+                    
+                    # Si el error completa la fila, se imprime y se resetea
+                    if len(content_row) == 4:
+                        self.elements.append(Table([content_row], hAlign="CENTER", spaceBefore=6))
+                        content_row = []
+
 
             # Agrega los elementos restantes en la última fila
-            if fila:
-                self.elements.append(Table([fila], hAlign="CENTER"))
+            if content_row:
+                self.elements.append(Table([content_row], hAlign="CENTER"))
             
             self.elements.append(Spacer(1, 20))
 
@@ -315,9 +333,9 @@ class PDFGasto:
             bottomMargin=40,
         )
 
-        # --- ORDEN DE SECCIONES CORREGIDO ---
+        # --- ORDEN DE SECCIONES ---
         self.header()
-        self.tabla_consignaciones(consignaciones) # NUEVO: Detalle de consignaciones
+        self.tabla_consignaciones(consignaciones)
         self.tabla_gastos(gastos)
         self.tabla_balance(gastos, consignaciones)
         self.seccion_imagenes(imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones)
@@ -342,7 +360,6 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         tmp.close()
 
         # --- Detección de gastos y consignaciones ---
-        # Esta lógica se queda porque routes_excel.py pasa la data aquí.
         if isinstance(gasto_data_formateado, list):
             gastos = gasto_data_formateado
             consignaciones = []
