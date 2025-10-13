@@ -953,14 +953,30 @@ def generar_pdf_gasto():
     try:
         data = request.get_json()
         
-        gasto_data = data.get('gastoData', {})
+        # 1. RECUPERAR LAS LISTAS COMPLETAS DE DATOS
+        # Asumiendo que el frontend envía la lista de gastos y consignaciones.
+        # Si solo se envía un gasto, asume que 'gasto_data' es la lista completa de gastos.
+        gastos = data.get('gastos', [])  # Si el frontend envía la lista de gastos
+        consignaciones = data.get('consignaciones', []) # Si el frontend envía la lista de consignaciones
+        
+        # Fallback si solo se pasa un objeto 'gastoData' (como estaba antes)
+        gasto_data_single = data.get('gastoData', {}) 
+        if not gastos and gasto_data_single:
+            # Si 'gastos' es vacío pero 'gastoData' no, usa 'gastoData' como el único gasto.
+            gastos = [gasto_data_single]
+            
         monto_consignado = float(data.get('montoConsignado', 0))
-        imagenes = data.get('imagenes', [])
+        imagenes = data.get('imagenes', {}) # ¡CORRECCIÓN! Usar {} por defecto
         nombre_pdf = data.get('nombrePDF', 'Reporte_Gastos')
         
-        # Calcular totales
-        total_gastos = float(gasto_data.get('monto', 0))
-        total_consignado = monto_consignado
+        # 2. CALCULAR TOTALES BASADO EN LAS LISTAS COMPLETAS
+        total_gastos = sum(float(g.get('monto', 0)) for g in gastos)
+        total_consignado = sum(float(c.get('monto', 0)) for c in consignaciones)
+        
+        # Si el frontend aún pasa 'montoConsignado' solo, lo usamos para el total consignado
+        if not consignaciones and monto_consignado > 0:
+             total_consignado = monto_consignado # Se mantiene por compatibilidad
+        
         diferencia = total_consignado - total_gastos
         
         calculos = {
@@ -970,24 +986,16 @@ def generar_pdf_gasto():
             'excedenteAFavorDeJG': abs(diferencia) if diferencia < 0 else 0,
         }
         
-        # Formatear fecha
-        fecha_obj = gasto_data.get('fecha')
-        if fecha_obj:
-            if isinstance(fecha_obj, str):
-                fecha_str = fecha_obj
-            else:
-                fecha_str = fecha_obj.strftime('%d/%m/%Y') if hasattr(fecha_obj, 'strftime') else str(fecha_obj)
-        else:
-            fecha_str = 'N/A'
-        
-        gasto_data_formateado = {
-            'fecha': fecha_str,
-            'categoria': gasto_data.get('categoria', 'N/A'),
-            'descripcion': gasto_data.get('descripcion', 'N/A'),
-            'monto': float(gasto_data.get('monto', 0))
+        # 3. CREAR LA ESTRUCTURA ESPERADA POR EL GENERADOR PDF
+        # Esto es lo que permite que el PDF se llene con múltiples gastos y consignaciones.
+        data_para_pdf = {
+            'gastos': gastos,
+            'consignaciones': consignaciones,
         }
         
-        exito, pdf_bytes = gasto_pdf_generator.generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf)
+        # 4. LLAMAR AL GENERADOR PDF
+        # Ahora pasamos el diccionario que contiene las listas de gastos/consignaciones
+        exito, pdf_bytes = gasto_pdf_generator.generar_pdf_gasto(data_para_pdf, calculos, imagenes, nombre_pdf)
         
         if exito and pdf_bytes:
             return send_file(
