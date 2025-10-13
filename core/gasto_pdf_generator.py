@@ -247,7 +247,7 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         tmp_path = tmp.name
         tmp.close()
 
-        # Detectar si gasto_data_formateado es lista o dict
+        # --- Detectar si los datos vienen como lista o dict ---
         if isinstance(gasto_data_formateado, list):
             gastos = gasto_data_formateado
             consignaciones = []
@@ -255,25 +255,35 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
             gastos = gasto_data_formateado.get("gastos", [])
             consignaciones = gasto_data_formateado.get("consignaciones", [])
 
-        # Preparar estructura esperada
+        # --- Detectar si las imágenes vienen como lista o dict ---
+        if isinstance(imagenes, list):
+            imagenes_gastos = imagenes
+            imagenes_consignaciones = []
+            imagenes_devoluciones = []
+        else:
+            imagenes_gastos = imagenes.get("imagenesGastos", [])
+            imagenes_consignaciones = imagenes.get("imagenesConsignaciones", [])
+            imagenes_devoluciones = imagenes.get("imagenesDevoluciones", [])
+
+        # --- Estructura de datos final para el PDF ---
         data = {
             "gastos": gastos,
             "consignaciones": consignaciones,
-            "imagenesGastos": imagenes.get("imagenesGastos", []),
-            "imagenesConsignaciones": imagenes.get("imagenesConsignaciones", []),
-            "imagenesDevoluciones": imagenes.get("imagenesDevoluciones", []),
+            "imagenesGastos": imagenes_gastos,
+            "imagenesConsignaciones": imagenes_consignaciones,
+            "imagenesDevoluciones": imagenes_devoluciones,
             "calculos": calculos,
         }
 
-        # Generar PDF
+        # --- Generar PDF ---
         pdf = PDFGasto(tmp_path)
         pdf.generar_pdf(data)
 
-        # Leer PDF en memoria
+        # --- Leer PDF en memoria ---
         with open(tmp_path, "rb") as f:
             pdf_bytes = f.read()
 
-        # Eliminar archivo temporal
+        # --- Limpiar archivo temporal ---
         try:
             os.remove(tmp_path)
         except Exception:
@@ -285,3 +295,4 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         traceback.print_exc()
         print(f"❌ Error generando PDF ({nombre_pdf}):", e)
         return False, None
+
