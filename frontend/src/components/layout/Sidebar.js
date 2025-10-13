@@ -10,7 +10,7 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import DescriptionIcon from '@mui/icons-material/Description';
 import PaymentIcon from '@mui/icons-material/Payment';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney'; 
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { useTheme } from '../../context/ThemeContext';
 import logoJG from '../../assets/icono.png';
@@ -28,10 +28,10 @@ const menuItems = [
     icon: <PictureAsPdfIcon />,
     subItems: [
       { label: 'Relación de Servicios', icon: <DescriptionIcon />, path: '/reportes/servicios' },
-      { label: 'Pendientes de Pago', icon: <PaymentIcon />, path: '/reportes/pendientes' }
+      { label: 'Pendientes de Pago', icon: <PaymentIcon />, path: '/reportes/pendientes' },
+      { label: 'Rigistar Gasto', icon: <AttachMoneyIcon/>, path: '/registrar-gasto'},
     ]
   },
-  
 ];
 
 function Sidebar({ onNavigation, open, onClose }) {

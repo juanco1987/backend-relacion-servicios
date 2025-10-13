@@ -31,6 +31,13 @@ function App() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [showNoteDialog, setShowNoteDialog] = useState(false);
+  const [gastoData, setGastoData] = useState({
+    fecha: null,
+    descripcion: '',
+    monto: '',
+    categoria: '',
+    notas: ''
+  });
   const [showModeTransition, setShowModeTransition] = useState(false);
   const [modeTransitionData, setModeTransitionData] = useState({ from: '', to: '' });
 
@@ -241,6 +248,10 @@ function App() {
     }
   };
 
+  const handleGastoChange = (newGastoData) => {
+    setGastoData(newGastoData);
+  };
+
   const generateDefaultPDFName = (workMode) => {
     const dateStr = dayjs().format('YYYY-MM-DD');
     const timeStr = dayjs().format('HH-mm-ss');
@@ -315,6 +326,7 @@ function App() {
               fechaFin={fechaFin}
               note={note}
               imagenes={imagenes}
+              gastoData={gastoData}
               onFileChange={handleFileChange}
               onAnalyticsFileChange={handleAnalyticsFileChange}
               onFechaInicioChange={handleFechaInicioChange}
@@ -323,6 +335,7 @@ function App() {
               onImageChange={setImagenes}
               onProcessData={handleProcessData}
               onGeneratePDF={handleGeneratePDF}
+              onGastoChange={handleGastoChange}
               processing={processing}
               animationState={animationState}
               setAnimationState={setAnimationState}

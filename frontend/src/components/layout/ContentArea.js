@@ -5,6 +5,7 @@ import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from '../../config/animations
 import UnifiedWorkflowCard from '../UnifiedWorkflowCard';
 import Analytics from '../analytics/Analytics';
 import DashboardPage from '../../pages/DashboardPage';
+import UnifiedGastoWorkflow from '../GastosWorkFlowCard/UnifiedGastoWorkflow';
 import { useTheme } from '../../context/ThemeContext';
 
 function ContentArea({ 
@@ -15,6 +16,7 @@ function ContentArea({
   fechaFin,
   note,
   imagenes,
+  gastoData, // ✅ NUEVO: datos del gasto
   onFileChange,
   onAnalyticsFileChange,
   onFechaInicioChange,
@@ -23,18 +25,17 @@ function ContentArea({
   onImageChange,
   onProcessData,
   onGeneratePDF,
+  onGastoChange, // ✅ NUEVO: handler para cambios en gasto
   processing,
   animationState,
   onClearAnalyticsFile,
 }) {
   const { theme } = useTheme();
 
-  // Debug log para excelData
   useEffect(() => {
     console.log('ContentArea excelData:', excelData);
   }, [excelData]);
 
-  // Debug log para handlers
   useEffect(() => {
     console.log('ContentArea handlers:', {
       onFileChange: !!onFileChange,
@@ -46,13 +47,12 @@ function ContentArea({
     });
   }, [onFileChange, onFechaInicioChange, onFechaFinChange, onNoteChange, onProcessData, onGeneratePDF]);
 
-  // Determinar el modo de trabajo basado en la ruta
   const getWorkMode = (route) => {
     switch(route) {
       case '/reportes/servicios':
-        return 0; // Relación de Servicios
+        return 0;
       case '/reportes/pendientes':
-        return 1; // Pendientes de Pago
+        return 1;
       default:
         return 0;
     }
@@ -60,7 +60,6 @@ function ContentArea({
 
   const workMode = getWorkMode(currentRoute);
   
-  // Renderizar contenido específico según la ruta
   const renderRouteContent = () => {
     switch(currentRoute) {
       case '/':
@@ -106,6 +105,19 @@ function ContentArea({
           />
         );
       
+      // ✅ NUEVO: Caso para registrar gasto
+      case '/registrar-gasto':
+      return (
+        <UnifiedGastoWorkflow
+          gastoData={gastoData}
+          onGastoChange={onGastoChange}
+          imagenes={imagenes}
+          onImageChange={onImageChange}
+          processing={processing}
+          onGeneratePDF={onGeneratePDF}
+        />
+      );
+      
       default:
         return (
           <Box sx={{ 
@@ -128,8 +140,6 @@ function ContentArea({
       initial="hidden"
       animate="visible"
     >
-
-      {/* Contenido específico según la ruta */}
       <motion.div variants={STAGGER_ITEM_VARIANTS}>
         {renderRouteContent()}
       </motion.div>
@@ -137,4 +147,4 @@ function ContentArea({
   );
 }
 
-export default ContentArea; 
+export default ContentArea;

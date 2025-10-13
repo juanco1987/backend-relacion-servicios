@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify, send_file
 import pandas as pd
 import os
+import io
 from datetime import datetime
-from core import pending_excel_processor, excel_processor, df_pending_report, pdf_generator
+from core import pending_excel_processor, excel_processor, df_pending_report, pdf_generator, gasto_pdf_generator
 from core.pending_excel_processor import normalize_column_name, find_column_variant
 from config.settings import EXCEL_COLUMNS
 from unidecode import unidecode
@@ -944,5 +945,59 @@ def analytics_pendientes_cobrar():
             'detalle': detalle_convertido,
             'success': True
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp_excel.route('/gastos/generar-pdf', methods=['POST'])
+def generar_pdf_gasto():
+    try:
+        data = request.get_json()
+        
+        gasto_data = data.get('gastoData', {})
+        monto_consignado = float(data.get('montoConsignado', 0))
+        imagenes = data.get('imagenes', [])
+        nombre_pdf = data.get('nombrePDF', 'Reporte_Gastos')
+        
+        # Calcular totales
+        total_gastos = float(gasto_data.get('monto', 0))
+        total_consignado = monto_consignado
+        diferencia = total_consignado - total_gastos
+        
+        calculos = {
+            'totalGastos': total_gastos,
+            'totalConsignado': total_consignado,
+            'vueltasAFavorDeAbrecar': diferencia if diferencia > 0 else 0,
+            'excedenteAFavorDeJG': abs(diferencia) if diferencia < 0 else 0,
+        }
+        
+        # Formatear fecha
+        fecha_obj = gasto_data.get('fecha')
+        if fecha_obj:
+            if isinstance(fecha_obj, str):
+                fecha_str = fecha_obj
+            else:
+                fecha_str = fecha_obj.strftime('%d/%m/%Y') if hasattr(fecha_obj, 'strftime') else str(fecha_obj)
+        else:
+            fecha_str = 'N/A'
+        
+        gasto_data_formateado = {
+            'fecha': fecha_str,
+            'categoria': gasto_data.get('categoria', 'N/A'),
+            'descripcion': gasto_data.get('descripcion', 'N/A'),
+            'monto': float(gasto_data.get('monto', 0))
+        }
+        
+        exito, pdf_bytes = gasto_pdf_generator.generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf)
+        
+        if exito and pdf_bytes:
+            return send_file(
+                io.BytesIO(pdf_bytes),
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f'{nombre_pdf}.pdf'
+            )
+        else:
+            return jsonify({'error': 'Error al generar PDF'}), 500
+            
     except Exception as e:
         return jsonify({'error': str(e)}), 500

@@ -704,18 +704,34 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
         gap: '12px',
         flexWrap: 'wrap'
       }}>
+        {/* Botón para la vista de Servicios Pendientes por COBRAR */}
         <CustomButton
-          onClick={() => setSelectedView('pendientes-efectivo')}
+          onClick={() => setSelectedView('pendientes-cobrar')} // 👈 CORRECCIÓN: Cambia a 'pendientes-cobrar'
           variant="contained"
           sx={{
-            background: selectedView === 'pendientes-efectivo' ? theme.textoAdvertencia : theme.fondoContenedor,
-            color: selectedView === 'pendientes-efectivo' ? 'white' : theme.textoPrincipal,
+            background: selectedView === 'pendientes-cobrar' ? theme.textoAdvertencia : theme.fondoContenedor, // 👈 CORRECCIÓN: Estilo para 'pendientes-cobrar'
+            color: selectedView === 'pendientes-cobrar' ? 'white' : theme.textoPrincipal,
             border: `1px solid ${theme.bordePrincipal}`,
             padding: '12px 24px',
             fontSize: '1rem'
           }}
         >
           Servicios Pendientes por Cobrar
+        </CustomButton>
+
+        {/* Botón para la vista de Servicios Pendientes EFECTIVO (el que se perdió) */}
+        <CustomButton
+          onClick={() => setSelectedView('pendientes-efectivo')} // 👈 Botón para 'pendientes-efectivo'
+          variant="contained"
+          sx={{
+            background: selectedView === 'pendientes-efectivo' ? theme.terminalRojoEncendido : theme.fondoContenedor,
+            color: selectedView === 'pendientes-efectivo' ? 'white' : theme.textoPrincipal,
+            border: `1px solid ${theme.bordePrincipal}`,
+            padding: '12px 24px',
+            fontSize: '1rem'
+          }}
+        >
+          Servicios Pendientes Efectivo
         </CustomButton>
       </div>
 
