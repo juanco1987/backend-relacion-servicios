@@ -956,30 +956,38 @@ def generar_pdf_gasto():
         # 1. RECUPERAR LAS LISTAS COMPLETAS DE DATOS
         gastos = data.get('gastos', [])
         consignaciones = data.get('consignaciones', [])
+        nombre_pdf = data.get('nombrePDF', 'Reporte_Gastos')
         
-        # Fallback si solo se pasa un objeto 'gastoData' (se mantiene por compatibilidad)
+        # <<< MANTENER LÓGICA DE FALLBACK PARA UN ÚNICO GASTO (COMPATIBILIDAD) >>>
         gasto_data_single = data.get('gastoData', {}) 
         if not gastos and gasto_data_single:
+            # Si no vino la lista 'gastos', pero sí 'gastoData', lo convertimos en lista.
             gastos = [gasto_data_single]
-            
-        monto_consignado = float(data.get('montoConsignado', 0))
-        nombre_pdf = data.get('nombrePDF', 'Reporte_Gastos')
-
-        # === CORRECCIÓN CRÍTICA: Extraer las listas de imágenes de la raíz del JSON ===
-        imagenes = {
-            "imagenesGastos": data.get("imagenesGastos", []),
-            "imagenesConsignaciones": data.get("imagenesConsignaciones", []),
-            "imagenesDevoluciones": data.get("imagenesDevoluciones", []),
-        }
-        # ==============================================================================
         
-        # 2. CALCULAR TOTALES BASADO EN LAS LISTAS COMPLETAS
+        monto_consignado_unico = float(data.get('montoConsignado', 0))
+        # <<< FIN DE FALLBACK >>>
+        
+        # 2. EXTRAER LAS IMÁGENES DEL JSON (CORRECCIÓN CRÍTICA DE ANTES)
+        imagenes = {
+            'imagenesGastos': data.get('imagenesGastos', []),
+            'imagenesConsignaciones': data.get('imagenesConsignaciones', []),
+            'imagenesDevoluciones': data.get('imagenesDevoluciones', []),
+        }
+        
+        # 3. VALIDAR
+        if not gastos and not consignaciones:
+            return jsonify({'error': 'No se proporcionaron gastos ni consignaciones'}), 400
+        
+        # 4. CALCULAR CÁLCULOS
         total_gastos = sum(float(g.get('monto', 0)) for g in gastos)
         total_consignado = sum(float(c.get('monto', 0)) for c in consignaciones)
         
-        if not consignaciones and monto_consignado > 0:
-             total_consignado = monto_consignado
-        
+        # <<< MANTENER LÓGICA DE FALLBACK PARA MONTO CONSIGNADO ÚNICO >>>
+        if not consignaciones and monto_consignado_unico > 0:
+             # Si no hay lista de consignaciones, usamos el monto único para el total
+             total_consignado = monto_consignado_unico
+        # <<< FIN DE FALLBACK >>>
+             
         diferencia = total_consignado - total_gastos
         
         calculos = {
@@ -989,14 +997,19 @@ def generar_pdf_gasto():
             'excedenteAFavorDeJG': abs(diferencia) if diferencia < 0 else 0,
         }
         
-        # 3. CREAR LA ESTRUCTURA ESPERADA POR EL GENERADOR PDF
+        # 5. CREAR LA ESTRUCTURA ESTÁNDAR (DICCIONARIO) PARA EL GENERADOR PDF
         data_para_pdf = {
             'gastos': gastos,
             'consignaciones': consignaciones,
         }
         
-        # 4. LLAMAR AL GENERADOR PDF
-        exito, pdf_bytes = gasto_pdf_generator.generar_pdf_gasto(data_para_pdf, calculos, imagenes, nombre_pdf)
+        # 6. LLAMAR AL GENERADOR PDF
+        exito, pdf_bytes = gasto_pdf_generator.generar_pdf_gasto(
+            gasto_data_formateado=data_para_pdf, # << SIEMPRE ENVIANDO UN DICCIONARIO >>
+            calculos=calculos,
+            imagenes=imagenes,
+            nombre_pdf=nombre_pdf
+        )
         
         if exito and pdf_bytes:
             return send_file(
@@ -1009,4 +1022,6 @@ def generar_pdf_gasto():
             return jsonify({'error': 'Error al generar PDF'}), 500
             
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
