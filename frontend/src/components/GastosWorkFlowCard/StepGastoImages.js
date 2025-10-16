@@ -60,7 +60,7 @@ const SeccionImagenes = ({ tema, imagenes, onAgregarImagenes, onEliminarImagen, 
         sx={{
           borderRadius: '12px',
           background: tema.color,
-          color: '#fff',
+          color: theme.textoBlanco,
           px: 2,
           py: 1,
           fontWeight: 600,
@@ -140,7 +140,7 @@ const SeccionImagenes = ({ tema, imagenes, onAgregarImagenes, onEliminarImagen, 
                     top: -8,
                     right: -8,
                     background: theme.terminalRojo,
-                    color: '#fff',
+                    color: theme.textoBlanco,
                     borderRadius: '50%',
                     cursor: 'pointer',
                     fontSize: '14px',
@@ -231,25 +231,6 @@ const StepImagenesPorCategoria = ({
               onEliminarImagen={onEliminarImagenDevoluciones}
               theme={theme}
             />
-          </Grid>
-
-          {/* Botón continuar */}
-          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <CustomButton
-              variant="contained"
-              onClick={onContinuar}
-              sx={{
-                background: theme.gradientes.botonProcesar,
-                color: theme.textoContraste,
-                borderRadius: '20px',
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-                textTransform: 'none',
-              }}
-            >
-              Continuar: Confirmación Final
-            </CustomButton>
           </Grid>
         </Grid>
       </motion.div>

@@ -5,10 +5,34 @@ import { Box, Typography } from "@mui/material";
  * 
  * Props:
  * - theme: objeto de tema con colores
- * - workMode: número (0 = Relación de Servicios, 1 = Pendientes de Pago)
+ * - workMode: número (0 = Relación de Servicios, 1 = Pendientes de Pago, 2 = Registro de Gastos, etc.)
  * - actionIcon: ruta del ícono a mostrar
+ * - title: (NUEVO) título personalizado (opcional, si no se proporciona usa workMode)
+ * - description: (NUEVO) descripción personalizada (opcional)
  */
-const WorkflowHeader = ({ theme, workMode, actionIcon }) => {
+const WorkflowHeader = ({ theme, workMode, actionIcon, title, description }) => {
+  // Determinar título: usar el prop 'title' si se proporciona, sino usar workMode
+  const getTitle = () => {
+    if (title) return title; // Si se pasa un título personalizado, usarlo
+    
+    switch(workMode) {
+      case 0:
+        return "Relación de Servicios";
+      case 1:
+        return "Pendientes de Pago";
+      case 2:
+        return "Registro de Gastos y Consignaciones";
+      default:
+        return "Flujo de Trabajo";
+    }
+  };
+
+  // Determinar descripción: usar el prop 'description' si se proporciona, sino usar genérica
+  const getDescription = () => {
+    if (description) return description;
+    return "Flujo de trabajo unificado para generar reportes";
+  };
+
   return (
     <Box
       sx={{
@@ -38,7 +62,7 @@ const WorkflowHeader = ({ theme, workMode, actionIcon }) => {
             fontSize: { xs: "1.5rem", md: "2rem" },
           }}
         >
-          {workMode === 0 ? "Relación de Servicios" : "Pendientes de Pago"}
+          {getTitle()}
         </Typography>
         <Typography
           variant="body1"
@@ -48,7 +72,7 @@ const WorkflowHeader = ({ theme, workMode, actionIcon }) => {
             fontSize: { xs: "0.9rem", md: "1rem" },
           }}
         >
-          Flujo de trabajo unificado para generar reportes
+          {getDescription()}
         </Typography>
       </Box>
     </Box>

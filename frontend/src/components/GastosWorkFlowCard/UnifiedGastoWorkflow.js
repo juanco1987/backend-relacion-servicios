@@ -220,25 +220,6 @@ const UnifiedGastoWorkflow = ({
               setActiveStep(3);
             }}
           />
-
-          {/* Botón Atrás adicional para este paso (usar el estilo CustomButton) */}
-          <Grid container spacing={2} sx={{ mt: 2 }}>
-            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-start' }}>
-              <CustomButton
-                variant="outlined"
-                onClick={() => setActiveStep(1)} // vuelve a Consignaciones
-                sx={{
-                  borderRadius: '20px',
-                  px: 3,
-                  py: 1,
-                  fontWeight: 600,
-                  textTransform: 'none',
-                }}
-              >
-                Atrás: Consignaciones
-              </CustomButton>
-            </Grid>
-          </Grid>
         </>
       ),
     },

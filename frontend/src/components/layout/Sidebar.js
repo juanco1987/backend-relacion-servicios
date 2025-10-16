@@ -29,7 +29,7 @@ const menuItems = [
     subItems: [
       { label: 'Relación de Servicios', icon: <DescriptionIcon />, path: '/reportes/servicios' },
       { label: 'Pendientes de Pago', icon: <PaymentIcon />, path: '/reportes/pendientes' },
-      { label: 'Rigistar Gasto', icon: <AttachMoneyIcon/>, path: '/registrar-gasto'},
+      { label: 'Registrar Gastos', icon: <AttachMoneyIcon/>, path: '/registrar-gasto'},
     ]
   },
 ];

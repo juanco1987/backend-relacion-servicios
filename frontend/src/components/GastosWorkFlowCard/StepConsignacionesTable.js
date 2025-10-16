@@ -406,6 +406,8 @@ const StepConsignacionesTable = ({
                             variant="outlined"
                             onClick={() => onEliminarConsignacion(idx)}
                             sx={{
+                              background: theme.terminalRojo,
+                              color: theme.textoBlanco,
                               fontSize: '0.8rem',
                               px: 2,
                               py: 0.5,
@@ -444,26 +446,6 @@ const StepConsignacionesTable = ({
               </Box>
             </Grid>
           )}
-
-          {/* 🔹 Botón continuar */}
-          <Grid
-            item
-            xs={12}
-            sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}
-          >
-            <CustomButton
-              disabled={consignaciones.length === 0}
-              onClick={onContinuar}
-              sx={{
-                borderRadius: '20px',
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-              }}
-            >
-              Continuar: Confirmación
-            </CustomButton>
-          </Grid>
         </Grid>
       </motion.div>
     </Box>

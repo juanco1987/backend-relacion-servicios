@@ -425,7 +425,7 @@ const StepGastosTable = ({
                             onClick={() => onEliminarGasto(idx)}
                             sx={{
                               background: theme.terminalRojo,
-                              color: '#fff',
+                              color:theme.textoBlanco,
                               borderRadius: '8px',
                               px: 2,
                               py: 0.5,
@@ -449,26 +449,6 @@ const StepGastosTable = ({
               </Box>
             </Grid>
           )}
-
-          {/* Botón continuar */}
-          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <CustomButton
-              variant="contained"
-              disabled={gastos.length === 0}
-              onClick={onContinuar}
-              sx={{
-                background: theme.gradientes.botonProcesar,
-                color: theme.textoContraste,
-                borderRadius: '20px',
-                px: 4,
-                py: 1.5,
-                fontWeight: 600,
-                textTransform: 'none',
-              }}
-            >
-              Continuar: Consignaciones
-            </CustomButton>
-          </Grid>
         </Grid>
       </motion.div>
     </Box>
