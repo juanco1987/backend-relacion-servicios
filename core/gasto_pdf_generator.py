@@ -206,7 +206,7 @@ class PDFGastoSideBySide:
             total_gastos += monto
             data.append([fecha, categoria, descripcion, self.formatear_moneda(monto)])
 
-        data.append([
+        data.append([ 
             "", "",
             Paragraph("<b>TOTAL GASTOS</b>", self.estilo_normal),
             Paragraph(
