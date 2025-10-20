@@ -2,8 +2,7 @@ from fpdf import FPDF
 from datetime import datetime
 import pandas as pd 
 import os
-import threading    
-from tkinter import messagebox
+import tempfile
 
 from utils.date_utils import fecha_larga
 
@@ -121,9 +120,6 @@ class PDF(FPDF):
         self.cell(sum(widths[:-1]), 8, 'TOTAL SERVICIOS:', 1, 0, 'C', True)
         self.cell(widths[-1], 8, str(len(datos)), 1, 1, 'C', True)
 
-        # Texto periodo analizado con fechas seleccionadas por el usuario
-        # (esto se agrega desde la función generate_pdf_report)
-
 
 def generate_pdf_report(data, base_file_path, fecha_inicio=None, fecha_fin=None, nombre_pdf=None, notas=None):
     """
@@ -182,8 +178,9 @@ def generate_pdf_report(data, base_file_path, fecha_inicio=None, fecha_fin=None,
         else:
             nombre_pdf_final = f"Servicios_Pendientes_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.pdf"
         
-        # Usar el directorio del archivo base para guardar el PDF
-        output_dir = r"C:\Users\usuario\OneDrive\Escritorio\pendientes-de-pago-a-JG"
+        # Usar directorio temporal para servidores (como Render)
+        # En producción, se usará /tmp o el directorio temporal del sistema
+        output_dir = os.environ.get('PDF_OUTPUT_DIR', tempfile.gettempdir())
         ruta_pdf_generado = os.path.join(output_dir, nombre_pdf_final)
 
         # Asegurarse de que el directorio de salida exista
@@ -203,4 +200,4 @@ def generate_pdf_report(data, base_file_path, fecha_inicio=None, fecha_fin=None,
 
     except Exception as e:
         messages.append({'level': 'error', 'text': f"Error al generar el PDF: {str(e)}"})
-        return False, None, messages 
+        return False, None, messages
