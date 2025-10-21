@@ -950,13 +950,16 @@ def analytics_pendientes_cobrar():
 
 @bp_excel.route('/gastos/generar-pdf', methods=['POST'])
 def generar_pdf_gasto():
+    print("DEBUG: Iniciando generar_pdf_gasto")
     try:
         data = request.get_json()
+        print(f"DEBUG: Datos recibidos: {data}")
         
         # 1. RECUPERAR LAS LISTAS COMPLETAS DE DATOS
         gastos = data.get('gastos', [])
         consignaciones = data.get('consignaciones', [])
         nombre_pdf = data.get('nombrePDF', 'Reporte_Gastos')
+        print(f"DEBUG: Gastos: {len(gastos)}, Consignaciones: {len(consignaciones)}")
         
         # <<< MANTENER LÓGICA DE FALLBACK PARA UN ÚNICO GASTO (COMPATIBILIDAD) >>>
         gasto_data_single = data.get('gastoData', {}) 
@@ -973,6 +976,7 @@ def generar_pdf_gasto():
             'imagenesConsignaciones': data.get('imagenesConsignaciones', []),
             'imagenesDevoluciones': data.get('imagenesDevoluciones', []),
         }
+        print(f"DEBUG: Imágenes: {imagenes}")
         
         # 3. VALIDAR
         if not gastos and not consignaciones:
@@ -1004,12 +1008,14 @@ def generar_pdf_gasto():
         }
         
         # 6. LLAMAR AL GENERADOR PDF
+        print(f"DEBUG: Llamando al generador PDF con: gastos={len(data_para_pdf.get('gastos', []))}, consignaciones={len(data_para_pdf.get('consignaciones', []))}")
         exito, pdf_bytes = gasto_pdf_generator.generar_pdf_gasto(
             gasto_data_formateado=data_para_pdf, # << SIEMPRE ENVIANDO UN DICCIONARIO >>
             calculos=calculos,
             imagenes=imagenes,
             nombre_pdf=nombre_pdf
         )
+        print(f"DEBUG: Resultado del generador: exito={exito}, pdf_bytes={pdf_bytes is not None}")
         
         if exito and pdf_bytes:
             return send_file(
@@ -1023,5 +1029,7 @@ def generar_pdf_gasto():
             
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        error_trace = traceback.format_exc()
+        print(f"ERROR CRÍTICO en generar_pdf_gasto: {str(e)}")
+        print(f"Traceback completo: {error_trace}")
+        return jsonify({'error': f'Error al generar PDF: {str(e)}', 'traceback': error_trace}), 500

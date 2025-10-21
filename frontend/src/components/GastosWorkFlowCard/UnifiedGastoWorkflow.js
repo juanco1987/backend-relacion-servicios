@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Grid } from '@mui/material';
+import { Box, Grid, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 import { API_CONFIG } from '../../config/appConfig';
 import WorkflowHeader from '../UnifiedWorkflowCard/WorkflowHeader';
@@ -35,6 +35,10 @@ const UnifiedGastoWorkflow = ({
   const [imagenesGastos, setImagenesGastos] = useState([]);
   const [imagenesConsignaciones, setImagenesConsignaciones] = useState([]);
   const [imagenesDevoluciones, setImagenesDevoluciones] = useState([]);
+  
+  // Estado para controlar si el paso de imágenes fue completado
+  const [pasoImagenesCompletado, setPasoImagenesCompletado] = useState(false);
+  const [showImageConfirmDialog, setShowImageConfirmDialog] = useState(false);
 
   // --- GASTOS ---
   const handleAgregarGasto = (nuevoGasto) => {
@@ -85,14 +89,39 @@ const UnifiedGastoWorkflow = ({
     setImagenesDevoluciones(nuevas);
   };
 
-  // Validaciones
-  const isStep0Valid = () => gastos.length > 0;
-  const isStep1Valid = () => consignaciones.length > 0;
-  // Para el paso de imágenes las consideramos opcionales; marcamos completado si hay al menos una imagen en alguna categoría
-  const isStep2ValidImages = () =>
+  // Verificar si hay al menos una imagen en alguna categoría
+  const tieneAlgunaImagen =
     (imagenesGastos && imagenesGastos.length > 0) ||
     (imagenesConsignaciones && imagenesConsignaciones.length > 0) ||
     (imagenesDevoluciones && imagenesDevoluciones.length > 0);
+
+  // Manejar continuar desde el paso de imágenes
+  const handleContinuarImagenes = () => {
+    if (tieneAlgunaImagen) {
+      // Si hay imágenes, continuar directamente
+      setPasoImagenesCompletado(true);
+      setActiveStep(3);
+    } else {
+      // Si no hay imágenes, mostrar diálogo de confirmación
+      setShowImageConfirmDialog(true);
+    }
+  };
+
+  const handleConfirmarContinuarImagenes = () => {
+    setShowImageConfirmDialog(false);
+    setPasoImagenesCompletado(true);
+    setActiveStep(3);
+  };
+
+  const handleCancelarImagenes = () => {
+    setShowImageConfirmDialog(false);
+  };
+
+  // Validaciones
+  const isStep0Valid = () => gastos.length > 0;
+  const isStep1Valid = () => consignaciones.length > 0;
+  // Para el paso de imágenes: válido solo si fue completado (usuario hizo clic en continuar)
+  const isStep2ValidImages = () => pasoImagenesCompletado;
 
   // Estado final (confirmación) valida si gastos+consignaciones están presentes (imágenes opcionales)
   const isStep3Valid = () => isStep0Valid() && isStep1Valid();
@@ -105,7 +134,7 @@ const UnifiedGastoWorkflow = ({
       case 1:
         return isStep1Valid() ? 'completed' : 'pending';
       case 2:
-        // Si hay imágenes -> completed, si no -> pending (porque opcional, pero visualmente así lo verás)
+        // Paso de imágenes: completado solo si el usuario hizo clic en continuar
         return isStep2ValidImages() ? 'completed' : 'pending';
       case 3:
         return isStep3Valid() && processCompleted ? 'completed' : 'pending';
@@ -122,25 +151,29 @@ const UnifiedGastoWorkflow = ({
       console.log('Enviando datos al backend...');
       console.log('Gastos:', gastos);
       console.log('Consignaciones:', consignaciones);
-      console.log('Imagenes Gastos:', imagenesGastos.length);
-      console.log('Imagenes Consignaciones:', imagenesConsignaciones.length);
-      console.log('Imagenes Devoluciones:', imagenesDevoluciones.length);
+      console.log('Imagenes Gastos:', imagenesGastos.length, imagenesGastos);
+      console.log('Imagenes Consignaciones:', imagenesConsignaciones.length, imagenesConsignaciones);
+      console.log('Imagenes Devoluciones:', imagenesDevoluciones.length, imagenesDevoluciones);
+      
+      const requestData = {
+        gastos,
+        consignaciones,
+        imagenesGastos,
+        imagenesConsignaciones,
+        imagenesDevoluciones,
+        nombrePDF: pdfNameParam || pdfName || 'Reporte_Gastos',
+      };
+      console.log('Datos completos enviados:', requestData);
 
       const response = await fetch(`${API_BASE}/api/gastos/generar-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          gastos,
-          consignaciones,
-          imagenesGastos,
-          imagenesConsignaciones,
-          imagenesDevoluciones,
-          nombrePDF: pdfNameParam || pdfName || 'Reporte_Gastos',
-        }),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Error del backend:', errorData);
         throw new Error(errorData.error || 'Error al generar PDF');
       }
 
@@ -203,26 +236,20 @@ const UnifiedGastoWorkflow = ({
       description: 'Sube los comprobantes relacionados con tus gastos y consignaciones',
       icon: gastoIcon,
       content: (
-        <>
-          <StepImagenesPorCategoria
-            theme={theme}
-            imagenesGastos={imagenesGastos}
-            imagenesConsignaciones={imagenesConsignaciones}
-            imagenesDevolucioPnes={imagenesDevoluciones}
-            onAgregarImagenGastos={handleAgregarImagenGastos}
-            onAgregarImagenConsignaciones={handleAgregarImagenConsignaciones}
-            onAgregarImagenDevoluciones={handleAgregarImagenDevoluciones}
-            onEliminarImagenGastos={handleEliminarImagenGastos}
-            onEliminarImagenConsignaciones={handleEliminarImagenConsignaciones}
-            onEliminarImagenDevoluciones={handleEliminarImagenDevoluciones}
-            // onContinuar aquí será usado por el componente interno para avanzar
-            onContinuar={() => {
-              // Avanza al paso de confirmación (índice 3)
-              setActiveStep(3);
-            }}
-          />
-        </>
+        <StepImagenesPorCategoria
+          theme={theme}
+          imagenesGastos={imagenesGastos}
+          imagenesConsignaciones={imagenesConsignaciones}
+          imagenesDevolucioPnes={imagenesDevoluciones}
+          onAgregarImagenGastos={handleAgregarImagenGastos}
+          onAgregarImagenConsignaciones={handleAgregarImagenConsignaciones}
+          onAgregarImagenDevoluciones={handleAgregarImagenDevoluciones}
+          onEliminarImagenGastos={handleEliminarImagenGastos}
+          onEliminarImagenConsignaciones={handleEliminarImagenConsignaciones}
+          onEliminarImagenDevoluciones={handleEliminarImagenDevoluciones}
+        />
       ),
+      onContinue: handleContinuarImagenes, // Función personalizada para continuar
     },
     {
       label: 'Confirmación y PDF',
@@ -254,6 +281,8 @@ const UnifiedGastoWorkflow = ({
     setPdfName('');
     setActiveStep(0);
     setProcessCompleted(false);
+    setPasoImagenesCompletado(false);
+    setShowImageConfirmDialog(false);
     setShowNewProcessDialog(false);
   };
 
@@ -300,6 +329,102 @@ const UnifiedGastoWorkflow = ({
         onClose={() => setShowNewProcessDialog(false)}
         onConfirm={handleNewProcess}
       />
+
+      {/* Diálogo de confirmación para continuar sin imágenes */}
+      <Dialog
+        open={showImageConfirmDialog}
+        onClose={handleCancelarImagenes}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: theme.fondoContenedor,
+            borderRadius: '16px',
+            border: `2px solid ${theme.bordePrincipal}`,
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            color: theme.textoPrincipal,
+            fontWeight: 700,
+            fontSize: '1.2rem',
+            textAlign: 'center',
+            pb: 1,
+          }}
+        >
+          ⚠️ Sin Comprobantes de Pago
+        </DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="body1"
+            sx={{
+              color: theme.textoSecundario,
+              textAlign: 'center',
+              lineHeight: 1.6,
+              mb: 2,
+            }}
+          >
+            No has ingresado ninguna imagen como comprobante de pago.
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: theme.textoSecundario,
+              textAlign: 'center',
+              lineHeight: 1.5,
+            }}
+          >
+            ¿Deseas continuar con la generación del PDF sin incluir comprobantes?
+          </Typography>
+        </DialogContent>
+        <DialogActions
+          sx={{
+            justifyContent: 'center',
+            gap: 2,
+            p: 3,
+            pt: 1,
+          }}
+        >
+          <Button
+            onClick={handleCancelarImagenes}
+            variant="outlined"
+            sx={{
+              color: theme.textoSecundario,
+              borderColor: theme.bordePrincipal,
+              borderRadius: '8px',
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: theme.bordeHover,
+                backgroundColor: theme.fondoOverlay,
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <CustomButton
+            onClick={handleConfirmarContinuarImagenes}
+            sx={{
+              background: theme.gradientes.botonActivo,
+              color: theme.textoContraste,
+              px: 3,
+              py: 1,
+              borderRadius: '8px',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                transform: 'translateY(-1px)',
+                boxShadow: theme.sombraComponenteHover,
+              },
+            }}
+          >
+            Continuar
+          </CustomButton>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

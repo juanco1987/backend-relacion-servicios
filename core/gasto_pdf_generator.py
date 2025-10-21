@@ -413,6 +413,8 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
     Función principal llamada desde routes_excel.py
     Retorna (exito, pdf_bytes)
     """
+    logger.info(f"Iniciando generar_pdf_gasto con: gastos={len(gasto_data_formateado.get('gastos', []))}, consignaciones={len(gasto_data_formateado.get('consignaciones', []))}")
+    logger.info(f"Imágenes recibidas: {imagenes}")
     rutas_temp_generadas = [] 
 
     try:
@@ -480,8 +482,11 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
         return True, pdf_bytes
 
     except Exception as e:
-        traceback.print_exc()
+        error_trace = traceback.format_exc()
         logger.error(f"Error en generar_pdf_gasto: {e}")
+        logger.error(f"Traceback completo: {error_trace}")
+        print(f"ERROR en generar_pdf_gasto: {e}")
+        print(f"Traceback: {error_trace}")
         return False, None
         
     finally:

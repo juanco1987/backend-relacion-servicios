@@ -176,13 +176,7 @@ const StepImagenesPorCategoria = ({
   onEliminarImagenGastos,
   onEliminarImagenConsignaciones,
   onEliminarImagenDevoluciones,
-  onContinuar,
 }) => {
-  // Verificar si hay al menos una imagen en alguna categoría (opcional)
-  const tieneAlgunaImagen =
-    (imagenesGastos && imagenesGastos.length > 0) ||
-    (imagenesConsignaciones && imagenesConsignaciones.length > 0) ||
-    (imagenesDevolucioPnes && imagenesDevolucioPnes.length > 0);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -231,6 +225,7 @@ const StepImagenesPorCategoria = ({
               onEliminarImagen={onEliminarImagenDevoluciones}
               theme={theme}
             />
+
           </Grid>
         </Grid>
       </motion.div>

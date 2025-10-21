@@ -21,7 +21,14 @@ const WorkflowStepper = ({
 
   const handleContinueClick = (index) => {
     console.log('Botón Continuar clickeado, navegando de paso', index, 'a', index + 1);
-    setActiveStep(index + 1);
+    
+    // Si el paso tiene una función onContinue personalizada, usarla
+    if (steps[index] && steps[index].onContinue) {
+      steps[index].onContinue();
+    } else {
+      // Comportamiento por defecto
+      setActiveStep(index + 1);
+    }
   };
 
   const isStepDisabled = (index) => {
