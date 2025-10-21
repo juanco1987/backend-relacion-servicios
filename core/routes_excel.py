@@ -1009,10 +1009,19 @@ def generar_pdf_gasto():
         
         # 6. LLAMAR AL GENERADOR PDF
         print(f"DEBUG: Llamando al generador PDF con: gastos={len(data_para_pdf.get('gastos', []))}, consignaciones={len(data_para_pdf.get('consignaciones', []))}")
+        
+        # Si no hay imágenes, usar un diccionario vacío para evitar problemas
+        imagenes_safe = imagenes if imagenes else {
+            'imagenesGastos': [],
+            'imagenesConsignaciones': [],
+            'imagenesDevoluciones': []
+        }
+        print(f"DEBUG: Imágenes seguras: {imagenes_safe}")
+        
         exito, pdf_bytes = gasto_pdf_generator.generar_pdf_gasto(
             gasto_data_formateado=data_para_pdf, # << SIEMPRE ENVIANDO UN DICCIONARIO >>
             calculos=calculos,
-            imagenes=imagenes,
+            imagenes=imagenes_safe,
             nombre_pdf=nombre_pdf
         )
         print(f"DEBUG: Resultado del generador: exito={exito}, pdf_bytes={pdf_bytes is not None}")
