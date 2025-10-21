@@ -1,0 +1,22 @@
+{
+  "gastos": [
+    {
+      "fecha": "2025-01-21",
+      "categoria": "Materiales",
+      "monto": 1000,
+      "descripcion": "Test"
+    }
+  ],
+  "consignaciones": [
+    {
+      "fecha": "2025-01-21",
+      "entregadoPor": "EFECTIVO",
+      "monto": 1000,
+      "descripcion": "Test"
+    }
+  ],
+  "imagenesGastos": [],
+  "imagenesConsignaciones": [],
+  "imagenesDevoluciones": [],
+  "nombrePDF": "Test"
+}

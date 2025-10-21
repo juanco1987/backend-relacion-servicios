@@ -1018,13 +1018,19 @@ def generar_pdf_gasto():
         }
         print(f"DEBUG: Imágenes seguras: {imagenes_safe}")
         
-        exito, pdf_bytes = gasto_pdf_generator.generar_pdf_gasto(
-            gasto_data_formateado=data_para_pdf, # << SIEMPRE ENVIANDO UN DICCIONARIO >>
-            calculos=calculos,
-            imagenes=imagenes_safe,
-            nombre_pdf=nombre_pdf
-        )
-        print(f"DEBUG: Resultado del generador: exito={exito}, pdf_bytes={pdf_bytes is not None}")
+        try:
+            exito, pdf_bytes = gasto_pdf_generator.generar_pdf_gasto(
+                gasto_data_formateado=data_para_pdf, # << SIEMPRE ENVIANDO UN DICCIONARIO >>
+                calculos=calculos,
+                imagenes=imagenes_safe,
+                nombre_pdf=nombre_pdf
+            )
+            print(f"DEBUG: Resultado del generador: exito={exito}, pdf_bytes={pdf_bytes is not None}")
+        except Exception as e:
+            print(f"ERROR en llamada al generador: {str(e)}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            raise e
         
         if exito and pdf_bytes:
             return send_file(
