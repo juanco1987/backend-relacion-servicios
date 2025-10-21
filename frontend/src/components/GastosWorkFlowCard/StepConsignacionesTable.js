@@ -12,6 +12,7 @@ const MEDIOS_ENTREGA = [
   'DAVIPLATA',
   'EFECTIVO',
   'OTROS',
+  'DINERO DE JG (TÉCNICO)',
 ];
 
 const StepConsignacionesTable = ({

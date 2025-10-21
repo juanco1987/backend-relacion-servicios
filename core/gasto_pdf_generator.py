@@ -237,13 +237,24 @@ class PDFGastoSideBySide:
         """Tabla de balance"""
         total_gastos = sum(float(g.get("monto", 0)) for g in gastos)
         total_consignaciones = sum(float(c.get("monto", 0)) for c in consignaciones)
-
-        if total_gastos < total_consignaciones:
-            vueltas_abrecar = total_consignaciones - total_gastos
-            excedente_jg = 0
+        
+        # Separar consignaciones por origen del dinero
+        consignaciones_empresa = [c for c in consignaciones if c.get("entregadoPor", "") != "DINERO DE JG (TÉCNICO)"]
+        consignaciones_jg = [c for c in consignaciones if c.get("entregadoPor", "") == "DINERO DE JG (TÉCNICO)"]
+        
+        total_consignaciones_empresa = sum(float(c.get("monto", 0)) for c in consignaciones_empresa)
+        total_consignaciones_jg = sum(float(c.get("monto", 0)) for c in consignaciones_jg)
+        
+        # Calcular balance para dinero de la empresa
+        if total_gastos < total_consignaciones_empresa:
+            vueltas_abrecar = total_consignaciones_empresa - total_gastos
+            excedente_jg_empresa = 0
         else:
             vueltas_abrecar = 0
-            excedente_jg = total_gastos - total_consignaciones
+            excedente_jg_empresa = total_gastos - total_consignaciones_empresa
+        
+        # El dinero de JG siempre va a favor de JG
+        excedente_jg_total = excedente_jg_empresa + total_consignaciones_jg
 
         data = [
             ["RESUMEN", "MONTO"],
@@ -260,7 +271,7 @@ class PDFGastoSideBySide:
             [
                 "Excedente a favor de JG",
                 Paragraph(
-                    f"<b>{self.formatear_moneda(excedente_jg)}</b>",
+                    f"<b>{self.formatear_moneda(excedente_jg_total)}</b>",
                     ParagraphStyle("JG", parent=self.estilo_normal,
                         textColor=colors.HexColor("#C62828"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), 
                 ),
