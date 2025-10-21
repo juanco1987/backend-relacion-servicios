@@ -8,7 +8,7 @@ import CustomTooltip from '../common/CustomTooltip';
 import ServiciosPendientesEfectivo from './ServiciosPendientesEfectivo';
 import ServiciosPendientesCobrar from './ServiciosPendientesCobrar';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com';
 
 const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
   const { theme } = useTheme();

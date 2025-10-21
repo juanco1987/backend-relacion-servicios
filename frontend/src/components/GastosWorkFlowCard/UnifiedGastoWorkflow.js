@@ -116,7 +116,7 @@ const UnifiedGastoWorkflow = ({
   // Generar PDF en backend (ahora incluye imágenes)
   const handleGenerarPDF = async (pdfNameParam) => {
     try {
-      const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const API_BASE = process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com';
 
       console.log('Enviando datos al backend...');
       console.log('Gastos:', gastos);

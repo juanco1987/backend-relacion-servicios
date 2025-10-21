@@ -8,6 +8,13 @@ const TEMA_OSCURO = {
   fondoInputDeshabilitado: "#2a3441",
   fondoMenu: "#162447",
   fondoMenuActivo: "rgba(0,234,255,0.12)",
+  fondoAzulvibrante:'#2196F3',
+  fondoAmarillovibrante:'#ffbd2e',
+  fondoVerdevibrante:'#27c93f',
+  fondoRosaVibrante:'#FF1493',
+  fondoMoradoVibrante:'#9333EA',
+  fondoRojoEncendido:'#e00d0dff',
+  
   
   // Texto
   textoPrincipal: "#ffffff",

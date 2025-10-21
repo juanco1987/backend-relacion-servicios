@@ -19,7 +19,6 @@ const StepConsignacionesTable = ({
   consignaciones,
   onAgregarConsignacion,
   onEliminarConsignacion,
-  onContinuar,
 }) => {
   const [formData, setFormData] = useState({
     fecha: '',
@@ -272,7 +271,7 @@ const StepConsignacionesTable = ({
                       color: theme.textoContraste,  
                       height: 40,
                       fontWeight: 600,
-                      borderRadius: '18px',
+                      borderRadius: '26px',
                     }}
                   >
                     Agregar Consignación
@@ -366,13 +365,13 @@ const StepConsignacionesTable = ({
                     <tr
                       style={{
                         background: theme.acento || '#2196F3',
-                        color: '#fff',
+                        color: theme.textoBlanco,
                       }}
                     >
                       <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Fecha</th>
                       <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Entregado/Transferido</th>
                       <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Descripción</th>
-                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold' }}>Monto</th>
+                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold' }}>Valor</th>
                       <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>Acción</th>
                     </tr>
                   </thead>
@@ -408,10 +407,10 @@ const StepConsignacionesTable = ({
                             sx={{
                               background: theme.terminalRojo,
                               color: theme.textoBlanco,
-                              fontSize: '0.8rem',
+                              fontSize: '0.9rem',
                               px: 2,
                               py: 0.5,
-                              borderRadius: '8px',
+                              borderRadius: '26px',
                             }}
                           >
                             Eliminar

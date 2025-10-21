@@ -12,7 +12,7 @@ import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from './config/animations';
 import dayjs from 'dayjs';
 import { generarPDFServiciosEfectivo, generarPDFPendientes } from './services/pdfService';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com';
 function App() {
   const { theme } = useTheme();
   
@@ -137,11 +137,11 @@ function App() {
 
         if (!response.ok) {
           if (response.status === 404) {
-            throw new Error('El backend no está disponible. Verifica que el servidor esté ejecutándose en http://localhost:5000');
+            throw new Error('El backend no está disponible. Verifica que el servidor esté ejecutándose en https://backend-relacion-servicios.onrender.com');
           } else if (response.status === 500) {
             throw new Error('Error interno del servidor. Verifica los logs del backend.');
           } else if (response.status === 0 || response.statusText === 'Failed to fetch') {
-            throw new Error('No se puede conectar al backend. Verifica que el servidor esté ejecutándose en http://localhost:5000');
+            throw new Error('No se puede conectar al backend. Verifica que el servidor esté ejecutándose en https://backend-relacion-servicios.onrender.com');
           } else {
             throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
           }
@@ -175,7 +175,7 @@ function App() {
         // Manejar errores de red específicamente
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
           setShowError(true);
-          return { success: false, error: 'No se puede conectar al backend. Verifica que el servidor esté ejecutándose en http://localhost:5000' };
+          return { success: false, error: 'No se puede conectar al backend. Verifica que el servidor esté ejecutándose en https://backend-relacion-servicios.onrender.com' };
         }
         
         setShowError(true);

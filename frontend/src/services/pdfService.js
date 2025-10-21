@@ -1,5 +1,5 @@
 // Servicio para generar PDF de servicios en efectivo
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com';
 
 export async function generarPDFServiciosEfectivo({ archivo, fechaInicio, fechaFin, notas, imagenes, nombrePDF }) {
   const formData = new FormData();
