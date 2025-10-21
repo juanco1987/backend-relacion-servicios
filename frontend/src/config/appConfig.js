@@ -1,3 +1,18 @@
+export const API_CONFIG = {
+  BASE_URL: process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com',
+  ENDPOINTS: {
+    RELACION_SERVICIOS: '/api/relacion_servicios',
+    PROCESAR_EXCEL: '/api/procesar_excel',
+    PROCESS: '/api/process',
+    ANALYTICS: '/api/analytics',
+    PDF_PENDIENTES: '/api/pdf_pendientes',
+    PDF_RELACION_SERVICIOS: '/api/pdf_relacion_servicios',
+    ANALYTICS_PENDIENTES_EFECTIVO: '/api/analytics_pendientes_efectivo',
+    ANALYTICS_PENDIENTES_COBRAR: '/api/analytics_pendientes_cobrar',
+    GASTOS_GENERAR_PDF: '/api/gastos/generar-pdf'
+  }
+};
+
 export const EXCEL_COLUMNS = {
   FECHA: "FECHA",
   DIRECCION: "DIRECCION",

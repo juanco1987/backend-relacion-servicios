@@ -24,9 +24,11 @@ import actionIcon from '../../assets/flechas_circulo.png';
 import pdfIcon from '../../assets/icono_pdf.png';
 import processIcon from '../../assets/Engrenages.png';
 
+import { API_CONFIG } from '../../config/appConfig';
+
 dayjs.locale('es');
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com';
+const API_BASE = API_CONFIG.BASE_URL;
 const UnifiedWorkflowCard = ({
   archivoExcel,
   fechaInicio,

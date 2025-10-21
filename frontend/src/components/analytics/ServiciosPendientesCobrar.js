@@ -4,8 +4,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
 import { generateMonthsUntilNow, formatMonth } from '../../utils/dateUtils';
 import KpiCard from '../common/KpiCard';
+import { API_CONFIG } from '../../config/appConfig';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com';
+const API_BASE = API_CONFIG.BASE_URL;
 
 const ServiciosPendientesCobrar = ({ file }) => {
     const { theme } = useTheme();

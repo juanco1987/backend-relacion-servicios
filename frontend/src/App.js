@@ -11,8 +11,9 @@ import ModeTransitionAnimation from './components/animations/ModeTransitionAnima
 import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from './config/animations';
 import dayjs from 'dayjs';
 import { generarPDFServiciosEfectivo, generarPDFPendientes } from './services/pdfService';
+import { API_CONFIG } from './config/appConfig';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com';
+const API_BASE = API_CONFIG.BASE_URL;
 function App() {
   const { theme } = useTheme();
   

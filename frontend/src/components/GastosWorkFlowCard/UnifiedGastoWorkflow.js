@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Grid } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
+import { API_CONFIG } from '../../config/appConfig';
 import WorkflowHeader from '../UnifiedWorkflowCard/WorkflowHeader';
 import WorkflowStepper from '../UnifiedWorkflowCard/WorkFlowStepper';
 import WorkflowStatus from '../UnifiedWorkflowCard/WorkFlowStatus';
@@ -116,7 +117,7 @@ const UnifiedGastoWorkflow = ({
   // Generar PDF en backend (ahora incluye imágenes)
   const handleGenerarPDF = async (pdfNameParam) => {
     try {
-      const API_BASE = process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com';
+      const API_BASE = API_CONFIG.BASE_URL;
 
       console.log('Enviando datos al backend...');
       console.log('Gastos:', gastos);

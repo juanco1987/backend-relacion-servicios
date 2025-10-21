@@ -5,8 +5,9 @@ import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../u
 import { generateMonthsUntilNow, formatMonth } from '../../utils/dateUtils';
 import KpiCard from '../common/KpiCard';
 import { formatCurrency, formatInteger } from '../../utils/numberFormatters';
+import { API_CONFIG } from '../../config/appConfig';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com';
+const API_BASE = API_CONFIG.BASE_URL;
 const ServiciosPendientesEfectivo = ({ file }) => {
   const { theme } = useTheme();
   const [data, setData] = useState(null);

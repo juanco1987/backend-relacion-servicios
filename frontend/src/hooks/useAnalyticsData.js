@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { API_CONFIG } from '../config/appConfig';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'https://backend-relacion-servicios.onrender.com';
+const API_BASE = API_CONFIG.BASE_URL;
 
 function useAnalyticsData(analyticsFile, excelData) {
   const [analyticsData, setAnalyticsData] = useState(null);
