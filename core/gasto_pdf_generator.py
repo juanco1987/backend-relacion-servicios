@@ -334,25 +334,31 @@ class PDFGastoSideBySide:
         
         # Rellenar con celdas vacías si un lado tiene menos imágenes
         max_imgs = max(len(gastos_row), len(consignaciones_row))
-        while len(gastos_row) < max_imgs:
-            gastos_row.append(Spacer(img_width, img_height))
-        while len(consignaciones_row) < max_imgs:
-            consignaciones_row.append(Spacer(img_width, img_height))
         
-        # Crear tabla lado a lado
-        imagenes_data = []
-        for i in range(max_imgs):
-            imagenes_data.append([gastos_row[i], consignaciones_row[i]])
-        
-        tabla_imagenes = Table(imagenes_data, colWidths=[4*inch, 4*inch], hAlign='CENTER')  # Nuevo: Centra la tabla
-        tabla_imagenes.setStyle(TableStyle([
-            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("LEFTPADDING", (0,0), (-1,-1), 0),
-            ("RIGHTPADDING", (0,0), (-1,-1), 0),
-        ]))
-        self.elements.append(tabla_imagenes)
-        self.elements.append(Spacer(1, 20))
+        # Si no hay imágenes, mostrar mensaje en lugar de tabla vacía
+        if max_imgs == 0:
+            self.elements.append(Paragraph("No se adjuntaron comprobantes de pago", self.estilo_normal))
+            self.elements.append(Spacer(1, 20))
+        else:
+            while len(gastos_row) < max_imgs:
+                gastos_row.append(Spacer(img_width, img_height))
+            while len(consignaciones_row) < max_imgs:
+                consignaciones_row.append(Spacer(img_width, img_height))
+            
+            # Crear tabla lado a lado
+            imagenes_data = []
+            for i in range(max_imgs):
+                imagenes_data.append([gastos_row[i], consignaciones_row[i]])
+            
+            tabla_imagenes = Table(imagenes_data, colWidths=[4*inch, 4*inch], hAlign='CENTER')  # Nuevo: Centra la tabla
+            tabla_imagenes.setStyle(TableStyle([
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0,0), (-1,-1), 0),
+                ("RIGHTPADDING", (0,0), (-1,-1), 0),
+            ]))
+            self.elements.append(tabla_imagenes)
+            self.elements.append(Spacer(1, 20))
         
         # ========== ROW 2: DEVOLUCIONES (CENTRADO ABAJO) ==========
         
