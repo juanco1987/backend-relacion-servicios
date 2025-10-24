@@ -305,21 +305,10 @@ class PDFGastoSideBySide:
         self.elements.append(Paragraph("ARCHIVOS ADJUNTOS", self.estilo_subtitulo))
         self.elements.append(Spacer(1, 10))
         
-        img_width = 1.8 * inch
-        img_height = 1.4 * inch
+        img_width = 0.95 * inch  # reducido para imágenes más angostas
+        img_height = 1.6 * inch
         
         # ========== ROW 1: IZQUIERDA Y DERECHA ==========
-        
-        # Títulos
-        titulo_gastos = Paragraph("SOPORTE DE PAGO DE GASTOS", self.estilo_titulo_seccion)
-        titulo_consignaciones = Paragraph("ABRECAR DIO PARA MATERIALES", self.estilo_titulo_seccion)
-        
-        titulos_row = Table([[titulo_gastos, titulo_consignaciones]], 
-                            colWidths=[4*inch, 4*inch],  # Aumentado de 3.5 a 4 para mejor balance
-                            hAlign='CENTER')  # Nuevo: Centra la tabla en la página
-        titulos_row.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER")]))  # Cambiado a CENTER para títulos
-        self.elements.append(titulos_row)
-        self.elements.append(Spacer(1, 6))
         
         # Imágenes IZQUIERDA (Gastos)
         gastos_row = []
@@ -343,32 +332,126 @@ class PDFGastoSideBySide:
                 logger.error(f"Error cargando imagen consignación: {e}")
                 consignaciones_row.append(Paragraph(f"Error img {idx+1}", self.estilo_normal))
         
-        # Rellenar con celdas vacías si un lado tiene menos imágenes
-        max_imgs = max(len(gastos_row), len(consignaciones_row))
-        
-        # Si no hay imágenes, mostrar mensaje en lugar de tabla vacía
-        if max_imgs == 0:
+        # Si no hay imágenes en ninguna columna, mostrar mensaje
+        if len(gastos_row) + len(consignaciones_row) == 0:
             self.elements.append(Paragraph("No se adjuntaron comprobantes de pago", self.estilo_normal))
             self.elements.append(Spacer(1, 20))
         else:
-            while len(gastos_row) < max_imgs:
-                gastos_row.append(Spacer(img_width, img_height))
-            while len(consignaciones_row) < max_imgs:
-                consignaciones_row.append(Spacer(img_width, img_height))
+            # No rellenamos las listas con Spacers aquí; cada columna se gestiona y centra por separado
+            pass
             
-            # Crear tabla lado a lado
-            imagenes_data = []
-            for i in range(max_imgs):
-                imagenes_data.append([gastos_row[i], consignaciones_row[i]])
-            
-            tabla_imagenes = Table(imagenes_data, colWidths=[4*inch, 4*inch], hAlign='CENTER')  # Nuevo: Centra la tabla
-            tabla_imagenes.setStyle(TableStyle([
+            # Crear los títulos
+            titulo_gastos = Paragraph("SOPORTE DE PAGO DE GASTOS", self.estilo_titulo_seccion)
+            titulo_consignaciones = Paragraph("ABRECAR DIO PARA MATERIALES", self.estilo_titulo_seccion)
+
+            # Crear las tablas de imágenes para cada sección (3 por fila)
+            # Usamos tablas anidadas por fila para poder centrar correctamente filas con 1, 2 o 3 imágenes.
+            gap = 0.15 * inch
+            image_col_w = img_width * 0.9
+            max_row_width = image_col_w * 3 + gap * 2
+
+            filas_gastos_nested = []
+            if not gastos_row:
+                # fila vacía con un placeholder centrado
+                nested = Table([[Spacer(image_col_w, img_height)]], colWidths=[max_row_width], hAlign='CENTER')
+                filas_gastos_nested.append([nested])
+            else:
+                # agrupar en filas de hasta 3
+                fila_actual = []
+                for img in gastos_row:
+                    fila_actual.append(img)
+                    if len(fila_actual) == 3:
+                        # construir nested table para 3 imágenes con gutters
+                        row = [fila_actual[0], Spacer(gap, img_height), fila_actual[1], Spacer(gap, img_height), fila_actual[2]]
+                        nested = Table([row], colWidths=[image_col_w, gap, image_col_w, gap, image_col_w], hAlign='CENTER')
+                        nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                        # envolver en una celda de ancho máximo para que quede centrado en la columna
+                        wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
+                        wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
+                        filas_gastos_nested.append([wrapper])
+                        fila_actual = []
+
+                if fila_actual:
+                    k = len(fila_actual)
+                    if k == 1:
+                        row = [fila_actual[0]]
+                        nested = Table([row], colWidths=[image_col_w], hAlign='CENTER')
+                    else:  # k == 2
+                        # colocar las dos imágenes juntas (adjuntas) y centrar este bloque
+                        row = [fila_actual[0], Spacer(gap, img_height), fila_actual[1]]
+                        nested = Table([row], colWidths=[image_col_w, gap, image_col_w], hAlign='CENTER')
+
+                    nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                    wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
+                    wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
+                    filas_gastos_nested.append([wrapper])
+
+            tabla_gastos = Table(filas_gastos_nested, colWidths=[max_row_width], hAlign='CENTER')
+            tabla_gastos.setStyle(TableStyle([
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("LEFTPADDING", (0,0), (-1,-1), 0),
-                ("RIGHTPADDING", (0,0), (-1,-1), 0),
+                ("LEFTPADDING", (0,0), (-1,-1), 6),
+                ("RIGHTPADDING", (0,0), (-1,-1), 6),
+                ("TOPPADDING", (0,0), (-1,-1), 6),
+                ("BOTTOMPADDING", (0,0), (-1,-1), 6),
             ]))
-            self.elements.append(tabla_imagenes)
+
+            # Tabla derecha (Consignaciones) - mismo enfoque anidado que Gastos
+            filas_consig_nested = []
+            if not consignaciones_row:
+                nested = Table([[Spacer(image_col_w, img_height)]], colWidths=[max_row_width], hAlign='CENTER')
+                filas_consig_nested.append([nested])
+            else:
+                fila_actual = []
+                for img in consignaciones_row:
+                    fila_actual.append(img)
+                    if len(fila_actual) == 3:
+                        row = [fila_actual[0], Spacer(gap, img_height), fila_actual[1], Spacer(gap, img_height), fila_actual[2]]
+                        nested = Table([row], colWidths=[image_col_w, gap, image_col_w, gap, image_col_w], hAlign='CENTER')
+                        nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                        wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
+                        wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
+                        filas_consig_nested.append([wrapper])
+                        fila_actual = []
+
+                if fila_actual:
+                    k = len(fila_actual)
+                    if k == 1:
+                        row = [fila_actual[0]]
+                        nested = Table([row], colWidths=[image_col_w], hAlign='CENTER')
+                    else:  # k == 2
+                        row = [fila_actual[0], Spacer(gap, img_height), fila_actual[1]]
+                        nested = Table([row], colWidths=[image_col_w, gap, image_col_w], hAlign='CENTER')
+
+                    nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                    wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
+                    wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
+                    filas_consig_nested.append([wrapper])
+
+            tabla_consig = Table(filas_consig_nested, colWidths=[max_row_width], hAlign='CENTER')
+            tabla_consig.setStyle(TableStyle([
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0,0), (-1,-1), 6),
+                ("RIGHTPADDING", (0,0), (-1,-1), 6),
+                ("TOPPADDING", (0,0), (-1,-1), 6),
+                ("BOTTOMPADDING", (0,0), (-1,-1), 6),
+            ]))
+            
+            # Crear una tabla que combine las dos secciones lado a lado
+            combined_data = [[titulo_gastos, titulo_consignaciones],
+                           [tabla_gastos, tabla_consig]]
+            
+            tabla_combinada = Table(combined_data,
+                                  colWidths=[4*inch, 4*inch],
+                                  hAlign='CENTER')
+            tabla_combinada.setStyle(TableStyle([
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]))
+            
+            self.elements.append(tabla_combinada)
+            
             self.elements.append(Spacer(1, 20))
         
         # ========== ROW 2: DEVOLUCIONES (CENTRADO ABAJO) ==========
@@ -376,7 +459,7 @@ class PDFGastoSideBySide:
         if imagenes_devoluciones:
             self.elements.append(Paragraph("SOPORTE DEVOLUCIÓN VUELTAS PARA ABRECAR", self.estilo_titulo_seccion))  # Ahora centrado por el estilo
             self.elements.append(Spacer(1, 6))
-            
+
             devoluciones_row = []
             for idx, img_path in enumerate(imagenes_devoluciones):
                 try:
@@ -386,13 +469,47 @@ class PDFGastoSideBySide:
                 except Exception as e:
                     logger.error(f"Error cargando imagen devolución: {e}")
                     devoluciones_row.append(Paragraph(f"Error img {idx+1}", self.estilo_normal))
-            
-            # Si quieres que ocupe full width centrado, ajusta colWidths según el número de imágenes
-            col_width = 8*inch / max(1, len(devoluciones_row))  # Divide el ancho disponible
-            tabla_devoluciones = Table([devoluciones_row], colWidths=[col_width] * len(devoluciones_row), hAlign="CENTER")
+
+            # Usar mismo enfoque anidado que para las columnas superiores: permite centrar 1 o 2 imágenes
+            gap = 0.15 * inch
+            image_col_w = img_width * 0.9
+            max_row_width = image_col_w * 3 + gap * 2
+
+            filas_dev_nested = []
+            if not devoluciones_row:
+                nested = Table([[Spacer(image_col_w, img_height)]], colWidths=[max_row_width], hAlign='CENTER')
+                filas_dev_nested.append([nested])
+            else:
+                fila_actual = []
+                for img in devoluciones_row:
+                    fila_actual.append(img)
+                    if len(fila_actual) == 3:
+                        row = [fila_actual[0], Spacer(gap, img_height), fila_actual[1], Spacer(gap, img_height), fila_actual[2]]
+                        nested = Table([row], colWidths=[image_col_w, gap, image_col_w, gap, image_col_w], hAlign='CENTER')
+                        nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                        wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
+                        wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
+                        filas_dev_nested.append([wrapper])
+                        fila_actual = []
+
+                if fila_actual:
+                    k = len(fila_actual)
+                    if k == 1:
+                        nested = Table([[fila_actual[0]]], colWidths=[image_col_w], hAlign='CENTER')
+                    else:  # k == 2
+                        nested = Table([[fila_actual[0], Spacer(gap, img_height), fila_actual[1]]], colWidths=[image_col_w, gap, image_col_w], hAlign='CENTER')
+
+                    nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                    wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
+                    wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
+                    filas_dev_nested.append([wrapper])
+
+            tabla_devoluciones = Table(filas_dev_nested, colWidths=[max_row_width], hAlign='CENTER')
             tabla_devoluciones.setStyle(TableStyle([
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0,0), (-1,-1), 4),
+                ("RIGHTPADDING", (0,0), (-1,-1), 4),
             ]))
             self.elements.append(tabla_devoluciones)
 
