@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart, Line } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../utils/numberFormatters';
+import { formatMonthAbbreviation } from '../../utils/dateFormatters';
 import KpiCard from '../common/KpiCard';
 import CustomButton from '../common/CustomButton';
 import CustomTooltip from '../common/CustomTooltip';
@@ -345,7 +346,15 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={dataToUse.tendenciaMensual}>
               <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
-              <XAxis dataKey="mes" stroke={theme.textoPrincipal} />
+              <XAxis 
+                dataKey="mes" 
+                stroke={theme.textoPrincipal}
+                tickFormatter={formatMonthAbbreviation}
+                tick={{
+                  fontSize: '0.75rem',
+                  fontWeight: 500
+                }}
+              />
               <YAxis yAxisId="left" stroke={theme.textoPrincipal} />
               <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} />
               <Tooltip 
@@ -401,7 +410,11 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
                 margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
-                <XAxis dataKey="mes" stroke={theme.textoPrincipal} />
+                <XAxis 
+                  dataKey="mes" 
+                  stroke={theme.textoPrincipal}
+                  tickFormatter={formatMonthAbbreviation}
+                />
                 <YAxis stroke={theme.textoPrincipal} />
                 <Tooltip content={<CustomTooltip formatter={(value,)=> `${value}`}/>} />
                  

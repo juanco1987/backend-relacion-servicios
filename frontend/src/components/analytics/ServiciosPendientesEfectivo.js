@@ -4,10 +4,12 @@ import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
 import { generateMonthsUntilNow, formatMonth } from '../../utils/dateUtils';
 import KpiCard from '../common/KpiCard';
+import CustomTable from '../common/CustomTable';
 import { formatCurrency, formatInteger } from '../../utils/numberFormatters';
 import { API_CONFIG } from '../../config/appConfig';
 
 const API_BASE = API_CONFIG.BASE_URL;
+
 const ServiciosPendientesEfectivo = ({ file }) => {
   const { theme } = useTheme();
   const [data, setData] = useState(null);
@@ -85,14 +87,12 @@ const ServiciosPendientesEfectivo = ({ file }) => {
 
   const mesesOrdenados = generateMonthsUntilNow();
 
-  // Calcular total global y encontrar el mensaje más crítico
   const totalGlobal = mesesOrdenados.reduce((acc, mesKey) => {
     const datosMes = resumen[mesKey] || {};
     const serviciosNuevos = datosMes.total_servicios || 0;
     const valorNuevo = datosMes.total_valor || 0;
     const diasNuevos = datosMes.dias_sin_relacionar || 0;
     
-    // Si este mes tiene advertencia, actualizar el mensaje solo si es más crítico
     const mensajeActual = acc.advertencia;
     const mensajeNuevo = datosMes.advertencia;
     const usarMensajeNuevo = datosMes.tiene_pendientes && 
@@ -130,8 +130,6 @@ const ServiciosPendientesEfectivo = ({ file }) => {
     return mesAñoCalculado === mesSeleccionado;
   }) : [];
 
-  // Usando la función de utilidad formatCurrency importada
-
   const getStatusBadge = (dias, esAntiguo) => {
     let color = theme.terminalVerde;
     if (esAntiguo) color = theme.terminalRojo;
@@ -151,13 +149,91 @@ const ServiciosPendientesEfectivo = ({ file }) => {
     );
   };
 
+  const getStatusLabel = (servicio) => {
+    if (servicio.es_antiguo) {
+      return (
+        <span style={{
+          backgroundColor: theme.terminalRojo,
+          color: theme.textoPrincipal,
+          padding: '4px 8px',
+          borderRadius: '12px',
+          fontSize: '12px',
+          fontWeight: 'bold'
+        }}>
+          Urgente
+        </span>
+      );
+    } else if (servicio.dias_sin_relacionar > 7) {
+      return (
+        <span style={{
+          backgroundColor: theme.terminalAmarillo,
+          color: theme.textoPrincipal,
+          padding: '4px 8px',
+          borderRadius: '12px',
+          fontSize: '12px',
+          fontWeight: 'bold'
+        }}>
+          Atención
+        </span>
+      );
+    } else {
+      return (
+        <span style={{
+          backgroundColor: theme.terminalVerde,
+          color: theme.textoPrincipal,
+          padding: '4px 8px',
+          borderRadius: '12px',
+          fontSize: '12px',
+          fontWeight: 'bold'
+        }}>
+          Normal
+        </span>
+      );
+    }
+  };
+
+  // Definir headers para CustomTable
+  const tableHeaders = [
+    { label: 'Fecha' },
+    { label: 'Estado' },
+    { label: 'Servicio' },
+    { label: 'Subtotal', style: { textAlign: 'right' } },
+    { label: 'IVA', style: { textAlign: 'right' } },
+    { label: 'Total ABRECAR', style: { textAlign: 'right' } },
+    { label: 'Días de Retraso', style: { textAlign: 'center', minWidth: '100px' } },
+    { label: 'Estado', style: { textAlign: 'center' } }
+  ];
+
+  // Función para renderizar cada fila
+  const renderRow = (servicio, tdStyles) => (
+    <>
+      <td style={tdStyles}>{servicio.fecha}</td>
+      <td style={tdStyles}>{servicio.estado}</td>
+      <td style={tdStyles}>{servicio.servicio_realizado}</td>
+      <td style={{ ...tdStyles, textAlign: 'right' }}>
+        {formatCurrency(servicio.subtotal)}
+      </td>
+      <td style={{ ...tdStyles, textAlign: 'right' }}>
+        {formatCurrency(servicio.iva)}
+      </td>
+      <td style={{ ...tdStyles, textAlign: 'right', fontWeight: 'bold' }}>
+        {formatCurrency(servicio.total_abrecar)}
+      </td>
+      <td style={{ ...tdStyles, textAlign: 'center' }}>
+        {getStatusBadge(servicio.dias_sin_relacionar, servicio.es_antiguo)}
+      </td>
+      <td style={{ ...tdStyles, textAlign: 'center' }}>
+        {getStatusLabel(servicio)}
+      </td>
+    </>
+  );
+
   return (
     <div style={{ marginTop: '2rem', textAlign: 'center' }}>
       <h2 style={{ display: 'inline-block', alignItems: 'center', gap: '8px', color: theme.textoPrincipal }}>
         💰 Servicios en Efectivo Pendientes
       </h2>
 
-      {/* Selector de mes */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
         <FormControl variant="outlined" sx={{ minWidth: 200 }}>
           <InputLabel id="mes-selector-label" sx={getCustomLabelSx(theme)}>Seleccionar Mes</InputLabel>
@@ -179,7 +255,6 @@ const ServiciosPendientesEfectivo = ({ file }) => {
         </FormControl>
       </Box>
 
-      {/* Alertas */}
       <div style={{
         padding: '1rem',
         backgroundColor: datosSeleccionados.tiene_pendientes ? theme.terminalAmarillo + '10' : theme.terminalVerde + '10',
@@ -191,7 +266,6 @@ const ServiciosPendientesEfectivo = ({ file }) => {
         <strong>{datosSeleccionados.tiene_pendientes ? '⚠️ ADVERTENCIA:' : '✅ ÉXITO:'}</strong> {datosSeleccionados.advertencia}
       </div>
 
-      {/* Tarjetas de resumen usando KpiCard */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -246,104 +320,20 @@ const ServiciosPendientesEfectivo = ({ file }) => {
         </KpiCard>
       </div>
 
-      {/* Tabla de detalle */}
       {detalleFiltrado && detalleFiltrado.length > 0 && (
-        <div style={{
-          padding: '1rem',
-          border: `1px solid ${theme.bordePrincipal}`,
-          borderRadius: '8px',
-          backgroundColor: theme.fondoContenedor,
-          maxWidth: '1400px',
-          width: '100%',
-          margin: '0 auto'
-        }}>
-          <h3 style={{ margin: '0 0 1rem 0', color: theme.textoPrincipal, textAlign: 'center' }}> Detalle de Servicios Pendientes</h3>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              overflow: 'hidden'
-            }}>
-              <thead>
-                <tr style={{ backgroundColor: theme.fondoContenedor }}>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Fecha</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Estado</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Servicio</th>
-                  <th style={{ padding: '12px', textAlign: 'right', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Subtotal</th>
-                  <th style={{ padding: '12px', textAlign: 'right', borderBottom: `1px solid ${theme.bordePrincipal}` }}>IVA</th>
-                  <th style={{ padding: '12px', textAlign: 'right', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Total ABRECAR</th>
-                  <th style={{ padding: '12px', textAlign: 'center', borderBottom: `1px solid ${theme.bordePrincipal}`, minWidth: '100px' }}>Días de Retraso</th>
-                  <th style={{ padding: '12px', textAlign: 'center', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detalleFiltrado.map((servicio, index) => (
-                  <tr key={index} style={{
-                    backgroundColor: servicio.es_antiguo ? theme.terminalRojo + '10' : 'inherit'
-                  }}>
-                    <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.fecha}</td>
-                    <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.estado}</td>
-                    <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.servicio_realizado}</td>
-                    <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}`, textAlign: 'right' }}>
-                      {formatCurrency(servicio.subtotal)}
-                    </td>
-                    <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}`, textAlign: 'right' }}>
-                      {formatCurrency(servicio.iva)}
-                    </td>
-                    <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}`, textAlign: 'right', fontWeight: 'bold' }}>
-                      {formatCurrency(servicio.total_abrecar)}
-                    </td>
-                    <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}`, textAlign: 'center' }}>
-                      {getStatusBadge(servicio.dias_sin_relacionar, servicio.es_antiguo)}
-                    </td>
-                    <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}`, textAlign: 'center' }}>
-                      {servicio.es_antiguo ? (
-                        <span style={{
-                          backgroundColor: theme.terminalRojo,
-                          color: theme.textoPrincipal,
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}>
-                          Urgente
-                        </span>
-                      ) : servicio.dias_sin_relacionar > 7 ? (
-                        <span style={{
-                          backgroundColor: theme.terminalAmarillo,
-                          color: theme.textoPrincipal,
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}>
-                          Atención
-                        </span>
-                      ) : (
-                        <span style={{
-                          backgroundColor: theme.terminalVerde,
-                          color: theme.textoPrincipal,
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}>
-                          Normal
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <h3 style={{ margin: '0 0 1rem 0', color: theme.textoPrincipal, textAlign: 'center' }}>
+            Detalle de Servicios Pendientes
+          </h3>
+          <CustomTable
+            headers={tableHeaders}
+            data={detalleFiltrado}
+            renderRow={renderRow}
+            wrapperStyles={{ maxWidth: '1400px' }}
+          />
         </div>
       )}
 
-      {/* Mensaje cuando no hay datos en absoluto */}
       {(!detalle || detalle.length === 0) && (
         <div style={{
           padding: '1rem',
@@ -358,8 +348,7 @@ const ServiciosPendientesEfectivo = ({ file }) => {
         </div>
       )}
 
-      {/* Mensaje cuando no hay datos filtrados */}
-      {detalleFiltrado.length === 0 && mesSeleccionado !== 'Total Global' && (
+      {detalleFiltrado.length === 0 && mesSeleccionado !== 'Total Global' && detalle && detalle.length > 0 && (
         <div style={{
           padding: '1rem',
           backgroundColor: theme.fondoContenedor,

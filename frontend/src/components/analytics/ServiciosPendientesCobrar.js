@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
 import { generateMonthsUntilNow, formatMonth } from '../../utils/dateUtils';
 import KpiCard from '../common/KpiCard';
+import CustomTable from '../common/CustomTable';
 import { API_CONFIG } from '../../config/appConfig';
 
 const API_BASE = API_CONFIG.BASE_URL;
@@ -15,7 +16,6 @@ const ServiciosPendientesCobrar = ({ file }) => {
     const [error, setError] = useState(null);
     const [mesSeleccionado, setMesSeleccionado] = useState('Total Global');
     
-
     useEffect(() => {
         if (!file) return;
 
@@ -86,10 +86,8 @@ const ServiciosPendientesCobrar = ({ file }) => {
 
     const { resumen, detalle } = data;
 
-    // Generar todos los meses hasta la fecha actual
     const mesesOrdenados = generateMonthsUntilNow();
 
-    // Calcular total global
     const totalGlobal = mesesOrdenados.reduce((acc, mesKey) => {
         const datosMes = resumen[mesKey] || {};
         return {
@@ -105,7 +103,6 @@ const ServiciosPendientesCobrar = ({ file }) => {
         fecha_mas_antigua: '9999-12-31'
     });
 
-    // Datos seleccionados con valores por defecto para meses sin datos
     const datosSeleccionados = mesSeleccionado === 'Total Global'
         ? totalGlobal
         : resumen[mesSeleccionado] || {
@@ -115,12 +112,45 @@ const ServiciosPendientesCobrar = ({ file }) => {
             fecha_mas_antigua: '9999-12-31'
         };
 
-    // Filtrar detalle usando el formato de fecha directo
     const detalleFiltrado = detalle ? detalle.filter(servicio => {
         if (mesSeleccionado === 'Total Global') return true;
         const [año, mes] = servicio.fecha.split('-');
         return `${año}-${mes}` === mesSeleccionado;
     }) : [];
+
+    // Definir headers para CustomTable
+    const tableHeaders = [
+        { label: 'Fecha' },
+        { label: 'Estado' },
+        { label: 'Servicio Realizado' },
+        { label: 'Días de Retraso', style: { textAlign: 'center', minWidth: '100px' } },
+        { label: 'Mensaje', style: { textAlign: 'center', minWidth: '220px' } }
+    ];
+
+    // Función para renderizar cada fila
+    const renderRow = (servicio, tdStyles) => (
+        <>
+            <td style={tdStyles}>{servicio.fecha}</td>
+            <td style={tdStyles}>{servicio.estado}</td>
+            <td style={tdStyles}>{servicio.servicio_realizado}</td>
+            <td style={{
+                ...tdStyles,
+                textAlign: 'center',
+                fontWeight: servicio.dias_de_retraso > 30 ? 'bold' : 'normal',
+                color: servicio.dias_de_retraso > 30 ? theme.textoError : 'inherit'
+            }}>
+                {servicio.dias_de_retraso}
+            </td>
+            <td style={{
+                ...tdStyles,
+                textAlign: 'center',
+                color: servicio.dias_de_retraso > 30 ? theme.textoError : theme.textoInfo,
+                fontWeight: servicio.dias_de_retraso > 30 ? 'bold' : 'normal'
+            }}>
+                {servicio.mensaje}
+            </td>
+        </>
+    );
 
     return (
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
@@ -128,7 +158,6 @@ const ServiciosPendientesCobrar = ({ file }) => {
                 💸 Servicios Pendientes por Cobrar
             </h2>
 
-            {/* Selector de mes */}
             <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
                 <FormControl variant="outlined" sx={{ minWidth: 200 }}>
                     <InputLabel id="mes-selector-label" sx={getCustomLabelSx(theme)}>
@@ -152,7 +181,6 @@ const ServiciosPendientesCobrar = ({ file }) => {
                 </FormControl>
             </Box>
 
-            {/* Tarjetas de KPIs */}
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -198,50 +226,17 @@ const ServiciosPendientesCobrar = ({ file }) => {
                 </KpiCard>
             </div>
 
-            {/* Tabla de detalle o mensaje de éxito */}
             {detalleFiltrado && detalleFiltrado.length > 0 ? (
-                <div style={{
-                    padding: '1rem',
-                    border: `1px solid ${theme.bordePrincipal}`,
-                    borderRadius: '8px',
-                    backgroundColor: theme.fondoContenedor,
-                    maxWidth: '900px',
-                    width: '100%',
-                    margin: '0 auto'
-                }}>
+                <div style={{ maxWidth: '900px', margin: '0 auto' }}>
                     <h3 style={{ margin: '0 0 1rem 0', color: theme.textoPrincipal }}>
                         Detalle de Servicios Pendientes por Cobrar
                     </h3>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{
-                            width: '100%',
-                            borderCollapse: 'collapse',
-                            backgroundColor: 'white',
-                            borderRadius: '8px',
-                            overflow: 'hidden'
-                        }}>
-                            <thead>
-                                <tr style={{ backgroundColor: theme.fondoContenedor }}>
-                                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Fecha</th>
-                                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Estado</th>
-                                    <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${theme.bordePrincipal}` }}>Servicio Realizado</th>
-                                    <th style={{ padding: '12px', textAlign: 'center', borderBottom: `1px solid ${theme.bordePrincipal}`, minWidth: '100px' }}>Días de Retraso</th>
-                                    <th style={{ padding: '12px', textAlign: 'center', borderBottom: `1px solid ${theme.bordePrincipal}`, minWidth: '220px' }}>Mensaje</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {detalleFiltrado.map((servicio, index) => (
-                                    <tr key={index} style={{ backgroundColor: servicio.dias_de_retraso > 30 ? theme.terminalRojo + '10' : 'inherit' }}>
-                                        <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.fecha}</td>
-                                        <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.estado}</td>
-                                        <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}` }}>{servicio.servicio_realizado}</td>
-                                        <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}`, textAlign: 'center', fontWeight: servicio.dias_de_retraso > 30 ? 'bold' : 'normal', color: servicio.dias_de_retraso > 30 ? theme.textoError : 'inherit' }}>{servicio.dias_de_retraso}</td>
-                                        <td style={{ padding: '12px', borderBottom: `1px solid ${theme.bordePrincipal}`, textAlign: 'center', color: servicio.dias_de_retraso > 30 ? theme.textoError : theme.textoInfo, fontWeight: servicio.dias_de_retraso > 30 ? 'bold' : 'normal' }}>{servicio.mensaje}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <CustomTable
+                        headers={tableHeaders}
+                        data={detalleFiltrado}
+                        renderRow={renderRow}
+                        wrapperStyles={{ maxWidth: '900px' }}
+                    />
                 </div>
             ) : (
                 <div style={{ 

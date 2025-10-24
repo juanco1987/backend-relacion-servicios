@@ -29,8 +29,32 @@ function AnalyticsChart({ dataGrafica }) {
         <BarChart data={dataGrafica}>
           <XAxis 
             dataKey="mes" 
-            tick={{ fill: theme.textoPrincipal }}
+            tick={{ 
+              fill: theme.textoPrincipal,
+              fontSize: '0.875rem',
+              fontWeight: 500
+            }}
             axisLine={{ stroke: theme.bordePrincipal }}
+            height={60}  // Da más espacio para los labels rotados
+            tickFormatter={(value) => {
+              // Formato: "Enero 2024" -> "Ene"
+              const mes = value.split(' ')[0];
+              const abreviaturas = {
+                'Enero': 'Ene',
+                'Febrero': 'Feb',
+                'Marzo': 'Mar',
+                'Abril': 'Abr',
+                'Mayo': 'May',
+                'Junio': 'Jun',
+                'Julio': 'Jul',
+                'Agosto': 'Ago',
+                'Septiembre': 'Sep',
+                'Octubre': 'Oct',
+                'Noviembre': 'Nov',
+                'Diciembre': 'Dic'
+              };
+              return abreviaturas[mes] || mes;
+            }}
           />
           <YAxis 
             tick={{ fill: theme.textoPrincipal }}
@@ -39,9 +63,9 @@ function AnalyticsChart({ dataGrafica }) {
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
-          <Bar dataKey="Efectivo" fill={theme.terminalVerde} />
-          <Bar dataKey="Transferencia" fill={theme.textoInfo} />
-          <Bar dataKey="Total General" fill={theme.terminalVerdeNeon} />
+          <Bar dataKey="Efectivo" fill={theme.terminalVerde} radius={[16, 16, 0, 0]} />
+          <Bar dataKey="Transferencia" fill={theme.textoInfo} radius={[16, 16, 0, 0]} />
+          <Bar dataKey="Total General" fill={theme.terminalVerdeNeon} radius={[16, 16, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </Paper>

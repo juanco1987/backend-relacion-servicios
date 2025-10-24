@@ -67,5 +67,31 @@ export const generarMesesFormateados = (fechaInicio, fechaFin) => {
   }
 
   return meses;
+};
 
+// Abreviaturas de meses para los gráficos
+export const MONTH_ABBREVIATIONS = {
+  'Enero': 'Ene',
+  'Febrero': 'Feb',
+  'Marzo': 'Mar',
+  'Abril': 'Abr',
+  'Mayo': 'May',
+  'Junio': 'Jun',
+  'Julio': 'Jul',
+  'Agosto': 'Ago',
+  'Septiembre': 'Sep',
+  'Octubre': 'Oct',
+  'Noviembre': 'Nov',
+  'Diciembre': 'Dic'
+};
+
+/**
+ * Convierte el nombre completo del mes a su abreviatura
+ * @param {string} monthName - Nombre completo del mes en español
+ * @returns {string} Abreviatura del mes o el valor original si no se encuentra
+ */
+export const formatMonthAbbreviation = (monthName) => {
+  // Si el valor incluye año, extraer solo el mes
+  const month = monthName.split(' ')[0];
+  return MONTH_ABBREVIATIONS[month] || month;
 };
