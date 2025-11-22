@@ -162,7 +162,9 @@ class PDFGastoSideBySide:
             monto = float(c.get("monto", 0))
             total_consignaciones += monto
             
-            data.append([fecha, entregado_por, descripcion, self.formatear_moneda(monto)])
+            # Envolver la descripción en Paragraph para que haga salto de línea automático
+            descripcion_paragraph = Paragraph(descripcion, self.estilo_normal)
+            data.append([fecha, entregado_por, descripcion_paragraph, self.formatear_moneda(monto)])
 
         data.append([
             "", "", 
@@ -204,7 +206,9 @@ class PDFGastoSideBySide:
             descripcion = g.get("descripcion", "")
             monto = float(g.get("monto", 0))
             total_gastos += monto
-            data.append([fecha, categoria, descripcion, self.formatear_moneda(monto)])
+            # Envolver la descripción en Paragraph para que haga salto de línea automático
+            descripcion_paragraph = Paragraph(descripcion, self.estilo_normal)
+            data.append([fecha, categoria, descripcion_paragraph, self.formatear_moneda(monto)])
 
         data.append([ 
             "", "",
