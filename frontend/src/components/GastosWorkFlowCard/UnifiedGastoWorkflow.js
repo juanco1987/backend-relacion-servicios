@@ -371,8 +371,8 @@ const UnifiedGastoWorkflow = ({
         steps={steps}
         activeStep={activeStep}
         setActiveStep={setActiveStep}
-        archivoExcel={isStep0Valid()}
-        userHasConfiguredDates={isStep1Valid()}
+        archivoExcel="Gastos"
+        userHasConfiguredDates={isStep0Valid()}
         dataProcessed={isStep3Valid()}
         getStepStatus={getStepStatus}
       />
