@@ -323,6 +323,7 @@ function App() {
               currentRoute={currentRoute}
               excelData={excelData}
               analyticsFile={analyticsFile}
+                onNavigate={handleNavigation}
               fechaInicio={fechaInicio}
               fechaFin={fechaFin}
               note={note}

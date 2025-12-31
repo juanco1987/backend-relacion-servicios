@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography, Grid, TextField, MenuItem } from '@mui/material';
 import { motion } from 'framer-motion';
 import { ANIMATIONS } from '../../config/animations';
@@ -15,12 +15,12 @@ const MEDIOS_ENTREGA = [
   'DINERO DE JG (TÉCNICO)',
 ];
 
-const StepConsignacionesTable = ({
+const StepConsignacionesTable = forwardRef(({
   theme,
   consignaciones,
   onAgregarConsignacion,
   onEliminarConsignacion,
-}) => {
+}, ref) => {
   const [formData, setFormData] = useState({
     fecha: '',
     monto: '',
@@ -46,6 +46,11 @@ const StepConsignacionesTable = ({
       descripcion: '',
     });
   };
+
+  // Exponer función al componente padre (Stepper) para invocarla desde el botón global
+  useImperativeHandle(ref, () => ({
+    handleAgregarConsignacion,
+  }));
 
   const totalConsignaciones = consignaciones.reduce(
     (sum, cons) => sum + parseFloat(cons.monto || 0),
@@ -258,26 +263,8 @@ const StepConsignacionesTable = ({
                   />
                 </Grid>
 
-                {/* Botón Agregar Consignación */}
-                <Grid
-                  item
-                  xs={12} sm={6} md={3}
-                  sx={{ display: 'flex', alignItems: 'center' }}
-                >
-                  <CustomButton
-                    fullWidth
-                    onClick={handleAgregarConsignacion}
-                    sx={{
-                      background: theme.gradientes.botonActivo,
-                      color: theme.textoContraste,  
-                      height: 40,
-                      fontWeight: 600,
-                      borderRadius: '26px',
-                    }}
-                  >
-                    Agregar Consignación
-                  </CustomButton>
-                </Grid>
+                {/* Botón movido al Stepper; se mantiene placeholder para layout */}
+                <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex', alignItems: 'center' }} />
 
                 {/* Descripción */}
                 <Grid item xs={12}>
@@ -450,6 +437,6 @@ const StepConsignacionesTable = ({
       </motion.div>
     </Box>
   );
-};
+});
 
 export default StepConsignacionesTable;

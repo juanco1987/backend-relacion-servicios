@@ -139,6 +139,9 @@ const WorkflowStepper = ({
                     </CustomButton>
                   )}
                   
+                  {/* Botón adicional opcional desde el paso (ej: Agregar) */}
+                  {step.additionalButton && step.additionalButton}
+                  
                   {/* Botón Continuar - solo mostrar si no es el último paso */}
                   {index < steps.length - 1 && (
                     <CustomButton

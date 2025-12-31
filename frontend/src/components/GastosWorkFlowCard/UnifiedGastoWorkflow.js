@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Box, Grid, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 import { API_CONFIG } from '../../config/appConfig';
@@ -26,6 +26,8 @@ const UnifiedGastoWorkflow = ({
   const [pdfName, setPdfName] = useState('');
   const [showNewProcessDialog, setShowNewProcessDialog] = useState(false);
   const [processCompleted, setProcessCompleted] = useState(false);
+  const stepGastosTableRef = useRef(null);
+  const stepConsignacionesRef = useRef(null);
 
   // Estados principales
   const [gastos, setGastos] = useState([]);
@@ -203,6 +205,7 @@ const UnifiedGastoWorkflow = ({
       icon: gastoIcon,
       content: (
         <StepGastosTable
+          ref={stepGastosTableRef}
           theme={theme}
           gastos={gastos}
           onAgregarGasto={handleAgregarGasto}
@@ -213,6 +216,39 @@ const UnifiedGastoWorkflow = ({
           }}
         />
       ),
+      additionalButton: (
+        <CustomButton
+          variant="contained"
+          onClick={() => {
+            if (stepGastosTableRef.current) {
+              stepGastosTableRef.current.handleAgregarGasto();
+            }
+          }}
+          sx={{
+            background: theme.gradientes.botonActivo,
+            color: theme.textoContraste,
+            borderRadius: '18px',
+            boxShadow: theme.sombraComponente,
+            fontWeight: 'bold',
+            fontSize: '0.8rem',
+            px: 3,
+            py: 1.5,
+            height: 40,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              background: theme.gradientes.botonActivoHover,
+              boxShadow: theme.sombraComponenteHover,
+              transform: 'translateY(-2px)',
+            },
+            '&:active': {
+              transform: 'translateY(0)',
+              boxShadow: theme.sombraComponente,
+            },
+          }}
+        >
+          Agregar
+        </CustomButton>
+      ),
     },
     {
       label: 'Consignaciones',
@@ -220,6 +256,7 @@ const UnifiedGastoWorkflow = ({
       icon: gastoIcon,
       content: (
         <StepConsignacionesTable
+          ref={stepConsignacionesRef}
           theme={theme}
           consignaciones={consignaciones}
           onAgregarConsignacion={handleAgregarConsignacion}
@@ -229,6 +266,39 @@ const UnifiedGastoWorkflow = ({
             else alert('Agrega al menos una consignación antes de continuar');
           }}
         />
+      ),
+      additionalButton: (
+        <CustomButton
+          variant="contained"
+          onClick={() => {
+            if (stepConsignacionesRef.current) {
+              stepConsignacionesRef.current.handleAgregarConsignacion();
+            }
+          }}
+          sx={{
+            background: theme.gradientes.botonActivo,
+            color: theme.textoContraste,
+            borderRadius: '18px',
+            boxShadow: theme.sombraComponente,
+            fontWeight: 'bold',
+            fontSize: '0.8rem',
+            px: 3,
+            py: 1.5,
+            height: 40,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              background: theme.gradientes.botonActivoHover,
+              boxShadow: theme.sombraComponenteHover,
+              transform: 'translateY(-2px)',
+            },
+            '&:active': {
+              transform: 'translateY(0)',
+              boxShadow: theme.sombraComponente,
+            },
+          }}
+        >
+          Agregar Consignación
+        </CustomButton>
       ),
     },
     {
@@ -301,8 +371,8 @@ const UnifiedGastoWorkflow = ({
         steps={steps}
         activeStep={activeStep}
         setActiveStep={setActiveStep}
-        archivoExcel="Gastos"
-        userHasConfiguredDates={isStep0Valid()}
+        archivoExcel={isStep0Valid()}
+        userHasConfiguredDates={isStep1Valid()}
         dataProcessed={isStep3Valid()}
         getStepStatus={getStepStatus}
       />

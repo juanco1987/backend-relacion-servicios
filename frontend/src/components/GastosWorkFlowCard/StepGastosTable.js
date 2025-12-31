@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { Box, Typography, Grid, TextField, MenuItem } from '@mui/material';
 import { motion } from 'framer-motion';
 import { ANIMATIONS } from '../../config/animations';
@@ -14,13 +14,13 @@ const CATEGORIAS_PRESET = [
   'Otros'
 ];
 
-const StepGastosTable = ({
+const StepGastosTable = forwardRef(({
   theme,
   gastos,
   onAgregarGasto,
   onEliminarGasto,
   onContinuar,
-}) => {
+}, ref) => {
   const [formData, setFormData] = useState({
     fecha: '',
     categoria: '',
@@ -49,6 +49,11 @@ const StepGastosTable = ({
       notas: '',
     });
   };
+
+  // Exponer la función handleAgregarGasto al componente padre
+  useImperativeHandle(ref, () => ({
+    handleAgregarGasto,
+  }));
 
   const totalGastos = gastos.reduce((sum, gasto) => sum + parseFloat(gasto.monto || 0), 0);
 
@@ -249,24 +254,6 @@ const StepGastosTable = ({
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6} md={3}>
-                  <CustomButton
-                    variant="contained"
-                    fullWidth
-                    onClick={handleAgregarGasto}
-                    sx={{
-                      background: theme.gradientes.botonActivo,
-                      color: theme.textoContraste,
-                      borderRadius: '18px',
-                      height: '40px',
-                      fontWeight: 600,
-                      textTransform: 'none',
-                    }}
-                  >
-                    Agregar
-                  </CustomButton>
-                </Grid>
-
                 <Grid item xs={12}>
                   <TextField
                     label="Descripción"
@@ -453,6 +440,6 @@ const StepGastosTable = ({
       </motion.div>
     </Box>
   );
-};
+});
 
 export default StepGastosTable;

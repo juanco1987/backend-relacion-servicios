@@ -12,6 +12,7 @@ function ContentArea({
   currentRoute,
   excelData,
   analyticsFile,
+  onNavigate,
   fechaInicio,
   fechaFin,
   note,
@@ -64,12 +65,20 @@ function ContentArea({
     switch(currentRoute) {
       case '/':
       case '/dashboard':
+      case '/dashboard/general':
+      case '/dashboard/clientes':
+      case '/dashboard/servicios':
+      case '/dashboard/pendientes':
+      case '/dashboard/pendientes/cobrar':
+      case '/dashboard/pendientes/efectivo':
         return (
           <DashboardPage 
             excelData={excelData} 
             analyticsFile={analyticsFile} 
             onAnalyticsFileChange={onAnalyticsFileChange} 
             onClearAnalyticsFile={onClearAnalyticsFile}
+            currentRoute={currentRoute}
+            onRequestOpenUploader={onNavigate}
           />
         );
       

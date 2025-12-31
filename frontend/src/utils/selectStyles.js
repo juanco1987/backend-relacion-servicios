@@ -36,23 +36,31 @@ export const getCustomMenuProps = (theme) => ({
       border: 'none', // CORREGIDO: Entre comillas
       boxShadow: theme.sombraContenedor,
       borderRadius: '16px !important',
-      overflow: 'hidden',
+      // permitir que el menú pueda desplegarse y scrollear
+      overflow: 'visible',
+      // permitir que el menú crezca hasta una proporción de la pantalla
+      maxHeight: '60vh',
+      zIndex: 1800,
       marginTop: '8px',
       '& > *': { borderRadius: '16px !important' },
       '& .MuiList-root': {
         padding: 0,
         borderRadius: '16px !important',
-        overflow: 'hidden !important',
+        // dejar que la lista pueda hacer scroll si es necesario
+        overflow: 'visible !important',
       },
       '& .MuiMenu-list': {
         padding: 0,
         borderRadius: '16px !important',
-        overflow: 'hidden !important',
+        maxHeight: '60vh',
+        overflowY: 'auto',
+        // asegurar que el scroll sea visible
+        WebkitOverflowScrolling: 'touch',
       },
       '& ul': {
         padding: '0 !important',
         borderRadius: '16px !important',
-        overflow: 'hidden !important',
+        overflow: 'visible !important',
         margin: 0,
       },
       '& div': { borderRadius: '16px !important' },
@@ -62,7 +70,9 @@ export const getCustomMenuProps = (theme) => ({
     sx: {
       padding: '0 !important',
       borderRadius: '16px !important',
-      overflow: 'hidden !important',
+      maxHeight: '60vh',
+      overflowY: 'auto !important',
+      WebkitOverflowScrolling: 'touch',
       margin: 0,
       '& .MuiMenuItem-root': {
         padding: '10px 16px',

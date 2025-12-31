@@ -12,9 +12,14 @@ import { API_CONFIG } from '../../config/appConfig';
 
 const API_BASE = API_CONFIG.BASE_URL;
 
-const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
+const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView = 'general', onRequestOpenUploader }) => {
   const { theme } = useTheme();
-  const [selectedView, setSelectedView] = useState('general');
+  const [selectedView, setSelectedView] = useState(defaultView);
+  
+  // Actualizar selectedView cuando cambie defaultView
+  useEffect(() => {
+    setSelectedView(defaultView);
+  }, [defaultView]);
   const [selectedMonth, setSelectedMonth] = useState('Total Global');
   const [analyticsData, setAnalyticsData] = useState(null);
   const [estadosGrafico, setEstadosGrafico] = useState(null);
@@ -710,58 +715,25 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
 
   const renderPendientesView = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <h2 style={{ color: theme.textoPrincipal, textAlign: 'center' }}>Servicios Pendientes</h2>
-      
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        gap: '12px',
-        flexWrap: 'wrap'
-      }}>
-        {/* Botón para la vista de Servicios Pendientes por COBRAR */}
-        <CustomButton
-          onClick={() => setSelectedView('pendientes-cobrar')} // 👈 CORRECCIÓN: Cambia a 'pendientes-cobrar'
-          variant="contained"
-          sx={{
-            background: selectedView === 'pendientes-cobrar' ? theme.textoAdvertencia : theme.fondoContenedor, // 👈 CORRECCIÓN: Estilo para 'pendientes-cobrar'
-            color: selectedView === 'pendientes-cobrar' ? 'white' : theme.textoPrincipal,
-            border: `1px solid ${theme.bordePrincipal}`,
-            padding: '12px 24px',
-            fontSize: '1rem'
-          }}
-        >
-          Servicios Pendientes por Cobrar
-        </CustomButton>
-
-        {/* Botón para la vista de Servicios Pendientes EFECTIVO (el que se perdió) */}
-        <CustomButton
-          onClick={() => setSelectedView('pendientes-efectivo')} // 👈 Botón para 'pendientes-efectivo'
-          variant="contained"
-          sx={{
-            background: selectedView === 'pendientes-efectivo' ? theme.terminalRojoEncendido : theme.fondoContenedor,
-            color: selectedView === 'pendientes-efectivo' ? 'white' : theme.textoPrincipal,
-            border: `1px solid ${theme.bordePrincipal}`,
-            padding: '12px 24px',
-            fontSize: '1rem'
-          }}
-        >
-          Servicios Pendientes Efectivo
-        </CustomButton>
-      </div>
+      {/* Los botones de navegación ahora están en el Sidebar */}
 
       {selectedView === 'pendientes-efectivo' && (
-        <ServiciosPendientesEfectivo 
-          file={file}
-          fechaInicio={fechaInicio}
-          fechaFin={fechaFin}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <ServiciosPendientesEfectivo 
+            file={file}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+          />
+        </div>
       )}
       {selectedView === 'pendientes-cobrar' && (
-        <ServiciosPendientesCobrar 
-          file={file}
-          fechaInicio={fechaInicio}
-          fechaFin={fechaFin}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <ServiciosPendientesCobrar 
+            file={file}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+          />
+        </div>
       )}
     </div>
   );
@@ -776,6 +748,36 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
         color: theme.textoPrincipal 
       }}>
         <p>Cargando dashboard analytics...</p>
+      </div>
+    );
+  }
+
+  // Si no hay archivo, mostrar mensaje claro y opción para ir al uploader
+  if (!file) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 300,
+        color: theme.textoPrincipal,
+        padding: 24
+      }}>
+        <h2 style={{ marginBottom: 8 }}>No hay datos disponibles</h2>
+        <p style={{ color: theme.textoSecundario, marginBottom: 18 }}>Debes cargar un archivo excel primero.</p>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <CustomButton
+            onClick={() => {
+              if (onRequestOpenUploader) onRequestOpenUploader('/analytics');
+              else window.alert('Navega a /analytics para cargar el archivo');
+            }}
+            variant="contained"
+            color="primary"
+          >
+            Cargar archivo
+          </CustomButton>
+        </div>
       </div>
     );
   }
@@ -799,43 +801,31 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin }) => {
         Dashboard Analytics Completo
       </h1>
 
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        marginBottom: '30px',
-        gap: '12px',
-        flexWrap: 'wrap'
-      }}>
-        {[
-          { key: 'general', label: 'General' },
-          { key: 'clientes', label: 'Clientes' },
-          { key: 'servicios', label: 'Servicios' },
-          { key: 'pendientes', label: 'Pendientes' }
-        ].map((view) => (
-          <CustomButton
-            key={view.key}
-            onClick={() => setSelectedView(view.key)}
-            variant="contained"
-            sx={{
-              background: selectedView === view.key ? theme.textoInfo : theme.fondoContenedor,
-              color: selectedView === view.key ? 'white' : theme.textoPrincipal,
-              border: `1px solid ${theme.bordePrincipal}`,
-              padding: '12px 24px',
-              fontSize: '1rem'
-            }}
-          >
-            {view.label}
-          </CustomButton>
-        ))}
-      </div>
+      {/* Los botones de navegación ahora están en el Sidebar, no aquí */}
 
       <div>
         {selectedView === 'general' && renderGeneralView()}
         {selectedView === 'clientes' && renderClientesView()}
         {selectedView === 'servicios' && renderServiciosView()}
         {selectedView === 'pendientes' && renderPendientesView()}
-        {selectedView === 'pendientes-efectivo' && renderPendientesView()}
-        {selectedView === 'pendientes-cobrar' && renderPendientesView()}
+        {selectedView === 'pendientes-efectivo' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <ServiciosPendientesEfectivo 
+              file={file}
+              fechaInicio={fechaInicio}
+              fechaFin={fechaFin}
+            />
+          </div>
+        )}
+        {selectedView === 'pendientes-cobrar' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <ServiciosPendientesCobrar 
+              file={file}
+              fechaInicio={fechaInicio}
+              fechaFin={fechaFin}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

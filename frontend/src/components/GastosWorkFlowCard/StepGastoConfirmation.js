@@ -42,6 +42,7 @@ const StepGastoConfirmation = ({
                 p: 3,
                 border: `2px solid ${theme.bordePrincipal}`,
                 mb: 3,
+                overflowX: 'auto',
               }}
             >
               <Typography variant="h6" sx={{ color: theme.textoPrincipal, mb: 2, fontWeight: 700 }}>
@@ -88,6 +89,7 @@ const StepGastoConfirmation = ({
                 p: 3,
                 border: `2px solid ${theme.bordePrincipal}`,
                 mb: 3,
+                overflowX: 'auto',
               }}
             >
               <Typography variant="h6" sx={{ color: theme.textoPrincipal, mb: 2, fontWeight: 700 }}>

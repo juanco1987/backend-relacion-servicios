@@ -1,29 +1,41 @@
-import React, { useState } from 'react';
-import { Box, Typography, Grid } from '@mui/material';
-import CustomButton from '../components/common/CustomButton';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { useTheme } from '../context/ThemeContext';
 import Analytics from '../components/analytics/Analytics';
 import EnhancedAnalyticsDashboard from '../components/analytics/EnhancedAnalyticsDashboard';
 import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from '../config/animations';
 
-function DashboardPage({ excelData, analyticsFile, onAnalyticsFileChange, onClearAnalyticsFile }) {
-  const { theme } = useTheme();
-  const [showFullDashboard, setShowFullDashboard] = useState(false);
-
+function DashboardPage({ excelData, analyticsFile, onAnalyticsFileChange, onClearAnalyticsFile, currentRoute, onRequestOpenUploader }) {
   const fileForAnalytics = analyticsFile || excelData;
 
-  const handleStartAnalysis = () => {
-    if (fileForAnalytics) {
-      setShowFullDashboard(true);
+  // Determinar qué vista mostrar basado en la ruta
+  const getViewFromRoute = () => {
+    if (!currentRoute) return 'general';
+    
+    if (currentRoute === '/dashboard' || currentRoute === '/') {
+      return 'general';
     }
+    
+    if (currentRoute.includes('/dashboard/pendientes/cobrar')) {
+      return 'pendientes-cobrar';
+    }
+    
+    if (currentRoute.includes('/dashboard/pendientes/efectivo')) {
+      return 'pendientes-efectivo';
+    }
+    
+    // Extraer la vista de la ruta: /dashboard/general -> 'general'
+    const routeParts = currentRoute.split('/');
+    if (routeParts.length >= 3) {
+      return routeParts[2]; // 'general', 'clientes', 'servicios', 'pendientes'
+    }
+    
+    return 'general';
   };
 
-  const handleBackToOverview = () => {
-    setShowFullDashboard(false);
-  };
+  const selectedView = getViewFromRoute();
 
-  if (showFullDashboard && fileForAnalytics) {
+  // Si es una ruta de dashboard completo, mostrar EnhancedAnalyticsDashboard
+  if (currentRoute && currentRoute.startsWith('/dashboard/') && currentRoute !== '/dashboard') {
     return (
       <motion.div
         variants={STAGGER_VARIANTS}
@@ -31,85 +43,33 @@ function DashboardPage({ excelData, analyticsFile, onAnalyticsFileChange, onClea
         animate="visible"
       >
         <motion.div variants={STAGGER_ITEM_VARIANTS}>
-          <Box sx={{ mb: 3 }}>
-            <CustomButton
-              onClick={handleBackToOverview}
-              variant="outlined"
-              sx={{
-                borderColor: theme.gradientes.botonProcesar,
-                color: theme.gradientes.botonProcesar,
-                '&:hover': {
-                  borderColor: theme.gradientes.botonProcesar,
-                  opacity: 0.9
-                }
-              }}
-            >
-              ← Volver al Resumen
-            </CustomButton>
-          </Box>
-          
           <EnhancedAnalyticsDashboard 
             file={fileForAnalytics}
             fechaInicio="2024-01-01"
             fechaFin="2024-12-31"
+            defaultView={selectedView}
+            onRequestOpenUploader={onRequestOpenUploader}
           />
         </motion.div>
       </motion.div>
     );
   }
 
+  // Si es /dashboard o /, mostrar el resumen (Analytics)
   return (
     <motion.div
       variants={STAGGER_VARIANTS}
       initial="hidden"
       animate="visible"
     >
-      {/* Dashboard Original de Analytics */}
       <motion.div variants={STAGGER_ITEM_VARIANTS}>
-                  <Analytics excelData={fileForAnalytics} workMode={0} onFileChange={onAnalyticsFileChange} onClearFile={onClearAnalyticsFile} />
+        <Analytics 
+          excelData={fileForAnalytics} 
+          workMode={0} 
+          onFileChange={onAnalyticsFileChange} 
+          onClearFile={onClearAnalyticsFile} 
+        />
       </motion.div>
-
-      {/* Botón para acceder al Dashboard Completo */}
-      {fileForAnalytics && (
-        <motion.div variants={STAGGER_ITEM_VARIANTS}>
-          <Box sx={{ 
-            background: theme.fondoContenedor,
-            borderRadius: '20px',
-            boxShadow: theme.sombraContenedor,
-            p: 3,
-            mb: 4,
-            marginTop: 3,
-            textAlign: 'center'
-          }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: theme.textoPrincipal,
-                fontWeight: 600,
-                mb: 2
-              }}
-            >
-              🚀 ¿Quieres ver el Dashboard Completo?
-            </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: theme.textoSecundario,
-                mb: 3
-              }}
-            >
-              Accede a análisis detallados por vendedores, clientes, servicios y más
-            </Typography>
-            <CustomButton
-              onClick={handleStartAnalysis}
-              variant="contained"
-              color="info"
-            >
-              Ver Dashboard Completo
-            </CustomButton>
-          </Box>
-        </motion.div>
-      )}
     </motion.div>
   );
 }
