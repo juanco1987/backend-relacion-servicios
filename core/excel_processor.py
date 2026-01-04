@@ -1,6 +1,9 @@
 import pandas as pd
+import numpy as np
 from utils.validation_utils import limpiar_valor_monetario
 from config.settings import EXCEL_COLUMNS, FILTER_CRITERIA
+from core.column_mapper import ColumnMapper
+from unidecode import unidecode
 
 def extraer_servicios(excel_path, fecha_inicio, fecha_fin, log_callback=None):
     """
@@ -10,18 +13,13 @@ def extraer_servicios(excel_path, fecha_inicio, fecha_fin, log_callback=None):
     3. En el rango de fechas especificado
     
     Returns:
-        tuple: (DataFrame, dict) donde dict contiene información sobre el proceso:
-            - 'has_data_in_range': bool - Si hay datos en el rango de fechas
-            - 'has_filtered_data': bool - Si hay datos que cumplen el filtro
-            - 'total_in_range': int - Total de registros en el rango de fechas
-            - 'total_filtered': int - Total de registros que pasan el filtro
+        tuple: (DataFrame, dict)
     """
     if log_callback is None:
         log_callback = print
 
     log_callback("Procesando datos del archivo Excel...")
     
-    # Información de seguimiento
     info = {
         'has_data_in_range': False,
         'has_filtered_data': False, 
@@ -38,34 +36,31 @@ def extraer_servicios(excel_path, fecha_inicio, fecha_fin, log_callback=None):
     frames = []
     total_registros_en_rango = 0
 
+    # Obtener variantes de columnas
+    columnas_variantes = ColumnMapper.get_column_variants()
+
     for hoja in xls.sheet_names:
         try:
             log_callback(f"\nAnalizando hoja: {hoja}")
             df = xls.parse(hoja)
 
-            # Limpiar nombres de columnas (eliminar espacios al final)
-            df.columns = df.columns.str.strip()
+            # Mapear columnas requeridas usando ColumnMapper
+            col_fecha = ColumnMapper.find_column(df, columnas_variantes[EXCEL_COLUMNS["FECHA"]])
+            col_forma_pago = ColumnMapper.find_column(df, columnas_variantes[EXCEL_COLUMNS["FORMA_PAGO"]])
+            col_estado_servicio = ColumnMapper.find_column(df, columnas_variantes[EXCEL_COLUMNS["ESTADO_SERVICIO"]])
 
-            # Mostrar todas las columnas que existen en la hoja
-            log_callback(f"Columnas en la hoja {hoja}:")
-            for col in df.columns:
-                log_callback(f"  - '{col}'")
-
-            # Usar nombres de columnas desde settings
-            col_fecha = EXCEL_COLUMNS["FECHA"]
-            col_forma_pago = EXCEL_COLUMNS["FORMA_PAGO"]
-            col_estado_servicio = EXCEL_COLUMNS["ESTADO_SERVICIO"]
-
-            if col_fecha not in df.columns:
-                log_callback(f"Hoja {hoja} no tiene columna {col_fecha}. Saltando...")
+            if not col_fecha:
+                log_callback(f"Hoja {hoja} no tiene columna de Fecha. Saltando...")
                 continue
 
-            # Filtrar filas con fecha no nula
+            # 1. Filtrar filas con fecha no nula y convertir
             df = df[df[col_fecha].notnull()]
             df[col_fecha] = pd.to_datetime(df[col_fecha], errors='coerce', dayfirst=True)
             
-            # ✅ PUNTO CLAVE: Contar datos en el rango de fechas
-            df_en_rango = df[df[col_fecha].between(fecha_inicio, fecha_fin)]
+            # 2. Filtrar por rango (Vectorizado)
+            mask_rango = df[col_fecha].between(fecha_inicio, fecha_fin)
+            df_en_rango = df[mask_rango].copy()
+            
             registros_en_rango = len(df_en_rango)
             total_registros_en_rango += registros_en_rango
             
@@ -75,177 +70,155 @@ def extraer_servicios(excel_path, fecha_inicio, fecha_fin, log_callback=None):
                 log_callback(f"No hay datos en el rango de fechas en hoja {hoja}. Saltando...")
                 continue
             
-            # Si llegamos aquí, hay datos en el rango
+            # Trabajar con datos filtrados
             df = df_en_rango
 
-            # Buscar exactamente la columna FORMA DE PAGO (ignorando espacios al final)
-            columna_pago = None
-            for col in df.columns:
-                if col.strip() == col_forma_pago:
-                    columna_pago = col
-                    break
-
-            if not columna_pago:
-                log_callback(f"No se encontró columna exacta '{col_forma_pago}' en hoja {hoja}. Saltando...")
+            if not col_forma_pago:
+                log_callback(f"No se encontró columna para Forma de Pago en hoja {hoja}. Saltando...")
                 continue
 
-            # Buscar exactamente la columna ESTADO DEL SERVICIO (ignorando espacios al final)
-            columna_estado = None
-            for col in df.columns:
-                if col.strip() == col_estado_servicio:
-                    columna_estado = col
-                    break
-
-            if not columna_estado:
-                log_callback(f"No se encontró columna exacta '{col_estado_servicio}' en hoja {hoja}. Saltando...")
+            if not col_estado_servicio:
+                log_callback(f"No se encontró columna para Estado del Servicio en hoja {hoja}. Saltando...")
                 continue
 
-            # Mostrar valores únicos en ambas columnas antes de filtrar
-            log_callback(f"Valores únicos en {columna_pago}: {df[columna_pago].astype(str).str.upper().unique()}")
-            log_callback(f"Valores únicos en {columna_estado}: {df[columna_estado].astype(str).str.upper().unique()}")
-
-            # Filtrar por forma de pago = EFECTIVO (desde settings)
-            df['FORMA_PAGO_CLEAN'] = df[columna_pago].astype(str).str.upper().str.strip()
+            # 3. Filtrar por forma de pago = EFECTIVO (Vectorizado)
+            # Primero normalizamos la columna completa de una vez
+            df['FORMA_PAGO_CLEAN'] = df[col_forma_pago].astype(str).str.upper().str.strip()
+            # Luego filtramos
             df = df[df['FORMA_PAGO_CLEAN'] == FILTER_CRITERIA["FORMA_PAGO_EFECTIVO"]]
             log_callback(f"Registros después de filtrar por forma de pago: {len(df)}")
 
-            # Filtrar por estado del servicio vacío (desde settings)
-            mascara_estado = df[columna_estado].isna() | (df[columna_estado].astype(str).str.strip() == FILTER_CRITERIA["ESTADO_SERVICIO_VACIO"])
-            df = df[mascara_estado]
-
-            # Mostrar los registros que fueron excluidos (usando loc para evitar la advertencia)
-            registros_excluidos = df.loc[~mascara_estado]
+            # 4. Filtrar por estado del servicio vacío (Vectorizado)
+            # Normalizar estado
+            estado_series = df[col_estado_servicio].astype(str).str.strip()
+            mascara_estado = (df[col_estado_servicio].isna()) | \
+                             (estado_series == 'nan') | \
+                             (estado_series == 'None') | \
+                             (estado_series == FILTER_CRITERIA["ESTADO_SERVICIO_VACIO"])
+            
+            registros_excluidos = df[~mascara_estado]
             if not registros_excluidos.empty:
                 log_callback(f"Registros excluidos por tener estado: {len(registros_excluidos)}")
-                for idx, row in registros_excluidos.iterrows():
-                    log_callback(f"  - Registro {idx}: {row[columna_estado]}")
-
+            
+            df = df[mascara_estado].copy()
             log_callback(f"Registros después de filtrar por estado: {len(df)}")
 
-            # Buscar columnas de dirección, servicio realizado, valor servicio y domicilio
-            columna_direccion = None
-            columna_servicio = None
-            columna_valor = None
-            columna_domicilio = None
-
+            # Buscar columnas adicionales de forma robusta
+            col_direccion = ColumnMapper.find_column(df, columnas_variantes[EXCEL_COLUMNS['DIRECCION']])
+            col_servicio = ColumnMapper.find_column(df, columnas_variantes[EXCEL_COLUMNS['SERVICIO_REALIZADO']])
+            col_valor = ColumnMapper.find_column(df, columnas_variantes['VALOR_SERVICIO'])
+            col_domicilio = ColumnMapper.find_column(df, columnas_variantes['DOMICILIO'])
+            col_iva = ColumnMapper.find_column(df, columnas_variantes['IVA'])
+            
+            # Columnas de materiales (lógica custom que requiere búsqueda manual parcial)
+            col_materiales = None
+            col_valor_materiales = None
             for col in df.columns:
-                if 'DIRECCION' in col.upper():
-                    columna_direccion = col
-                if 'SERVICIO' in col.upper() and 'REALIZADO' in col.upper():
-                    columna_servicio = col
-                if 'VALOR' in col.upper() and 'SERVICIO' in col.upper():
-                    columna_valor = col
-                if 'DOMICILIO' in col.upper():
-                    columna_domicilio = col
-
-            # Si no hay columna de dirección, intentar alternativas
-            if not columna_direccion:
-                for posible_col in ['DIRECCION', 'DIRECCIÓN', 'UBICACION', 'UBICACIÓN']:
-                    if posible_col in df.columns:
-                        columna_direccion = posible_col
-                        break
-
-            # Si no hay columna de servicio realizado, intentar alternativas
-            if not columna_servicio:
-                for posible_col in ['SERVICIO', 'DESCRIPCION', 'DESCRIPCIÓN', 'TRABAJO']:
-                    if posible_col in df.columns:
-                        columna_servicio = posible_col
-                        break
+                col_upper = str(col).upper()
+                if 'MATERIAL' in col_upper and 'VALOR' not in col_upper:
+                    col_materiales = col
+                if 'VALOR' in col_upper and 'MATERIAL' in col_upper:
+                    col_valor_materiales = col
 
             # Si no hay valor de servicio ni columna de domicilio, no podemos calcular
-            if not columna_valor and not columna_domicilio:
+            if not col_valor and not col_domicilio:
                 log_callback(f"No se encontraron columnas de valor en hoja {hoja}. Saltando...")
                 continue
 
-            # Crear columnas para el informe
-            df['DIRECCION_PARA_INFORME'] = ''
-            if columna_direccion:
-                df['DIRECCION_PARA_INFORME'] = df[columna_direccion].fillna('').astype(str)
-            df['SERVICIO_PARA_INFORME'] = ''
-            if columna_servicio:
-                df['SERVICIO_PARA_INFORME'] = df[columna_servicio].fillna('').astype(str)
+            # Preparar columnas para informe
+            df['DIRECCION_PARA_INFORME'] = df[col_direccion].fillna('').astype(str) if col_direccion else ''
+            df['SERVICIO_PARA_INFORME'] = df[col_servicio].fillna('').astype(str) if col_servicio else ''
+            
+            # Limpieza vectorizada de valores monetarios
+            def limpiar_vectorizado(series):
+                if series is None:
+                    return pd.Series([0.0] * len(df), index=df.index)
+                # Convertir a string, quitar $ y , y convertir a float de forma segura
+                clean_series = (series.astype(str)
+                        .str.replace('$', '', regex=False)
+                        .str.replace(',', '', regex=False)
+                        .str.strip()
+                        .replace({'nan': '0', 'None': '0', '': '0'}))
+                return pd.to_numeric(clean_series, errors='coerce').fillna(0.0)
 
-            # Crear columna combinada de valor
-            df['VALOR_COMBINADO'] = 0
-            df['VALOR_ORIGINAL'] = 0
+            # Inicializar valores
+            df['VALOR_COMBINADO'] = 0.0
+            df['VALOR_ORIGINAL'] = 0.0
 
-            # Si existe columna de valor servicio, usarla cuando no es nula o cero
-            if columna_valor:
-                df[columna_valor] = df[columna_valor].apply(limpiar_valor_monetario)
-                df.loc[df[columna_valor] > 0, 'VALOR_COMBINADO'] = df[columna_valor]
-                df.loc[df[columna_valor] > 0, 'VALOR_ORIGINAL'] = df[columna_valor]
+            # Procesar valor servicio
+            valores_servicio = pd.Series(0.0, index=df.index)
+            if col_valor:
+                try:
+                    valores_servicio = limpiar_vectorizado(df[col_valor])
+                except:
+                    # Fallback a método lento si falla vectorización
+                    valores_servicio = df[col_valor].apply(limpiar_valor_monetario)
 
-            # Si existe columna de domicilio, usarla cuando valor servicio es nulo o cero
-            if columna_domicilio:
-                df[columna_domicilio] = df[columna_domicilio].apply(limpiar_valor_monetario)
-                mascara_usar_domicilio = df['VALOR_COMBINADO'] == 0
-                df.loc[mascara_usar_domicilio & (df[columna_domicilio] > 0), 'VALOR_COMBINADO'] = df[columna_domicilio]
-                df.loc[mascara_usar_domicilio & (df[columna_domicilio] > 0), 'VALOR_ORIGINAL'] = df[columna_domicilio]
+            # Procesar domicilio
+            valores_domicilio = pd.Series(0.0, index=df.index)
+            if col_domicilio:
+                try:
+                    valores_domicilio = limpiar_vectorizado(df[col_domicilio])
+                except:
+                    valores_domicilio = df[col_domicilio].apply(limpiar_valor_monetario)
+
+            # Lógica vectorizada para valor combinado
+            # 1. Usar valor servicio donde sea > 0
+            mask_servicio = valores_servicio > 0
+            df.loc[mask_servicio, 'VALOR_COMBINADO'] = valores_servicio[mask_servicio]
+            df.loc[mask_servicio, 'VALOR_ORIGINAL'] = valores_servicio[mask_servicio]
+            
+            # 2. Usar domicilio donde valor combinado sea 0 y domicilio > 0
+            mask_domicilio = (df['VALOR_COMBINADO'] == 0) & (valores_domicilio > 0)
+            df.loc[mask_domicilio, 'VALOR_COMBINADO'] = valores_domicilio[mask_domicilio]
+            df.loc[mask_domicilio, 'VALOR_ORIGINAL'] = valores_domicilio[mask_domicilio]
 
             log_callback(f"Registros con valor combinado > 0: {len(df[df['VALOR_COMBINADO'] > 0])}")
 
-            # Buscar columna de IVA
-            columna_iva = None
-            for col in df.columns:
-                if 'IVA' in col.upper():
-                    columna_iva = col
-                    break
-
-            # Columna de materiales
-            columna_materiales = None
-            for col in df.columns:
-                if 'MATERIAL' in col.upper():
-                    if not 'VALOR' in col.upper():  # Excluir columnas de valor de materiales
-                        columna_materiales = col
-                        break
-
-            # Columna de valor de materiales
-            columna_valor_materiales = None
-            for col in df.columns:
-                if 'VALOR' in col.upper() and 'MATERIAL' in col.upper():
-                    columna_valor_materiales = col
-                    break
-
-            # Agregar columnas de materiales si existen
-            if columna_materiales:
-                df['MATERIALES'] = df[columna_materiales].fillna('').astype(str)
+            # Materiales
+            if col_materiales:
+                df['MATERIALES'] = df[col_materiales].fillna('').astype(str)
             else:
                 df['MATERIALES'] = ''
 
-            if columna_valor_materiales:
+            if col_valor_materiales:
                 try:
-                    df['VALOR MATERIALES'] = df[columna_valor_materiales].fillna(0).astype(str).apply(limpiar_valor_monetario)
+                    df['VALOR MATERIALES'] = limpiar_vectorizado(df[col_valor_materiales])
                 except:
                     df['VALOR MATERIALES'] = 0
             else:
                 df['VALOR MATERIALES'] = 0
 
-            # Calcular valores financieros
+            # Cálculos financieros vectorizados
             df['SUBTOTAL'] = df['VALOR_COMBINADO'] * 0.5
-            if columna_iva:
-                df['IVA'] = df[columna_iva].fillna(0).apply(limpiar_valor_monetario)
+            
+            if col_iva:
+                try:
+                    df['IVA'] = limpiar_vectorizado(df[col_iva])
+                except:
+                    df['IVA'] = df[col_iva].apply(limpiar_valor_monetario)
             else:
-                df['IVA'] = pd.Series([0.0] * len(df), index=df.index)
+                df['IVA'] = 0.0
+                
             df['TOTAL EMPRESA'] = df['SUBTOTAL'] + df['IVA']
 
-            # Filtrar registros con valor combinado mayor que cero (para evitar filas sin valor)
+            # Filtro final vectorizado
             df = df[df['VALOR_COMBINADO'] > 0]
             log_callback(f"Registros finales después de todos los filtros: {len(df)}")
 
-            # Eliminar columnas que se hayan quedado completamente vacías (NaN) después del filtrado
+            # Limpieza final
             df.dropna(axis=1, how='all', inplace=True)
             df = df.reset_index(drop=True)
-
-            # Registrar el número de servicios encontrados para esta hoja
-            log_callback(f"Servicios encontrados en '{hoja}': {len(df)}", 'info')
             
+            log_callback(f"Servicios encontrados en '{hoja}': {len(df)}", 'info')
             frames.append(df)
+            
         except Exception as e:
             log_callback(f"Error al procesar hoja {hoja}: {str(e)}", 'error')
             continue
 
-    # ✅ ACTUALIZAR INFORMACIÓN DE SEGUIMIENTO
-    info['total_in_range'] = total_registros_en_rango
+    # Actualizar info
+    info['total_in_range'] = int(total_registros_en_rango)
     info['has_data_in_range'] = total_registros_en_rango > 0
     
     result = pd.concat(frames) if frames else pd.DataFrame()

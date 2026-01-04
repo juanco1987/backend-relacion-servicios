@@ -44,3 +44,33 @@ export const parseMonth = (mesTexto) => {
   const mesNum = String(meses.indexOf(mes) + 1).padStart(2, '0');
   return `${año}-${mesNum}`;
 };
+
+/**
+ * Genera un rango de meses completo basado en los años encontrados en las claves de datos
+ * @param {string[]} keys - Claves de mes en formato YYYY-MM
+ * @returns {string[]} Array de meses completo para los años detectados
+ */
+export const generateMonthsFromData = (keys) => {
+  if (!keys || keys.length === 0) return generateMonthsUntilNow();
+
+  const years = new Set(keys.map(k => parseInt(k.split('-')[0])));
+  if (years.size === 0) return generateMonthsUntilNow();
+
+  const distinctYears = Array.from(years).sort();
+  const months = [];
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  distinctYears.forEach(year => {
+    // Si es el año actual, mostrar hasta el mes actual
+    // Si es un año pasado, mostrar todo el año (0-11)
+    const endMonth = (year === currentYear) ? currentMonth : 11;
+
+    for (let m = 0; m <= endMonth; m++) {
+      months.push(`${year}-${String(m + 1).padStart(2, '0')}`);
+    }
+  });
+
+  return months;
+};

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
 
-const CustomTable = ({ headers, data, renderRow, wrapperStyles = {}, tableStyles = {} }) => {
+const CustomTable = React.memo(({ headers, data, renderRow, wrapperStyles = {}, tableStyles = {} }) => {
     const { theme } = useTheme();
 
     const defaultWrapperStyles = {
@@ -79,7 +79,7 @@ const CustomTable = ({ headers, data, renderRow, wrapperStyles = {}, tableStyles
     };
 
     return (
-        <div 
+        <div
             style={defaultWrapperStyles}
             onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-8px) scale(1.01)';
@@ -113,25 +113,25 @@ const CustomTable = ({ headers, data, renderRow, wrapperStyles = {}, tableStyles
                     animation: 'shimmer 3s infinite'
                 }}></div>
             </div>
-            
+
             <div style={{ padding: '2rem', overflowX: 'auto' }}>
                 <table style={defaultTableStyles}>
                     <thead>
-                        <tr style={{ 
+                        <tr style={{
                             background: `linear-gradient(180deg, ${theme.fondoEncabezado} 0%, ${theme.fondoEncabezado}dd 100%)`,
                             boxShadow: `0 4px 12px ${theme.bordePrincipal}30`
                         }}>
                             {headers.map((header, index) => (
                                 <th key={index} style={{
-                                    ...thStyles, 
+                                    ...thStyles,
                                     ...(header.style || {}),
                                     borderRight: index < headers.length - 1 ? `2px solid ${theme.bordePrincipal}60` : 'none',
                                     borderTopLeftRadius: index === 0 ? '12px' : '0',
                                     borderTopRightRadius: index === headers.length - 1 ? '12px' : '0'
                                 }}>
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
                                         gap: '10px',
                                         position: 'relative'
                                     }}>
@@ -152,11 +152,11 @@ const CustomTable = ({ headers, data, renderRow, wrapperStyles = {}, tableStyles
                     </thead>
                     <tbody>
                         {data.map((item, index) => (
-                            <tr 
+                            <tr
                                 key={index}
                                 style={{
                                     ...trStyles,
-                                    background: index % 2 === 0 
+                                    background: index % 2 === 0
                                         ? `linear-gradient(90deg, ${theme.fondoContenedor}40 0%, ${theme.fondoContenedor}80 50%, ${theme.fondoContenedor}40 100%)`
                                         : `linear-gradient(90deg, ${theme.fondoElemento}20 0%, ${theme.fondoElemento}60 50%, ${theme.fondoElemento}20 100%)`,
                                     borderBottom: index === data.length - 1 ? 'none' : `2px solid ${theme.bordePrincipal}80`,
@@ -182,7 +182,7 @@ const CustomTable = ({ headers, data, renderRow, wrapperStyles = {}, tableStyles
                                     e.currentTarget.style.borderBottom = `2px solid ${theme.primario}80`;
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = index % 2 === 0 
+                                    e.currentTarget.style.background = index % 2 === 0
                                         ? `linear-gradient(90deg, ${theme.fondoContenedor}40 0%, ${theme.fondoContenedor}80 50%, ${theme.fondoContenedor}40 100%)`
                                         : `linear-gradient(90deg, ${theme.fondoElemento}20 0%, ${theme.fondoElemento}60 50%, ${theme.fondoElemento}20 100%)`;
                                     e.currentTarget.style.transform = 'translateX(0) scale(1)';
@@ -232,6 +232,6 @@ const CustomTable = ({ headers, data, renderRow, wrapperStyles = {}, tableStyles
             `}</style>
         </div>
     );
-};
+});
 
 export default CustomTable;

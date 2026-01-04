@@ -8,9 +8,9 @@ import { APP_MESSAGES } from '../../config/appConfig';
 import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
 
-function Header() {
+const Header = React.memo(() => {
   const { theme, modo, alternarTema } = useTheme();
-  
+
   return (
     <Box
       sx={{
@@ -144,6 +144,6 @@ function Header() {
       </motion.div>
     </Box>
   );
-}
+});
 
 export default Header; 

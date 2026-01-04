@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {  Paper, } from '@mui/material';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { Paper, } from '@mui/material';
 
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
@@ -79,7 +79,7 @@ const UnifiedWorkflowCard = ({
     }
   }, [fechaFin]);
 
-  
+
 
   // Generar nombre por defecto
   const generateDefaultName = () => {
@@ -98,12 +98,12 @@ const UnifiedWorkflowCard = ({
   }, [workMode]);
 
   // Función para manejar el inicio de un nuevo proceso
-  const handleNewProcess = () => {
+  const handleNewProcess = useCallback(() => {
     setShowNewProcessDialog(true);
-  };
+  }, []);
 
   // Función para confirmar el nuevo proceso
-  const confirmNewProcess = () => {
+  const confirmNewProcess = useCallback(() => {
     // Resetear todos los estados
     setActiveStep(0);
     setReportName(generateDefaultName());
@@ -111,19 +111,16 @@ const UnifiedWorkflowCard = ({
     setDataProcessed(false);
     setPdfGenerated(false);
     setShouldClearFile(false);
-    
+
     // Resetear fechas
     setFromDate(null);
     setToDate(null);
     setUserHasConfiguredDates(false);
-    
+
     // Resetear mes y año
     setMonth(dayjs().month());
     setYear(currentYear);
-    setFromDate(null);
-    setToDate(null);
-    setUserHasConfiguredDates(false);
-    
+
     // Limpiar los datos del archivo y fechas
     if (onFileChange) {
       onFileChange({ target: { files: [] } });
@@ -140,17 +137,17 @@ const UnifiedWorkflowCard = ({
     if (onImageChange) {
       onImageChange([]);
     }
-    
+
     setShowNewProcessDialog(false);
-  };
+  }, [currentYear, generateDefaultName, onFileChange, onFechaInicioChange, onFechaFinChange, onNoteChange, onImageChange]);
 
   // Función para cancelar el nuevo proceso
-  const cancelNewProcess = () => {
+  const cancelNewProcess = useCallback(() => {
     setShowNewProcessDialog(false);
-  };
+  }, []);
 
   // 🚀 Función personalizada para manejar el procesamiento con validaciones avanzadas
-  const handleProcessDataClick = async () => {
+  const handleProcessDataClick = useCallback(async () => {
     try {
       if (!archivoExcel || !fromDate || !toDate) {
         alert("Debes seleccionar un archivo y un rango de fechas.");
@@ -182,7 +179,7 @@ const UnifiedWorkflowCard = ({
       formData.append("fecha_inicio", fromDate.format("YYYY-MM-DD"));
       formData.append("fecha_fin", toDate.format("YYYY-MM-DD"));
 
-      
+
       const url =
         workMode === 0
           ? `${API_BASE}/api/relacion_servicios`
@@ -235,112 +232,24 @@ const UnifiedWorkflowCard = ({
       alert(customMessage);
       setDataProcessed(false);
     }
-  };
+  }, [archivoExcel, fromDate, toDate, workMode]);
 
-
-
-  // Resetear dataProcessed cuando cambien los archivos o fechas
-  useEffect(() => {
-    if (dataProcessed) {
-      console.log('Archivo o fechas cambiaron, reseteando estado de datos procesados');
-      setDataProcessed(false);
-    }
-  }, [archivoExcel, fechaInicio, fechaFin]);
-
-  // Debug logs para verificar props
-  useEffect(() => {
-    console.log('UnifiedWorkflowCard props:', {
-      archivoExcel: archivoExcel,
-      archivoExcelName: archivoExcel?.name,
-      archivoExcelType: typeof archivoExcel,
-      fechaInicio: fechaInicio?.format?.('YYYY-MM-DD'),
-      fechaFin: fechaFin?.format?.('YYYY-MM-DD'),
-      notas,
-      workMode,
-      userHasConfiguredDates,
-      fromDate: fromDate?.format?.('YYYY-MM-DD'),
-      toDate: toDate?.format?.('YYYY-MM-DD'),
-      onGeneratePDF: !!onGeneratePDF
-    });
-  }, [archivoExcel, fechaInicio, fechaFin, notas, workMode, userHasConfiguredDates, fromDate, toDate, onGeneratePDF]);
-
-  // Lógica para avanzar automáticamente el activeStep
-  useEffect(() => {
-    // Si se carga un archivo, avanzar al paso 1 (Configurar parámetros)
-    if (activeStep === 0 && archivoExcel && prevActiveStepRef.current > 0) {
-      console.log('UnifiedWorkflowCard: Navegado de vuelta al paso 0 con archivo , Limpiando ..');
-      if (onFileChange) {
-        onFileChange({ target: { files: [] } }); // Limpiar el archivo en App.js
-      }
-      setFromDate(null);
-      setToDate(null);
-      setUserHasConfiguredDates(false);
-      if (onNoteChange) {
-        onNoteChange(''); // Limpiar notas también para un reinicio limpio
-      }
-      if (onImageChange) {
-        onImageChange([]); // Limpiar imágenes también para un reinicio limpio
-      }
-      setReportName(generateDefaultName()); // Resetear nombre del reporte al predeterminado
-      setProcessCompleted(false); // Asegurar que el estado de completado del proceso se
-      setDataProcessed(false); // Resetear el estado de datos procesados
-    }
-    prevActiveStepRef.current = activeStep;
-  }, [archivoExcel, activeStep, onFileChange, onNoteChange, generateDefaultName]);
-
-  // Detectar navegación hacia atrás y marcar para limpiar
-  useEffect(() => {
-    const prevStep = prevActiveStepRef.current;
-    const hasNavigatedBack = prevStep > 0 && activeStep === 0;
-    
-    if (hasNavigatedBack && archivoExcel) {
-      console.log('UnifiedWorkflowCard: Navegado de vuelta al paso 0, marcando para limpiar archivo');
-      setShouldClearFile(true);
-    }
-    
-    // Actualizar la referencia del paso anterior
-    prevActiveStepRef.current = activeStep;
-  }, [activeStep, archivoExcel]);
-
-  // Limpiar archivo y resetear estados cuando se marca para limpiar
-  useEffect(() => {
-    if (shouldClearFile && archivoExcel) {
-      console.log('UnifiedWorkflowCard: Limpiando archivo y estados relacionados.');
-      
-      if (onFileChange) {
-        onFileChange({ target: { files: [] } }); // Limpiar el archivo en App.js
-      }
-      // También resetear estados locales que dependen de la selección de archivo para un estado limpio
-      setFromDate(null);
-      setToDate(null);
-      setUserHasConfiguredDates(false);
-      if (onNoteChange) {
-        onNoteChange(''); // Limpiar notas también para un reinicio limpio
-      }
-      setReportName(generateDefaultName()); // Resetear nombre del reporte al predeterminado
-      setProcessCompleted(false); // Asegurar que el estado de completado del proceso se resetee
-      
-      // Resetear el flag de limpieza
-      setShouldClearFile(false);
-    }
-  }, [shouldClearFile, archivoExcel, onFileChange, onNoteChange]);
-
-  const handleFromDateChange = (newDate) => {
+  const handleFromDateChange = useCallback((newDate) => {
     console.log('From date changed:', newDate?.format('YYYY-MM-DD'));
     setFromDate(newDate);
     setUserHasConfiguredDates(true);
     if (onFechaInicioChange) onFechaInicioChange(newDate);
-  };
+  }, [onFechaInicioChange]);
 
-  const handleToDateChange = (newDate) => {
+  const handleToDateChange = useCallback((newDate) => {
     console.log('To date changed:', newDate?.format('YYYY-MM-DD'));
     setToDate(newDate);
     setUserHasConfiguredDates(true);
     if (onFechaFinChange) onFechaFinChange(newDate);
-  };
+  }, [onFechaFinChange]);
 
   // Determinar el estado de cada paso
-  const getStepStatus = (stepIndex) => {
+  const getStepStatus = useCallback((stepIndex) => {
     switch (stepIndex) {
       case 0: // Cargar archivo
         return archivoExcel ? 'completed' : 'pending';
@@ -351,9 +260,9 @@ const UnifiedWorkflowCard = ({
       default:
         return 'pending';
     }
-  };
+  }, [archivoExcel, userHasConfiguredDates, dataProcessed, processing]);
 
-  const steps = [
+  const steps = useMemo(() => [
     {
       label: 'Cargar archivo Excel',
       description: 'Selecciona el archivo de datos que contiene la información de servicios',
@@ -379,8 +288,10 @@ const UnifiedWorkflowCard = ({
           toDate={toDate}
           notas={notas}
           onNoteChange={onNoteChange}
-          imagenes={imagenes}      
-          onImageChange={onImageChange}          
+          imagenes={imagenes}
+          onImageChange={onImageChange}
+          // Ocultar uploader de imágenes cuando workMode !== 0 (pendientes por cobrar)
+          allowImages={workMode === 0}
           onFromDateChange={handleFromDateChange}
           onToDateChange={handleToDateChange}
         />
@@ -413,7 +324,12 @@ const UnifiedWorkflowCard = ({
         />
       )
     }
-  ];
+  ], [
+    archivoExcel, onFileChange, theme, fromDate, toDate, notas,
+    onNoteChange, imagenes, onImageChange, workMode, handleFromDateChange,
+    handleToDateChange, reportName, dataProcessed, processing,
+    userHasConfiguredDates, handleProcessDataClick, onGeneratePDF
+  ]);
 
   return (
     <motion.div

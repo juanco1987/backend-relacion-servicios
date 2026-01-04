@@ -1,14 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { Box } from '@mui/material';
 import { motion } from 'framer-motion';
 import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from '../../config/animations';
-import UnifiedWorkflowCard from '../UnifiedWorkflowCard';
-import Analytics from '../analytics/Analytics';
-import DashboardPage from '../../pages/DashboardPage';
-import UnifiedGastoWorkflow from '../GastosWorkFlowCard/UnifiedGastoWorkflow';
 import { useTheme } from '../../context/ThemeContext';
+import Loading from '../common/Loading';
 
-function ContentArea({ 
+// Lazy loading de componentes pesados
+const UnifiedWorkflowCard = lazy(() => import('../UnifiedWorkflowCard'));
+const Analytics = lazy(() => import('../analytics/Analytics'));
+const DashboardPage = lazy(() => import('../../pages/DashboardPage'));
+const UnifiedGastoWorkflow = lazy(() => import('../GastosWorkFlowCard/UnifiedGastoWorkflow'));
+
+function ContentArea({
   currentRoute,
   excelData,
   analyticsFile,
@@ -17,7 +20,7 @@ function ContentArea({
   fechaFin,
   note,
   imagenes,
-  gastoData, // ✅ NUEVO: datos del gasto
+  gastoData,
   onFileChange,
   onAnalyticsFileChange,
   onFechaInicioChange,
@@ -26,7 +29,7 @@ function ContentArea({
   onImageChange,
   onProcessData,
   onGeneratePDF,
-  onGastoChange, // ✅ NUEVO: handler para cambios en gasto
+  onGastoChange,
   processing,
   animationState,
   onClearAnalyticsFile,
@@ -49,7 +52,7 @@ function ContentArea({
   }, [onFileChange, onFechaInicioChange, onFechaFinChange, onNoteChange, onProcessData, onGeneratePDF]);
 
   const getWorkMode = (route) => {
-    switch(route) {
+    switch (route) {
       case '/reportes/servicios':
         return 0;
       case '/reportes/pendientes':
@@ -60,9 +63,9 @@ function ContentArea({
   };
 
   const workMode = getWorkMode(currentRoute);
-  
+
   const renderRouteContent = () => {
-    switch(currentRoute) {
+    switch (currentRoute) {
       case '/':
       case '/dashboard':
       case '/dashboard/general':
@@ -72,16 +75,16 @@ function ContentArea({
       case '/dashboard/pendientes/cobrar':
       case '/dashboard/pendientes/efectivo':
         return (
-          <DashboardPage 
-            excelData={excelData} 
-            analyticsFile={analyticsFile} 
-            onAnalyticsFileChange={onAnalyticsFileChange} 
+          <DashboardPage
+            excelData={excelData}
+            analyticsFile={analyticsFile}
+            onAnalyticsFileChange={onAnalyticsFileChange}
             onClearAnalyticsFile={onClearAnalyticsFile}
             currentRoute={currentRoute}
             onRequestOpenUploader={onNavigate}
           />
         );
-      
+
       case '/reportes/servicios':
       case '/reportes/pendientes':
         return (
@@ -103,36 +106,35 @@ function ContentArea({
             workMode={workMode}
           />
         );
-      
+
       case '/analytics':
         return (
-          <Analytics 
+          <Analytics
             excelData={analyticsFile}
             workMode={workMode}
             onFileChange={onAnalyticsFileChange}
             onClearFile={onClearAnalyticsFile}
           />
         );
-      
-      // ✅ NUEVO: Caso para registrar gasto
+
       case '/registrar-gasto':
-      return (
-        <UnifiedGastoWorkflow
-          gastoData={gastoData}
-          onGastoChange={onGastoChange}
-          imagenes={imagenes}
-          onImageChange={onImageChange}
-          processing={processing}
-          onGeneratePDF={onGeneratePDF}
-        />
-      );
-      
+        return (
+          <UnifiedGastoWorkflow
+            gastoData={gastoData}
+            onGastoChange={onGastoChange}
+            imagenes={imagenes}
+            onImageChange={onImageChange}
+            processing={processing}
+            onGeneratePDF={onGeneratePDF}
+          />
+        );
+
       default:
         return (
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             minHeight: 400,
             color: theme.textoSecundario,
             fontSize: '1.2rem'
@@ -150,7 +152,9 @@ function ContentArea({
       animate="visible"
     >
       <motion.div variants={STAGGER_ITEM_VARIANTS}>
-        {renderRouteContent()}
+        <Suspense fallback={<Loading message="Cargando componente..." />}>
+          {renderRouteContent()}
+        </Suspense>
       </motion.div>
     </motion.div>
   );

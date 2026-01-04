@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../utils/numberFormatters';
 
-function CustomTooltip({ active, payload, label, formatter }) {
+const CustomTooltip = React.memo(({ active, payload, label, formatter }) => {
   const { theme } = useTheme();
 
   if (active && payload && payload.length) {
@@ -34,6 +34,6 @@ function CustomTooltip({ active, payload, label, formatter }) {
     );
   }
   return null;
-}
+});
 
 export default CustomTooltip;

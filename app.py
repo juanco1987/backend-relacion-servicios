@@ -4,13 +4,32 @@ import os
 
 def create_app():
     app = Flask(__name__)
+    
+    # Cargar configuración
+    try:
+        from config.config import DevelopmentConfig
+        app.config.from_object(DevelopmentConfig)
+    except ImportError:
+        print("Advertencia: No se pudo cargar config.config.DevelopmentConfig")
+    
     CORS(app)
 
     # Registrar blueprints
-    from core.routes_excel import bp_excel
-    app.register_blueprint(bp_excel, url_prefix='/api')
+    # Registrar blueprints
+    # from core.routes_excel import bp_excel
+    # app.register_blueprint(bp_excel, url_prefix='/api')
 
-    @app.route('/')
+    from api.routes.analytics import analytics_bp
+    from api.routes.reports import reports_bp
+    from api.routes.expenses import expenses_bp
+
+    app.register_blueprint(analytics_bp, url_prefix='/api')
+    app.register_blueprint(reports_bp, url_prefix='/api')
+    app.register_blueprint(expenses_bp, url_prefix='/api')
+
+    # Configurar JSON Provider personalizado (Flask 3.x+)
+    from utils.json_encoder import CustomJSONProvider
+    app.json = CustomJSONProvider(app)
     def home():
         return 'API de AAP_WEB_REPORTES funcionando', 200
 

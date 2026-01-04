@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 
-function KpiCard({
+const KpiCard = React.memo(({
   title,
   value,
   subtitle,
@@ -11,7 +11,7 @@ function KpiCard({
   children,
   variant = 'elevated',
   valueStyle = {},
-}) {
+}) => {
   const { theme } = useTheme();
 
   // Estilos base según variante
@@ -71,6 +71,6 @@ function KpiCard({
       )}
     </Box>
   );
-}
+});
 
 export default KpiCard;

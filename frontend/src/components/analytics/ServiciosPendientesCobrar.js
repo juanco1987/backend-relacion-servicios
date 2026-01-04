@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
-import { generateMonthsUntilNow, formatMonth } from '../../utils/dateUtils';
+import { generateMonthsUntilNow, formatMonth, generateMonthsFromData } from '../../utils/dateUtils';
 import KpiCard from '../common/KpiCard';
 import CustomTable from '../common/CustomTable';
 import { API_CONFIG } from '../../config/appConfig';
@@ -15,7 +15,7 @@ const ServiciosPendientesCobrar = ({ file }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [mesSeleccionado, setMesSeleccionado] = useState('Total Global');
-    
+
     useEffect(() => {
         if (!file) return;
 
@@ -86,7 +86,8 @@ const ServiciosPendientesCobrar = ({ file }) => {
 
     const { resumen, detalle } = data;
 
-    const mesesOrdenados = generateMonthsUntilNow();
+    // Usar generateMonthsFromData para cubrir huecos de meses sin datos
+    const mesesOrdenados = generateMonthsFromData(Object.keys(resumen));
 
     const totalGlobal = mesesOrdenados.reduce((acc, mesKey) => {
         const datosMes = resumen[mesKey] || {};
@@ -216,8 +217,8 @@ const ServiciosPendientesCobrar = ({ file }) => {
 
                 <KpiCard color={theme.textoInfo} variant='elevated'>
                     <div style={{ color: theme.textoInfo, fontWeight: 'bold', fontSize: '16px' }}>
-                        {datosSeleccionados.fecha_mas_antigua !== '9999-12-31' 
-                            ? datosSeleccionados.fecha_mas_antigua 
+                        {datosSeleccionados.fecha_mas_antigua !== '9999-12-31'
+                            ? datosSeleccionados.fecha_mas_antigua
                             : 'N/A'}
                     </div>
                     <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
@@ -239,12 +240,12 @@ const ServiciosPendientesCobrar = ({ file }) => {
                     />
                 </div>
             ) : (
-                <div style={{ 
-                    padding: '1rem', 
-                    backgroundColor: theme.fondoContenedor, 
-                    border: `1px solid ${theme.bordePrincipal}`, 
-                    borderRadius: '8px', 
-                    color: theme.terminalVerde, 
+                <div style={{
+                    padding: '1rem',
+                    backgroundColor: theme.fondoContenedor,
+                    border: `1px solid ${theme.bordePrincipal}`,
+                    borderRadius: '8px',
+                    color: theme.terminalVerde,
                     marginTop: '1rem',
                     textAlign: 'center'
                 }}>

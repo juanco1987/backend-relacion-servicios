@@ -18,6 +18,7 @@ const StepParameters = ({
   onNoteChange,
   onFromDateChange,
   onToDateChange,
+  allowImages = true,
 }) => {
   return (
     <Box sx={{ mt: 2 }}>
@@ -224,82 +225,89 @@ const StepParameters = ({
               Imágenes para el reporte
             </Typography>
           </Box>
+          {allowImages ? (
+            <>
+              <CustomButton
+                variant="contained"
+                component="label"
+                sx={{
+                  borderRadius: '16px',
+                  boxShadow: theme.sombraContenedor,
+                }}
+              >
+                Subir imágenes
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    files.forEach((file) => {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        if (onImageChange) {
+                          onImageChange((prev) => [...(prev || []), reader.result]); // agrega sin borrar las otras
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    });
+                  }}
+                />
+              </CustomButton>
 
-          <CustomButton
-            variant="contained"
-            component="label"
-            sx={{
-              borderRadius: '16px',
-              boxShadow: theme.sombraContenedor,
-            }}
-          >
-            Subir imágenes
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              multiple
-              onChange={(e) => {
-                const files = Array.from(e.target.files);
-                files.forEach((file) => {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    if (onImageChange) {
-                      onImageChange((prev) => [...prev, reader.result]); // agrega sin borrar las otras
-                    }
-                  };
-                  reader.readAsDataURL(file);
-                });
-              }}
-            />
-          </CustomButton>
-
-          {imagenes && imagenes.length > 0 && (
-            <Box
-              mt={2}
-              sx={{
-                display: 'flex',
-                gap: 2,
-                flexWrap: 'wrap',
-              }}
-            >
-              {imagenes.map((img, idx) => (
-                <Box key={idx} sx={{ position: 'relative' }}>
-                  <img
-                    src={img}
-                    alt={`preview-${idx}`}
-                    style={{
-                      maxWidth: '100px',
-                      maxHeight: '100px',
-                      borderRadius: '12px',
-                      boxShadow: theme.sombraContenedor,
-                      objectFit: 'cover',
-                    }}
-                  />
-                  {/* Botón eliminar */}
-                  <Box
-                    component="span"
-                    onClick={() => {
-                      onImageChange((prev) => prev.filter((_, i) => i !== idx));
-                    }}
-                    sx={{
-                      position: 'absolute',
-                      top: -8,
-                      right: -8,
-                      background: 'rgba(0,0,0,0.6)',
-                      color: '#fff',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      padding: '4px 6px',
-                      lineHeight: 1,
-                      userSelect: 'none',
-                    }}
-                  >
-                    ✕
-                  </Box>
+              {imagenes && imagenes.length > 0 && (
+                <Box
+                  mt={2}
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {imagenes.map((img, idx) => (
+                    <Box key={idx} sx={{ position: 'relative' }}>
+                      <img
+                        src={img}
+                        alt={`preview-${idx}`}
+                        style={{
+                          maxWidth: '100px',
+                          maxHeight: '100px',
+                          borderRadius: '12px',
+                          boxShadow: theme.sombraContenedor,
+                          objectFit: 'cover',
+                        }}
+                      />
+                      {/* Botón eliminar */}
+                      <Box
+                        component="span"
+                        onClick={() => {
+                          if (onImageChange) onImageChange((prev) => prev.filter((_, i) => i !== idx));
+                        }}
+                        sx={{
+                          position: 'absolute',
+                          top: -8,
+                          right: -8,
+                          background: 'rgba(0,0,0,0.6)',
+                          color: '#fff',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          padding: '4px 6px',
+                          lineHeight: 1,
+                          userSelect: 'none',
+                        }}
+                      >
+                        ✕
+                      </Box>
+                    </Box>
+                  ))}
                 </Box>
-              ))}
+              )}
+            </>
+          ) : (
+            <Box sx={{ color: theme.textoSecundario, fontSize: '0.95rem' }}>
+              No es necesario subir imágenes para este tipo de reporte.
             </Box>
           )}
         </Grid>
