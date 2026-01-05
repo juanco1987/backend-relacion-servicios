@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Paper, } from '@mui/material';
+import {  Paper, } from '@mui/material';
 
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
@@ -98,9 +98,9 @@ const UnifiedWorkflowCard = ({
   }, [workMode]);
 
   // Función para manejar el inicio de un nuevo proceso
-  const handleNewProcess = useCallback(() => {
+  const handleNewProcess = () => {
     setShowNewProcessDialog(true);
-  }, []);
+  };
 
   // Función para confirmar el nuevo proceso
   const confirmNewProcess = useCallback(() => {

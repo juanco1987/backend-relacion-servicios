@@ -30,14 +30,19 @@ export const getCustomSelectSx = (theme) => ({
 });
 
 export const getCustomMenuProps = (theme) => ({
+  // Forzar que el menú se renderice en `document.body` para evitar
+  // que extensiones o el traductor del navegador modifiquen su contenedor
+  // provocando inconsistencias en el DOM (removeChild errors).
+  container: typeof document !== 'undefined' ? document.body : undefined,
+  disablePortal: false,
   PaperProps: {
     sx: {
       background: theme.fondoContenedor,
       border: 'none', // CORREGIDO: Entre comillas
       boxShadow: theme.sombraContenedor,
       borderRadius: '16px !important',
-      // permitir que el menú pueda desplegarse y scrollear
-      overflow: 'visible',
+      // permitir que el menú pueda desplegarse y que su contenido haga scroll
+      overflow: 'hidden',
       // permitir que el menú crezca hasta una proporción de la pantalla
       maxHeight: '60vh',
       zIndex: 1800,
@@ -46,22 +51,21 @@ export const getCustomMenuProps = (theme) => ({
       '& .MuiList-root': {
         padding: 0,
         borderRadius: '16px !important',
-        // dejar que la lista pueda hacer scroll si es necesario
-        overflow: 'visible !important',
+        overflow: 'hidden',
       },
       '& .MuiMenu-list': {
         padding: 0,
         borderRadius: '16px !important',
         maxHeight: '60vh',
         overflowY: 'auto',
-        // asegurar que el scroll sea visible
         WebkitOverflowScrolling: 'touch',
       },
       '& ul': {
         padding: '0 !important',
         borderRadius: '16px !important',
-        overflow: 'visible !important',
+        overflow: 'auto',
         margin: 0,
+        maxHeight: '60vh',
       },
       '& div': { borderRadius: '16px !important' },
     },
