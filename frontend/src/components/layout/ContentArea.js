@@ -108,9 +108,10 @@ function ContentArea({
         );
 
       case '/analytics':
+      case '/dashboard/analytics':
         return (
           <Analytics
-            excelData={analyticsFile}
+            excelData={analyticsFile || excelData}
             workMode={workMode}
             onFileChange={onAnalyticsFileChange}
             onClearFile={onClearAnalyticsFile}

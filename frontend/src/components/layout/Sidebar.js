@@ -21,11 +21,12 @@ import logoJG from '../../assets/icono.png';
 const SIDEBAR_WIDTH = 260;
 
 const menuItems = [
-  {
-    label: 'Dashboard',
-    icon: <DashboardIcon />,
-    subItems: [
+      {
+        label: 'Dashboard',
+        icon: <DashboardIcon />,
+        subItems: [
       { label: 'General', icon: <BarChartIcon />, path: '/dashboard/general' },
+      { label: 'Resumen', icon: <BarChartIcon />, path: '/dashboard/analytics' },
       { label: 'Clientes', icon: <PeopleIcon />, path: '/dashboard/clientes' },
       { label: 'Servicios', icon: <BuildIcon />, path: '/dashboard/servicios' },
       { 
