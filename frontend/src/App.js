@@ -1,6 +1,6 @@
 // App.js - Componente principal de la aplicación
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useTheme } from './context/ThemeContext';
@@ -16,10 +16,10 @@ import { API_CONFIG } from './config/appConfig';
 const API_BASE = API_CONFIG.BASE_URL;
 function App() {
   const { theme } = useTheme();
-  
+
   // Estado para la navegación
   const [currentRoute, setCurrentRoute] = useState('/dashboard');
-  
+
   // Estados existentes
   const [excelData, setExcelData] = useState(null);
   const [analyticsFile, setAnalyticsFile] = useState(null);
@@ -42,8 +42,8 @@ function App() {
   const [showModeTransition, setShowModeTransition] = useState(false);
   const [modeTransitionData, setModeTransitionData] = useState({ from: '', to: '' });
 
-  // Handlers existentes
-  const handleFileChange = (event) => {
+  // Handlers optimizados con useCallback
+  const handleFileChange = useCallback((event) => {
     console.log('handleFileChange recibió:', event);
     const file = event.target.files[0];
     if (file) {
@@ -53,9 +53,9 @@ function App() {
       console.log('No se seleccionó ningún archivo');
       setExcelData(null);
     }
-  };
+  }, []);
 
-  const handleAnalyticsFileChange = (input) => {
+  const handleAnalyticsFileChange = useCallback((input) => {
     console.log('handleAnalyticsFileChange recibió:', input);
     let file = null;
 
@@ -75,119 +75,119 @@ function App() {
       console.log('No se seleccionó ningún archivo de Analytics');
       setAnalyticsFile(null);
     }
-  };
+  }, []);
 
-  const handleFechaInicioChange = (date) => {
+  const handleFechaInicioChange = useCallback((date) => {
     console.log('handleFechaInicioChange recibió:', date, 'tipo:', typeof date, 'es dayjs:', date && date.isValid);
     setFechaInicio(date);
-  };
+  }, []);
 
-  const handleFechaFinChange = (date) => {
+  const handleFechaFinChange = useCallback((date) => {
     console.log('handleFechaFinChange recibió:', date, 'tipo:', typeof date, 'es dayjs:', date && date.isValid);
     setFechaFin(date);
-  };
+  }, []);
 
-  const handleNoteChange = (newNote) => {
+  const handleNoteChange = useCallback((newNote) => {
     console.log('handleNoteChange recibió:', newNote);
     setNote(newNote);
-  };
+  }, []);
 
   const handleProcessData = async () => {
-  setProcessing(true);
-  setAnimationState('loading');
-  
-      try {
-        if (!excelData || !fechaInicio || !fechaFin) {
-          throw new Error('Debes seleccionar un archivo y un rango de fechas.');
-        }
+    setProcessing(true);
+    setAnimationState('loading');
 
-        // Verificar que las fechas sean objetos dayjs válidos
-        if (!fechaInicio || !fechaInicio.isValid || !fechaInicio.isValid()) {
-          throw new Error('Error: Fecha de inicio inválida');
-        }
-
-        if (!fechaFin || !fechaFin.isValid || !fechaFin.isValid()) {
-          throw new Error('Error: Fecha de fin inválida');
-        }
-
-        // Crear FormData para enviar al backend
-        const formData = new FormData();
-        formData.append('file', excelData);
-        formData.append('fecha_inicio', fechaInicio.format('YYYY-MM-DD'));
-        formData.append('fecha_fin', fechaFin.format('YYYY-MM-DD'));
-        formData.append('notas', note || '');
-        
-        // Determinar el endpoint basado en la ruta actual
-        let endpoint = '';
-        
-
-        if (currentRoute === '/dashboard' || currentRoute === '/servicios-efectivo') {
-          endpoint = `${API_BASE}/api/relacion_servicios`;
-        } else if (currentRoute === '/pendientes-pago') {
-          endpoint = `${API_BASE}/api/procesar_excel`;
-        } else {
-          // Fallback al endpoint de validación básica
-          endpoint = `${API_BASE}/api/process`;
-  }
-        
-        // Intentar conectar al backend
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('El backend no está disponible. Verifica que el servidor esté ejecutándose en https://backend-relacion-servicios.onrender.com');
-          } else if (response.status === 500) {
-            throw new Error('Error interno del servidor. Verifica los logs del backend.');
-          } else if (response.status === 0 || response.statusText === 'Failed to fetch') {
-            throw new Error('No se puede conectar al backend. Verifica que el servidor esté ejecutándose en https://backend-relacion-servicios.onrender.com');
-          } else {
-            throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
-          }
-        }
-
-        const result = await response.json();
-        
-        // Validación específica para datos vacíos o errores de rango de fechas
-        if (result.error) {
-          throw new Error(result.error);
-        }
-        
-        if (result.success && result.data && result.data.length === 0) {
-          throw new Error('No hay datos para procesar en el rango de fechas seleccionado. Por favor selecciona otro rango de fechas.');
-        }
-        
-        if (!result.data || result.data.length === 0) {
-          throw new Error('No hay datos para procesar en el rango de fechas seleccionado. Por favor selecciona otro rango de fechas.');
-        }
-        
-        if (result.success || (result.data && result.data.length > 0)) {
-          setShowSuccess(true);
-          return { success: true, data: result.data };
-        } else {
-          throw new Error('No hay datos para procesar en el rango de fechas seleccionado. Por favor selecciona otro rango de fechas.');
-        }
-        
-      } catch (error) {
-        console.error('Error en el procesamiento:', error);
-        
-        // Manejar errores de red específicamente
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-          setShowError(true);
-          return { success: false, error: 'No se puede conectar al backend. Verifica que el servidor esté ejecutándose en https://backend-relacion-servicios.onrender.com' };
-        }
-        
-        setShowError(true);
-        return { success: false, error: error.message };
-      } finally {
-        setProcessing(false);
-        setAnimationState('idle');
+    try {
+      if (!excelData || !fechaInicio || !fechaFin) {
+        throw new Error('Debes seleccionar un archivo y un rango de fechas.');
       }
-    };
 
-  const handleGeneratePDF = async (pdfName, workMode) => {
+      // Verificar que las fechas sean objetos dayjs válidos
+      if (!fechaInicio || !fechaInicio.isValid || !fechaInicio.isValid()) {
+        throw new Error('Error: Fecha de inicio inválida');
+      }
+
+      if (!fechaFin || !fechaFin.isValid || !fechaFin.isValid()) {
+        throw new Error('Error: Fecha de fin inválida');
+      }
+
+      // Crear FormData para enviar al backend
+      const formData = new FormData();
+      formData.append('file', excelData);
+      formData.append('fecha_inicio', fechaInicio.format('YYYY-MM-DD'));
+      formData.append('fecha_fin', fechaFin.format('YYYY-MM-DD'));
+      formData.append('notas', note || '');
+
+      // Determinar el endpoint basado en la ruta actual
+      let endpoint = '';
+
+
+      if (currentRoute === '/dashboard' || currentRoute === '/servicios-efectivo') {
+        endpoint = `${API_BASE}/api/relacion_servicios`;
+      } else if (currentRoute === '/pendientes-pago') {
+        endpoint = `${API_BASE}/api/procesar_excel`;
+      } else {
+        // Fallback al endpoint de validación básica
+        endpoint = `${API_BASE}/api/process`;
+      }
+
+      // Intentar conectar al backend
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('El backend no está disponible. Verifica que el servidor esté ejecutándose en https://backend-relacion-servicios.onrender.com');
+        } else if (response.status === 500) {
+          throw new Error('Error interno del servidor. Verifica los logs del backend.');
+        } else if (response.status === 0 || response.statusText === 'Failed to fetch') {
+          throw new Error('No se puede conectar al backend. Verifica que el servidor esté ejecutándose en https://backend-relacion-servicios.onrender.com');
+        } else {
+          throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
+        }
+      }
+
+      const result = await response.json();
+
+      // Validación específica para datos vacíos o errores de rango de fechas
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      if (result.success && result.data && result.data.length === 0) {
+        throw new Error('No hay datos para procesar en el rango de fechas seleccionado. Por favor selecciona otro rango de fechas.');
+      }
+
+      if (!result.data || result.data.length === 0) {
+        throw new Error('No hay datos para procesar en el rango de fechas seleccionado. Por favor selecciona otro rango de fechas.');
+      }
+
+      if (result.success || (result.data && result.data.length > 0)) {
+        setShowSuccess(true);
+        return { success: true, data: result.data };
+      } else {
+        throw new Error('No hay datos para procesar en el rango de fechas seleccionado. Por favor selecciona otro rango de fechas.');
+      }
+
+    } catch (error) {
+      console.error('Error en el procesamiento:', error);
+
+      // Manejar errores de red específicamente
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        setShowError(true);
+        return { success: false, error: 'No se puede conectar al backend. Verifica que el servidor esté ejecutándose en https://backend-relacion-servicios.onrender.com' };
+      }
+
+      setShowError(true);
+      return { success: false, error: error.message };
+    } finally {
+      setProcessing(false);
+      setAnimationState('idle');
+    }
+  };
+
+  const handleGeneratePDF = useCallback(async (pdfName, workMode) => {
     try {
       if (!excelData || !fechaInicio || !fechaFin) {
         alert('Debes seleccionar un archivo y un rango de fechas.');
@@ -206,7 +206,15 @@ function App() {
       }
 
       // Usar el nombre personalizado o generar uno por defecto
-      const finalPdfName = pdfName?.trim() || generateDefaultPDFName(workMode);
+      const generateDefaultName = (mode) => {
+        const dateStr = dayjs().format('YYYY-MM-DD');
+        const timeStr = dayjs().format('HH-mm-ss');
+        return mode === 0
+          ? `Relacion_Servicios_${dateStr}_${timeStr}.pdf`
+          : `Pendientes_de_Pago_${dateStr}_${timeStr}.pdf`;
+      };
+
+      const finalPdfName = pdfName?.trim() || generateDefaultName(workMode);
       let blob;
 
       if (workMode === 0) {
@@ -230,7 +238,7 @@ function App() {
           nombrePDF: finalPdfName,
         });
       }
-      
+
       // Descargar el PDF
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -239,29 +247,19 @@ function App() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Limpiar la URL del blob
       window.URL.revokeObjectURL(url);
-      
+
     } catch (error) {
       console.error('Error generando PDF:', error);
       alert(`Error al generar el PDF: ${error.message}`);
     }
-  };
+  }, [excelData, fechaInicio, fechaFin, note, imagenes]);
 
-  const handleGastoChange = (newGastoData) => {
+  const handleGastoChange = useCallback((newGastoData) => {
     setGastoData(newGastoData);
-  };
-
-  const generateDefaultPDFName = (workMode) => {
-    const dateStr = dayjs().format('YYYY-MM-DD');
-    const timeStr = dayjs().format('HH-mm-ss');
-    if (workMode === 0) {
-      return `Relacion_Servicios_${dateStr}_${timeStr}.pdf`;
-    } else {
-      return `Pendientes_de_Pago_${dateStr}_${timeStr}.pdf`;
-    }
-  };
+  }, []);
 
 
   const handleKeepNote = () => {
@@ -287,9 +285,9 @@ function App() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <Box sx={{ 
-          maxWidth: 900, 
-          mx: 'auto', 
+        <Box sx={{
+          maxWidth: 900,
+          mx: 'auto',
           p: { xs: 1, md: 4 },
           minHeight: '100vh',
           background: theme.fondoCuerpo,
@@ -314,7 +312,7 @@ function App() {
                   position: 'relative',
                 }}
               >
-                
+
               </Box>
             </motion.div>
 
@@ -323,7 +321,7 @@ function App() {
               currentRoute={currentRoute}
               excelData={excelData}
               analyticsFile={analyticsFile}
-                onNavigate={handleNavigation}
+              onNavigate={handleNavigation}
               fechaInicio={fechaInicio}
               fechaFin={fechaFin}
               note={note}
@@ -375,9 +373,9 @@ function App() {
               Has cambiado el rango de fechas. ¿Quieres mantener la nota escrita o empezar con una nota vacía?
             </DialogContent>
             <DialogActions>
-              <MuiButton 
-                onClick={handleClearNote} 
-                sx={{ 
+              <MuiButton
+                onClick={handleClearNote}
+                sx={{
                   background: theme.terminalRojo,
                   color: theme.textoContraste,
                   '&:hover': {
@@ -388,9 +386,9 @@ function App() {
               >
                 Limpiar nota
               </MuiButton>
-              <MuiButton 
-                onClick={handleKeepNote} 
-                sx={{ 
+              <MuiButton
+                onClick={handleKeepNote}
+                sx={{
                   background: theme.gradientes.botonProcesar,
                   color: theme.textoContraste,
                   '&:hover': {

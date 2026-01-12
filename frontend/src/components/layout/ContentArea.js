@@ -161,4 +161,4 @@ function ContentArea({
   );
 }
 
-export default ContentArea;
+export default React.memo(ContentArea);

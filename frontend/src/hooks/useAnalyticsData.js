@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { API_CONFIG } from '../config/appConfig';
 
 const API_BASE = API_CONFIG.BASE_URL;
@@ -6,8 +6,8 @@ const API_BASE = API_CONFIG.BASE_URL;
 function useAnalyticsData(analyticsFile, excelData) {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [pendientesData, setPendientesData] = useState({ 
-    total_pendientes_relacionar: 0, 
+  const [pendientesData, setPendientesData] = useState({
+    total_pendientes_relacionar: 0,
     total_pendientes_cobrar: 0,
     pendientes_por_mes: {}
   });
@@ -16,17 +16,17 @@ function useAnalyticsData(analyticsFile, excelData) {
   useEffect(() => {
     // Usar el archivo específico de Analytics si está disponible, sino usar excelData como fallback
     const fileToUse = analyticsFile || excelData;
-    
+
     if (!fileToUse) {
       setAnalyticsData(null);
-      setPendientesData({ 
-        total_pendientes_relacionar: 0, 
+      setPendientesData({
+        total_pendientes_relacionar: 0,
         total_pendientes_cobrar: 0,
         pendientes_por_mes: {}
       });
       return;
     }
-    
+
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
@@ -37,13 +37,13 @@ function useAnalyticsData(analyticsFile, excelData) {
           method: 'POST',
           body: formData,
         });
-        
+
         if (!response.ok) {
           throw new Error('Error al obtener analytics');
         }
-        
+
         const data = await response.json();
-        
+
         // Limpiar datos eliminando el campo 'precio'
         const cleanAnalyticsData = { ...data.resumen };
         Object.keys(cleanAnalyticsData).forEach(mes => {
@@ -51,7 +51,7 @@ function useAnalyticsData(analyticsFile, excelData) {
             delete cleanAnalyticsData[mes].precio;
           }
         });
-        
+
         setAnalyticsData(cleanAnalyticsData);
         setPendientesData({
           total_pendientes_relacionar: data.total_pendientes_relacionar || 0,
@@ -69,10 +69,10 @@ function useAnalyticsData(analyticsFile, excelData) {
     fetchAnalytics();
   }, [analyticsFile, excelData]);
 
-  // Función para filtrar meses válidos
-  const filterValidMonths = (analyticsData) => {
+  // Función para filtrar meses válidos - Optimizada con useCallback
+  const filterValidMonths = useCallback((analyticsData) => {
     if (!analyticsData) return [];
-    
+
     return Object.keys(analyticsData)
       .filter(mes => {
         if (!mes) return false;
@@ -92,12 +92,12 @@ function useAnalyticsData(analyticsFile, excelData) {
         if (añoA !== añoB) return añoA - añoB;
         return mesA - mesB;
       });
-  };
+  }, []);
 
-  // Función para preparar datos del gráfico
-  const prepareChartData = (analyticsData) => {
+  // Función para preparar datos del gráfico - Optimizada con useCallback
+  const prepareChartData = useCallback((analyticsData) => {
     if (!analyticsData) return [];
-    
+
     return Object.entries(analyticsData)
       .filter(([mes]) => {
         if (!mes) return false;
@@ -109,13 +109,13 @@ function useAnalyticsData(analyticsFile, excelData) {
           !/^nat$/i.test(normalizado);
       })
       .sort(([mesA], [mesB]) => {
-        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
-                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         const añoA = mesA.split(' ')[1];
         const añoB = mesB.split(' ')[1];
         const mesIndexA = meses.indexOf(mesA.split(' ')[0]);
         const mesIndexB = meses.indexOf(mesB.split(' ')[0]);
-        
+
         if (añoA !== añoB) return añoA - añoB;
         return mesIndexA - mesIndexB;
       })
@@ -127,10 +127,10 @@ function useAnalyticsData(analyticsFile, excelData) {
         efectivo_cantidad: Number(datos?.efectivo_cantidad || 0),
         transferencia_cantidad: Number(datos?.transferencia_cantidad || 0)
       }));
-  };
+  }, []);
 
-  // Función para calcular totales globales
-  const calculateGlobalTotals = (dataGrafica) => {
+  // Función para calcular totales globales - Optimizada con useCallback
+  const calculateGlobalTotals = useCallback((dataGrafica) => {
     return dataGrafica.reduce((acc, item) => ({
       efectivo_total: acc.efectivo_total + item.Efectivo,
       transferencia_total: acc.transferencia_total + item.Transferencia,
@@ -144,7 +144,7 @@ function useAnalyticsData(analyticsFile, excelData) {
       efectivo_cantidad: 0,
       transferencia_cantidad: 0
     });
-  };
+  }, []);
 
   return {
     analyticsData,

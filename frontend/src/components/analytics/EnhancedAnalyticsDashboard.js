@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart, Line } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../utils/numberFormatters';
@@ -15,7 +15,7 @@ const API_BASE = API_CONFIG.BASE_URL;
 const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView = 'general', onRequestOpenUploader }) => {
   const { theme } = useTheme();
   const [selectedView, setSelectedView] = useState(defaultView);
-  
+
   // Actualizar selectedView cuando cambie defaultView
   useEffect(() => {
     setSelectedView(defaultView);
@@ -27,8 +27,8 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   const [estadosEspecialesPorMes, setEstadosEspecialesPorMes] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Colores para el gráfico - Usando theme del archivo centralizado (SIN HARDCODEAR)
-  const COLORS = {
+  // Colores para el gráfico - Memoizados para evitar recreación
+  const COLORS = useMemo(() => ({
     YA_RELACIONADO: theme.terminalVerde,
     PENDIENTE_COBRAR: theme.textoAdvertencia,
     COTIZACION: theme.textoInfo,
@@ -37,57 +37,57 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     NO_SE_COBRA_DOMICILIO: theme.terminalMorado,
     CANCELADO: theme.terminalRojoEncendido,
     OTROS: theme.terminalRosa
-  };
+  }), [theme]);
 
   useEffect(() => {
     if (!file) {
       console.log('⚠️ No hay archivo cargado');
       return;
     }
-    
+
     const fetchAnalytics = async () => {
       setLoading(true);
       console.log('📄 Iniciando fetch de analytics...');
-      
+
       try {
         const formData = new FormData();
         formData.append('file', file);
-        
+
         console.log('📤 Enviando archivo:', file.name);
-        
+
         const response = await fetch(`${API_BASE}/api/analytics`, {
           method: 'POST',
           body: formData,
         });
-        
+
         console.log('📥 Response status:', response.status);
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           console.error('❌ Error response:', errorText);
           throw new Error(`Error al obtener analytics: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         console.log('✅ Data recibida:', data);
         console.log('📊 resumen:', data.resumen);
         console.log('📊 estados_grafico:', data.estados_grafico);
         console.log('📊 totales_estados_especiales:', data.totales_estados_especiales);
         console.log('📊 estados_especiales_por_mes:', data.estados_especiales_por_mes);
-        
+
         // DEBUG: Mostrar exactamente qué campos tiene estados_grafico
         console.log('🔍 CAMPOS DE estados_grafico:', Object.keys(data.estados_grafico || {}));
         console.log('🔍 Valor de OTROS:', data.estados_grafico?.OTROS);
         console.log('🔍 Valor de TOTAL_SERVICIOS:', data.estados_grafico?.TOTAL_SERVICIOS);
-        
+
         setAnalyticsData(data.resumen);
         setEstadosGrafico(data.estados_grafico);
         setTotalesEstadosEspeciales(data.totales_estados_especiales);
         setEstadosEspecialesPorMes(data.estados_especiales_por_mes);
-        
+
         console.log('✅ Estados actualizados en React');
-        
+
       } catch (error) {
         console.error('❌ Error fetching analytics:', error);
         console.error('❌ Error details:', error.message);
@@ -99,48 +99,48 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     fetchAnalytics();
   }, [file]);
 
-  // Procesar datos para el gráfico de dona - Solo los 7 estados principales
-  const getEstadosParaDona = () => {
+  // Procesar datos para el gráfico de dona - Memoizado para evitar recálculos
+  const getEstadosParaDona = useMemo(() => {
     if (!estadosGrafico) return [];
 
     return [
-      { 
-        estado: 'Ya Relacionado', 
+      {
+        estado: 'Ya Relacionado',
         cantidad: estadosGrafico.YA_RELACIONADO || 0,
         color: COLORS.YA_RELACIONADO
       },
-      { 
-        estado: 'Pendiente Cobrar', 
+      {
+        estado: 'Pendiente Cobrar',
         cantidad: estadosGrafico.PENDIENTE_COBRAR || 0,
         color: COLORS.PENDIENTE_COBRAR
       },
-      { 
-        estado: 'Cotización', 
+      {
+        estado: 'Cotización',
         cantidad: estadosGrafico.COTIZACION || 0,
         color: COLORS.COTIZACION
       },
-      { 
-        estado: 'No Pagaron Domicilio', 
+      {
+        estado: 'No Pagaron Domicilio',
         cantidad: estadosGrafico.NO_PAGARON_DOMICILIO || 0,
         color: COLORS.NO_PAGARON_DOMICILIO
       },
-      { 
-        estado: 'Garantía', 
+      {
+        estado: 'Garantía',
         cantidad: estadosGrafico.GARANTIA || 0,
         color: COLORS.GARANTIA
       },
-      { 
-        estado: 'No se Cobra Domicilio', 
+      {
+        estado: 'No se Cobra Domicilio',
         cantidad: estadosGrafico.NO_SE_COBRA_DOMICILIO || 0,
         color: COLORS.NO_SE_COBRA_DOMICILIO
       },
-      { 
-        estado: 'Cancelado', 
+      {
+        estado: 'Cancelado',
         cantidad: estadosGrafico.CANCELADO || 0,
         color: COLORS.CANCELADO
       }
     ].filter(item => item.cantidad > 0);
-  };
+  }, [estadosGrafico, COLORS]);
 
   // Procesar datos reales del Excel
   const [realData, setRealData] = useState({
@@ -181,23 +181,23 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       // Calcular totales
       const totalServicios = estadosGrafico.TOTAL_SERVICIOS || 0;
       const totalIngresos = tendenciaMensual.reduce((sum, item) => sum + item.ingresos, 0);
-      
+
       // Estados de servicio para KPIs
       const estadosServicio = [
-        { 
-          estado: 'YA RELACIONADO', 
-          cantidad: estadosGrafico.YA_RELACIONADO || 0, 
-          porcentaje: totalServicios > 0 ? Math.round((estadosGrafico.YA_RELACIONADO / totalServicios) * 100) : 0 
+        {
+          estado: 'YA RELACIONADO',
+          cantidad: estadosGrafico.YA_RELACIONADO || 0,
+          porcentaje: totalServicios > 0 ? Math.round((estadosGrafico.YA_RELACIONADO / totalServicios) * 100) : 0
         },
-        { 
-          estado: 'PENDIENTE COBRAR', 
-          cantidad: estadosGrafico.PENDIENTE_COBRAR || 0, 
-          porcentaje: totalServicios > 0 ? Math.round((estadosGrafico.PENDIENTE_COBRAR / totalServicios) * 100) : 0 
+        {
+          estado: 'PENDIENTE COBRAR',
+          cantidad: estadosGrafico.PENDIENTE_COBRAR || 0,
+          porcentaje: totalServicios > 0 ? Math.round((estadosGrafico.PENDIENTE_COBRAR / totalServicios) * 100) : 0
         },
-        { 
-          estado: 'EN PROCESO', 
-          cantidad: estadosGrafico.COTIZACION || 0, 
-          porcentaje: totalServicios > 0 ? Math.round((estadosGrafico.COTIZACION / totalServicios) * 100) : 0 
+        {
+          estado: 'EN PROCESO',
+          cantidad: estadosGrafico.COTIZACION || 0,
+          porcentaje: totalServicios > 0 ? Math.round((estadosGrafico.COTIZACION / totalServicios) * 100) : 0
         }
       ];
 
@@ -225,11 +225,11 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     }
   }, [analyticsData, estadosGrafico]);
 
-  const dataToUse = analyticsData ? realData : { 
-    serviciosPorTipo: [], 
-    tendenciaMensual: [], 
-    clientesRecurrentes: [], 
-    estadosServicio: [] 
+  const dataToUse = analyticsData ? realData : {
+    serviciosPorTipo: [],
+    tendenciaMensual: [],
+    clientesRecurrentes: [],
+    estadosServicio: []
   };
 
   const renderGeneralView = () => {
@@ -237,11 +237,11 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     console.log('📋 estadosGrafico:', estadosGrafico);
     console.log('📋 totalesEstadosEspeciales:', totalesEstadosEspeciales);
     console.log('📋 dataToUse:', dataToUse);
-    
+
     if (!estadosGrafico) {
       return (
-        <div style={{ 
-          padding: '40px', 
+        <div style={{
+          padding: '40px',
           color: theme.textoPrincipal,
           background: theme.fondoContenedor,
           borderRadius: '16px',
@@ -256,14 +256,14 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         </div>
       );
     }
-    
+
     const totalServicios = estadosGrafico?.TOTAL_SERVICIOS || 0;
     const totalIngresos = dataToUse.tendenciaMensual.reduce((sum, item) => sum + item.ingresos, 0);
     const serviciosPendientes = estadosGrafico?.PENDIENTE_COBRAR || 0;
-    const efectividad = totalServicios > 0 
-      ? Math.round((estadosGrafico?.YA_RELACIONADO / totalServicios) * 100) 
+    const efectividad = totalServicios > 0
+      ? Math.round((estadosGrafico?.YA_RELACIONADO / totalServicios) * 100)
       : 0;
-    
+
     console.log('📊 Calculados - Total:', totalServicios, 'Ingresos:', totalIngresos, 'Pendientes:', serviciosPendientes, 'Efectividad:', efectividad);
 
     return (
@@ -338,10 +338,10 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         )}
 
         {/* Gráfico de Tendencia Mensual */}
-        <div style={{ 
-          background: theme.fondoContenedor, 
-          borderRadius: '16px', 
-          padding: '20px', 
+        <div style={{
+          background: theme.fondoContenedor,
+          borderRadius: '16px',
+          padding: '20px',
           boxShadow: theme.sombraComponente,
           border: `1px solid ${theme.bordePrincipal}`
         }}>
@@ -351,8 +351,8 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={dataToUse.tendenciaMensual}>
               <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
-              <XAxis 
-                dataKey="mes" 
+              <XAxis
+                dataKey="mes"
                 stroke={theme.textoPrincipal}
                 tickFormatter={formatMonthAbbreviation}
                 tick={{
@@ -362,20 +362,20 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
               />
               <YAxis yAxisId="left" stroke={theme.textoPrincipal} />
               <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} />
-              <Tooltip 
+              <Tooltip
                 content={
-                  <CustomTooltip 
+                  <CustomTooltip
                     formatter={(value, name) => {
                       if (name === 'Ingresos') {
                         return formatCurrency(value);
                       }
                       return value;
-                    }} 
+                    }}
                   />
-                } 
+                }
               />
               <Legend />
-              <Bar yAxisId="left" dataKey="servicios" fill={theme.textoInfo} name="Servicios" maxBarSize={40}  radius={[16, 16, 16, 16]} />
+              <Bar yAxisId="left" dataKey="servicios" fill={theme.textoInfo} name="Servicios" maxBarSize={40} radius={[16, 16, 16, 16]} />
               <Line yAxisId="right" type="monotone" dataKey="ingresos" stroke={theme.terminalVerde} strokeWidth={3} name="Ingresos" />
             </ComposedChart>
           </ResponsiveContainer>
@@ -383,10 +383,10 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
 
         {/* Gráfico de Estados Especiales por Mes - AHORA USA estadosEspecialesPorMes */}
         {estadosEspecialesPorMes && Object.keys(estadosEspecialesPorMes).length > 0 && (
-          <div style={{ 
-            background: theme.fondoContenedor, 
-            borderRadius: '16px', 
-            padding: '20px', 
+          <div style={{
+            background: theme.fondoContenedor,
+            borderRadius: '16px',
+            padding: '20px',
             boxShadow: theme.sombraComponente,
             border: `1px solid ${theme.bordePrincipal}`
           }}>
@@ -394,7 +394,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
               Estados Especiales por Mes
             </h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart 
+              <BarChart
                 data={Object.entries(estadosEspecialesPorMes)
                   .sort(([mesA], [mesB]) => {
                     const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -415,14 +415,14 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                 margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
-                <XAxis 
-                  dataKey="mes" 
+                <XAxis
+                  dataKey="mes"
                   stroke={theme.textoPrincipal}
                   tickFormatter={formatMonthAbbreviation}
                 />
                 <YAxis stroke={theme.textoPrincipal} />
-                <Tooltip content={<CustomTooltip formatter={(value,)=> `${value}`}/>} />
-                 
+                <Tooltip content={<CustomTooltip formatter={(value,) => `${value}`} />} />
+
                 <Legend />
                 <Bar dataKey="No Pagaron Domicilio" stackId="a" fill={COLORS.NO_PAGARON_DOMICILIO} radius={[16, 16, 16, 16]} />
                 <Bar dataKey="Garantía" stackId="a" fill={COLORS.GARANTIA} radius={[16, 16, 16, 16]} />
@@ -435,10 +435,10 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         )}
 
         {/* Gráfico de Dona - MATERIAL DESIGN 3 MEJORADO */}
-        <div style={{ 
-          background: theme.fondoContenedor, 
-          borderRadius: '16px', 
-          padding: '20px', 
+        <div style={{
+          background: theme.fondoContenedor,
+          borderRadius: '16px',
+          padding: '20px',
           boxShadow: theme.sombraComponente,
           border: `2px solid ${theme.bordePrincipal}`,
           animation: 'fadeIn 0.5s ease-in'
@@ -460,15 +460,15 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
               box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
             }
           `}</style>
-          
+
           <h3 style={{ marginBottom: '24px', color: theme.textoPrincipal, fontSize: '1.2rem', fontWeight: '600' }}>
             Distribución de Estados de Servicios
           </h3>
-          
+
           <ResponsiveContainer width="100%" height={320}>
             <PieChart>
               <Pie
-                data={getEstadosParaDona()}
+                data={getEstadosParaDona}
                 cx="50%"
                 cy="50%"
                 innerRadius={70}
@@ -479,9 +479,9 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                 dataKey="cantidad"
                 nameKey="estado"
               >
-                {getEstadosParaDona().map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
+                {getEstadosParaDona.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
                     fill={entry.color}
                     className="donut-segment"
                   />
@@ -491,7 +491,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                 content={
                   <CustomTooltip
                     formatter={(value) => {
-                      const estadosData = getEstadosParaDona();
+                      const estadosData = getEstadosParaDona;
                       const total = estadosData.reduce((sum, item) => sum + item.cantidad, 0);
                       const porcentaje = ((value / total) * 100).toFixed(1);
                       return `${value} servicios (${porcentaje}%)`;
@@ -503,17 +503,17 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           </ResponsiveContainer>
 
           {/* Leyenda compacta - Badges con elevación */}
-          <div style={{ 
-            marginTop: '32px', 
+          <div style={{
+            marginTop: '32px',
             display: 'flex',
             flexWrap: 'wrap',
             gap: '12px',
             justifyContent: 'center'
           }}>
-            {getEstadosParaDona().map((item, index) => {
-              const total = getEstadosParaDona().reduce((sum, i) => sum + i.cantidad, 0);
+            {getEstadosParaDona.map((item, index) => {
+              const total = getEstadosParaDona.reduce((sum, i) => sum + i.cantidad, 0);
               const porcentaje = ((item.cantidad / total) * 100).toFixed(1);
-              
+
               return (
                 <div
                   key={index}
@@ -539,13 +539,13 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                     e.currentTarget.style.boxShadow = theme.sombraComponente;
                   }}
                 >
-                  <div 
-                    style={{ 
-                      width: '10px', 
-                      height: '10px', 
+                  <div
+                    style={{
+                      width: '10px',
+                      height: '10px',
                       background: item.color,
                       borderRadius: '50%'
-                    }} 
+                    }}
                   />
                   <span style={{ color: theme.textoPrincipal, fontWeight: '600' }}>
                     {item.estado}
@@ -568,11 +568,11 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   const renderClientesView = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <h2 style={{ color: theme.textoPrincipal, textAlign: 'center' }}>Análisis de Clientes</h2>
-      
-      <div style={{ 
-        background: theme.fondoContenedor, 
-        borderRadius: '16px', 
-        padding: '20px', 
+
+      <div style={{
+        background: theme.fondoContenedor,
+        borderRadius: '16px',
+        padding: '20px',
         boxShadow: theme.sombraComponente,
         border: `1px solid ${theme.bordePrincipal}`
       }}>
@@ -583,18 +583,18 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
             <XAxis dataKey="cliente" stroke={theme.textoPrincipal} />
             <YAxis yAxisId="left" stroke={theme.textoPrincipal} />
             <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} />
-            <Tooltip 
-                content={
-                  <CustomTooltip 
-                    formatter={(value, name) => {
-                      if (name === 'Valor Total') {
-                        return formatCurrency(value);
-                      }
-                      return value;
-                    }} 
-                  />
-                } 
-              />
+            <Tooltip
+              content={
+                <CustomTooltip
+                  formatter={(value, name) => {
+                    if (name === 'Valor Total') {
+                      return formatCurrency(value);
+                    }
+                    return value;
+                  }}
+                />
+              }
+            />
             <Legend />
             <Bar yAxisId="left" dataKey="servicios" fill={theme.textoInfo} radius={[16, 16, 16, 16]} name="Servicios" />
             <Bar yAxisId="right" dataKey="valor" fill={theme.terminalVerde} radius={[16, 16, 16, 16]} name="Valor Total" />
@@ -602,10 +602,10 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         </ResponsiveContainer>
       </div>
 
-      <div style={{ 
-        background: theme.fondoContenedor, 
-        borderRadius: '16px', 
-        padding: '20px', 
+      <div style={{
+        background: theme.fondoContenedor,
+        borderRadius: '16px',
+        padding: '20px',
         boxShadow: theme.sombraComponente,
         border: `1px solid ${theme.bordePrincipal}`
       }}>
@@ -629,11 +629,11 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   const renderServiciosView = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <h2 style={{ color: theme.textoPrincipal, textAlign: 'center' }}>Análisis de Servicios</h2>
-      
-      <div style={{ 
-        background: theme.fondoContenedor, 
-        borderRadius: '16px', 
-        padding: '20px', 
+
+      <div style={{
+        background: theme.fondoContenedor,
+        borderRadius: '16px',
+        padding: '20px',
         boxShadow: theme.sombraComponente,
         border: `1px solid ${theme.bordePrincipal}`
       }}>
@@ -645,8 +645,8 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           <BarChart data={dataToUse.serviciosPorTipo}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
             <XAxis dataKey="tipo" stroke={theme.textoPrincipal} />
-            <YAxis yAxisId="left" stroke={theme.textoPrincipal} />     
-            <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} /> 
+            <YAxis yAxisId="left" stroke={theme.textoPrincipal} />
+            <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} />
 
             <Tooltip
               content={
@@ -719,7 +719,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
 
       {selectedView === 'pendientes-efectivo' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <ServiciosPendientesEfectivo 
+          <ServiciosPendientesEfectivo
             file={file}
             fechaInicio={fechaInicio}
             fechaFin={fechaFin}
@@ -728,7 +728,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       )}
       {selectedView === 'pendientes-cobrar' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <ServiciosPendientesCobrar 
+          <ServiciosPendientesCobrar
             file={file}
             fechaInicio={fechaInicio}
             fechaFin={fechaFin}
@@ -740,12 +740,12 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: 200,
-        color: theme.textoPrincipal 
+        color: theme.textoPrincipal
       }}>
         <p>Cargando dashboard analytics...</p>
       </div>
@@ -783,17 +783,17 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   }
 
   return (
-    <div style={{ 
-      maxWidth: '1400px', 
-      margin: '0 auto', 
+    <div style={{
+      maxWidth: '1400px',
+      margin: '0 auto',
       padding: '20px',
       background: theme.fondoCuerpo,
       minHeight: '100vh',
       color: theme.textoPrincipal
     }}>
-      <h1 style={{ 
-        textAlign: 'center', 
-        marginBottom: '30px', 
+      <h1 style={{
+        textAlign: 'center',
+        marginBottom: '30px',
         color: theme.textoPrincipal,
         fontSize: '32px',
         fontWeight: 'bold'
@@ -810,7 +810,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         {selectedView === 'pendientes' && renderPendientesView()}
         {selectedView === 'pendientes-efectivo' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <ServiciosPendientesEfectivo 
+            <ServiciosPendientesEfectivo
               file={file}
               fechaInicio={fechaInicio}
               fechaFin={fechaFin}
@@ -819,7 +819,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         )}
         {selectedView === 'pendientes-cobrar' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <ServiciosPendientesCobrar 
+            <ServiciosPendientesCobrar
               file={file}
               fechaInicio={fechaInicio}
               fechaFin={fechaFin}
@@ -831,4 +831,4 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   );
 };
 
-export default EnhancedAnalyticsDashboard;
+export default React.memo(EnhancedAnalyticsDashboard);
