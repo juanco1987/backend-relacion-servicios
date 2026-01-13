@@ -4,232 +4,115 @@ import { useTheme } from '../../context/ThemeContext';
 const CustomTable = React.memo(({ headers, data, renderRow, wrapperStyles = {}, tableStyles = {} }) => {
     const { theme } = useTheme();
 
+    // Estilo Contenedor Moderno (Glassmorphism sutil)
     const defaultWrapperStyles = {
         padding: '0',
-        border: `3px solid ${theme.bordePrincipal}`,
-        borderRadius: '24px',
-        background: `linear-gradient(145deg, ${theme.fondoContenedor}dd 0%, ${theme.fondoElemento}ee 100%)`,
+        borderRadius: '16px',
+        background: theme.fondoContenedor, // Use solid or semi-transparent from theme
+        border: `1px solid ${theme.bordePrincipal}`,
         width: '100%',
         margin: '0 auto',
-        overflow: 'hidden',
-        boxShadow: `
-            ${theme.sombraComponente}, 
-            0 10px 40px ${theme.bordePrincipal}40,
-            inset 0 1px 0 rgba(255,255,255,0.1)
-        `,
-        transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        overflow: 'hidden', // Para el border radius
+        boxShadow: `0 4px 20px rgba(0,0,0,0.25)`, // Sombra suave moderna
         position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
         ...wrapperStyles
     };
 
-    // Barra decorativa superior más llamativa
-    const topBarStyles = {
-        height: '8px',
-        background: `linear-gradient(90deg, 
-            ${theme.primario} 0%, 
-            ${theme.terminalVerde} 25%,
-            ${theme.terminalAzul} 50%,
-            ${theme.terminalRosa} 75%,
-            ${theme.primario} 100%
-        )`,
-        boxShadow: `0 2px 10px ${theme.primario}60`,
-        position: 'relative',
-        overflow: 'hidden'
-    };
-
+    // Estilo Tabla
     const defaultTableStyles = {
         width: '100%',
         borderCollapse: 'separate',
         borderSpacing: 0,
-        background: 'transparent',
         ...tableStyles
     };
 
+    // Estilo Encabezado (Sticky & Clean)
     const thStyles = {
-        padding: '24px 28px',
-        textAlign: 'left',
-        background: `linear-gradient(180deg, ${theme.fondoEncabezado} 0%, ${theme.fondoEncabezado}dd 100%)`,
-        color: theme.textoPrincipal,
-        fontWeight: 900,
-        fontSize: '0.8rem',
-        borderBottom: `4px solid ${theme.primario}`,
-        borderRight: `2px solid ${theme.bordePrincipal}60`,
-        position: 'relative',
-        letterSpacing: '1.2px',
+        padding: '16px 24px',
+        textAlign: 'center', // Centrado por defecto como pidió el usuario
+        background: theme.fondoContenedor, // O un tono ligeramente diferente
+        color: theme.textoSecundario,
+        fontWeight: 700,
+        fontSize: '0.75rem',
         textTransform: 'uppercase',
-        textShadow: `0 2px 4px ${theme.bordePrincipal}40`,
-        boxShadow: `inset 0 -4px 8px ${theme.primario}20`
+        letterSpacing: '0.05em',
+        borderBottom: `1px solid ${theme.bordePrincipal}`,
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        backdropFilter: 'blur(12px)', // Efecto glass si el fondo tiene transparencia
+        whiteSpace: 'nowrap'
     };
 
+    // Estilo Celda Base
     const tdStyles = {
-        padding: '20px 28px',
-        borderBottom: `2px solid ${theme.bordePrincipal}80`,
-        borderRight: `2px solid ${theme.bordePrincipal}60`,
+        padding: '16px 24px',
+        borderBottom: `1px solid ${theme.bordePrincipal}40`, // Borde muy sutil
         color: theme.textoPrincipal,
-        fontSize: '0.95rem',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative',
-        fontWeight: 500,
-        background: 'transparent'
+        fontSize: '0.9rem',
+        whiteSpace: 'nowrap',
+        transition: 'all 0.2s ease'
     };
 
+    // Estilo Fila
     const trStyles = {
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative'
+        transition: 'background-color 0.2s ease, transform 0.2s ease',
+        cursor: 'default'
     };
 
     return (
-        <div
-            style={defaultWrapperStyles}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-8px) scale(1.01)';
-                e.currentTarget.style.boxShadow = `
-                    ${theme.sombraHover}, 
-                    0 20px 60px ${theme.bordePrincipal}50,
-                    0 0 80px ${theme.primario}30,
-                    inset 0 1px 0 rgba(255,255,255,0.2)
-                `;
-                e.currentTarget.style.borderColor = theme.primario;
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = `
-                    ${theme.sombraComponente}, 
-                    0 10px 40px ${theme.bordePrincipal}40,
-                    inset 0 1px 0 rgba(255,255,255,0.1)
-                `;
-                e.currentTarget.style.borderColor = theme.bordePrincipal;
-            }}
-        >
-            {/* Barra decorativa superior con efecto de brillo animado */}
-            <div style={topBarStyles}>
-                <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: '-100%',
-                    width: '100%',
-                    height: '100%',
-                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
-                    animation: 'shimmer 3s infinite'
-                }}></div>
-            </div>
-
-            <div style={{ padding: '2rem', overflowX: 'auto' }}>
+        <div style={defaultWrapperStyles}>
+            {/* Contenedor con scroll para la tabla */}
+            <div style={{ overflowX: 'auto', width: '100%' }}>
                 <table style={defaultTableStyles}>
                     <thead>
-                        <tr style={{
-                            background: `linear-gradient(180deg, ${theme.fondoEncabezado} 0%, ${theme.fondoEncabezado}dd 100%)`,
-                            boxShadow: `0 4px 12px ${theme.bordePrincipal}30`
-                        }}>
+                        <tr>
                             {headers.map((header, index) => (
                                 <th key={index} style={{
                                     ...thStyles,
                                     ...(header.style || {}),
-                                    borderRight: index < headers.length - 1 ? `2px solid ${theme.bordePrincipal}60` : 'none',
-                                    borderTopLeftRadius: index === 0 ? '12px' : '0',
-                                    borderTopRightRadius: index === headers.length - 1 ? '12px' : '0'
+                                    // Alineación condicional basada en el header style si existe
                                 }}>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        position: 'relative'
-                                    }}>
-                                        {/* Icono decorativo más grande */}
-                                        <div style={{
-                                            width: '6px',
-                                            height: '24px',
-                                            background: `linear-gradient(180deg, ${theme.primario}, ${theme.terminalVerde})`,
-                                            borderRadius: '6px',
-                                            boxShadow: `0 0 10px ${theme.primario}80, 0 0 20px ${theme.primario}40`,
-                                            marginRight: '6px'
-                                        }}></div>
-                                        {header.label}
-                                    </div>
+                                    {header.label}
                                 </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {data.map((item, index) => (
-                            <tr
-                                key={index}
-                                style={{
-                                    ...trStyles,
-                                    background: index % 2 === 0
-                                        ? `linear-gradient(90deg, ${theme.fondoContenedor}40 0%, ${theme.fondoContenedor}80 50%, ${theme.fondoContenedor}40 100%)`
-                                        : `linear-gradient(90deg, ${theme.fondoElemento}20 0%, ${theme.fondoElemento}60 50%, ${theme.fondoElemento}20 100%)`,
-                                    borderBottom: index === data.length - 1 ? 'none' : `2px solid ${theme.bordePrincipal}80`,
-                                    borderBottomLeftRadius: index === data.length - 1 ? '12px' : '0',
-                                    borderBottomRightRadius: index === data.length - 1 ? '12px' : '0'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = `
-                                        linear-gradient(90deg, 
-                                            ${theme.primario}15 0%, 
-                                            ${theme.fondoHover} 50%, 
-                                            ${theme.primario}15 100%
-                                        )
-                                    `;
-                                    e.currentTarget.style.transform = 'translateX(12px) scale(1.02)';
-                                    e.currentTarget.style.boxShadow = `
-                                        -6px 0 0 0 ${theme.primario}, 
-                                        0 6px 30px ${theme.bordePrincipal}40,
-                                        inset 0 0 20px ${theme.primario}10
-                                    `;
-                                    e.currentTarget.style.borderRadius = '12px';
-                                    e.currentTarget.style.zIndex = '10';
-                                    e.currentTarget.style.borderBottom = `2px solid ${theme.primario}80`;
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = index % 2 === 0
-                                        ? `linear-gradient(90deg, ${theme.fondoContenedor}40 0%, ${theme.fondoContenedor}80 50%, ${theme.fondoContenedor}40 100%)`
-                                        : `linear-gradient(90deg, ${theme.fondoElemento}20 0%, ${theme.fondoElemento}60 50%, ${theme.fondoElemento}20 100%)`;
-                                    e.currentTarget.style.transform = 'translateX(0) scale(1)';
-                                    e.currentTarget.style.boxShadow = 'none';
-                                    e.currentTarget.style.borderRadius = '0';
-                                    e.currentTarget.style.zIndex = '1';
-                                    e.currentTarget.style.borderBottom = index === data.length - 1 ? 'none' : `2px solid ${theme.bordePrincipal}80`;
-                                }}
-                            >
-                                {React.Children.map(renderRow(item, tdStyles), (child, cellIndex) => {
-                                    if (React.isValidElement(child) && child.type === 'td') {
-                                        return React.cloneElement(child, {
-                                            style: {
-                                                ...child.props.style,
-                                                borderRight: cellIndex === headers.length - 1 ? 'none' : child.props.style?.borderRight || tdStyles.borderRight,
-                                                borderBottomLeftRadius: index === data.length - 1 && cellIndex === 0 ? '12px' : '0',
-                                                borderBottomRightRadius: index === data.length - 1 && cellIndex === headers.length - 1 ? '12px' : '0'
-                                            }
-                                        });
-                                    }
-                                    return child;
-                                })}
-                            </tr>
-                        ))}
+                        {data.map((item, index) => {
+                            // Alternating row colors (muy sutil)
+                            const isEven = index % 2 === 0;
+                            const bgBase = 'transparent';
+
+                            return (
+                                <tr
+                                    key={index}
+                                    style={trStyles}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = `${theme.primario}10`; // 10% de opacidad del primario
+                                        // e.currentTarget.style.transform = 'scale(1.005)'; // Puede causar problemas de layout en tablas, mejor evitar scale en tr
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = bgBase;
+                                        // e.currentTarget.style.transform = 'scale(1)';
+                                    }}
+                                >
+                                    {renderRow(item, tdStyles)}
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
 
-            {/* Barra inferior decorativa */}
-            <div style={{
-                height: '4px',
-                background: `linear-gradient(90deg, 
-                    transparent 0%, 
-                    ${theme.primario}80 50%, 
-                    transparent 100%
-                )`,
-                opacity: 0.6,
-                boxShadow: `0 0 10px ${theme.primario}60`
-            }}></div>
-
-            {/* Agregar keyframes para la animación shimmer */}
-            <style>{`
-                @keyframes shimmer {
-                    0% { left: -100%; }
-                    100% { left: 200%; }
-                }
-            `}</style>
+            {/* Footer sutil si no hay datos o final */}
+            {data.length === 0 && (
+                <div style={{ padding: '2rem', textAlign: 'center', color: theme.textoSecundario }}>
+                    No hay datos para mostrar
+                </div>
+            )}
         </div>
     );
 });

@@ -20,16 +20,24 @@ class AnalyticsService:
     @staticmethod
     def _read_excel_robust(file_path):
         """Lee todas las hojas de un Excel y las concatena."""
-        xls = pd.ExcelFile(file_path, engine='openpyxl')
         dfs = []
-        for hoja in xls.sheet_names:
-            df_hoja = pd.read_excel(xls, sheet_name=hoja)
-            # Normalizar nombres de columnas
-            df_hoja.columns = [str(col).strip() for col in df_hoja.columns]
-            dfs.append(df_hoja)
+        try:
+            with pd.ExcelFile(file_path, engine='openpyxl') as xls:
+                for hoja in xls.sheet_names:
+                    df_hoja = pd.read_excel(xls, sheet_name=hoja)
+                    # Normalizar nombres de columnas
+                    df_hoja.columns = [str(col).strip() for col in df_hoja.columns]
+                    dfs.append(df_hoja)
+        except Exception as e:
+             print(f"ERROR LECTURA EXCEL: {e}")
+             raise e
+             
         if not dfs:
             raise ValueError('No se encontraron hojas en el archivo Excel.')
-        return pd.concat(dfs, ignore_index=True)
+        
+        df_concat = pd.concat(dfs, ignore_index=True)
+        print(f"DEBUG: Excel leído. Columnas encontradas: {list(df_concat.columns)}")
+        return df_concat
 
     @classmethod
     def get_general_analytics(cls, file_path):
@@ -37,6 +45,8 @@ class AnalyticsService:
 
         # Obtener variantes de columnas
         columnas_variantes = ColumnMapper.get_column_variants()
+        
+        print("DEBUG: Variantes de TORRE/APTO:", columnas_variantes.get('TORRE/APTO'))
 
         # Buscar columnas robustamente usando ColumnMapper
         col_estado = ColumnMapper.find_column(df, columnas_variantes['ESTADO DEL SERVICIO'])
@@ -201,6 +211,103 @@ class AnalyticsService:
         otros = df[~df[col_estado].isin(estados_conocidos) & df[col_estado].notna()]
         estados_grafico['OTROS'] = len(otros)
         
+
+        # --- Lógica de Categorización de Clientes (Fase 1: TORRE/APTO) ---
+        target_cols = columnas_variantes.get('TORRE/APTO', ['TORRE/APTO', 'TORRE', 'APTO'])
+        col_torre_apto = ColumnMapper.find_column(df, target_cols)
+        
+        # Filtrar solo filas con fecha válida para coincidir con el conteo general
+        df_clients = df[df[col_fecha].notna()].copy()
+        
+        print(f"DEBUG: Buscando columnas TORRE/APTO con variantes: {target_cols}")
+        print(f"DEBUG: Columna encontrada: {col_torre_apto}")
+        
+        # Si no encuentra TORRE/APTO específico, intentar usar Dirección como fallback (opcional, pero el usuario dijo TORRE/APTO)
+        if not col_torre_apto:
+             col_torre_apto = ColumnMapper.find_column(df_clients, columnas_variantes.get('DIRECCION', []))
+             print(f"DEBUG: Fallback a DIRECCION: {col_torre_apto}")
+
+        clientes_por_tipo = []
+
+        if col_torre_apto:
+            print(f"DEBUG: Muestra valores TORRE/APTO: {df_clients[col_torre_apto].unique()[:15]}")
+
+            # Diccionario para acumular
+            categorias = {
+                'ADMINISTRACIÓN': {'cantidad': 0, 'valor': 0},
+                'EMPRESA': {'cantidad': 0, 'valor': 0},
+                'LOCAL': {'cantidad': 0, 'valor': 0},
+                'CASA': {'cantidad': 0, 'valor': 0},
+                # 'APTO' se mapeará a CASA o separado si se desea, 
+                # el usuario dijo: "si aparecen numeros que lo ponga con nombre abreviado APTO"
+                'APTO': {'cantidad': 0, 'valor': 0}, 
+                'OTROS': {'cantidad': 0, 'valor': 0}
+            }
+
+            # Iterar sobre el DF (vectorizar sería mejor, pero la lógica de string es compleja)
+            # Usaremos apply para clasificación
+            def clasificar_cliente(valor):
+                s = str(valor).strip().upper()
+                if not s or s == 'NAN': return 'OTROS'
+                
+                # Palabras clave fuertes para ADMINISTRACION
+                if any(x in s for x in ['ADMINISTRACION', 'ADMON', 'CONJUNTO', 'EDIFICIO', 'TORRE', 'P.H.', 'PROPIEDAD', 'AGRUPACION']):
+                     # Excepción: Si dice "TORRE x APTO y", probablemente es APTO, no la administración de la torre.
+                     # Pero "TORRE" solo suele ser la administración.
+                     # Si tiene "APTO" o "CASA" explícito, dejar que caiga en reglas posteriores? 
+                     # No, si dice "CONJUNTO XYZ CASA 1", es CASA.
+                     # Vamos a priorizar CASA/APTO/LOCAL si aparecen explícitamente.
+                     if not any(x in s for x in ['APTO', 'CASA', 'LOCAL', 'CONSULTORIO', 'OFICINA', 'BODEGA']):
+                         return 'ADMINISTRACIÓN'
+
+                if any(x in s for x in ['EMPRESA', 'SAS', 'LTDA', 'PARROQUIA', 'COLEGIO', 'IGLESIA']):
+                    return 'EMPRESA'
+
+                # Incluir errores tipográficos comunes como CONSULTIRIO
+                if any(x in s for x in ['LOCAL', 'TIENDA', 'C.C', 'BAR', 'BODEGA', 'CONSULTORIO', 'CONSULTIRIO', 'OFICINA', 'RESTAURANTE']):
+                    return 'LOCAL'
+                    
+                if any(x in s for x in ['CASA', 'URBANIZACION', 'VIVIENDA']):
+                    return 'CASA'
+                
+                # Chequear si es solo números (APTO)
+                # O si contiene palabras clave de apto (Bloque, Int, Ap)
+                import re
+                if re.search(r'\d', s): # Si tiene números
+                     return 'APTO'
+                
+                return 'OTROS'
+
+            df_clients['TIPO_CLIENTE_TEMP'] = df_clients[col_torre_apto].apply(clasificar_cliente)
+
+            # Agrupar y sumar
+            # Necesitamos sumar el valor. Usaremos col_para_jg por defecto o col_xporc si representa valor?
+            # get_general_analytics calcula efectivo_total usando col_para_jg. Usaremos esa.
+            
+            # Asegurar que col_para_jg es numérica (ya se hizo arriba)
+            grupo_clientes = df_clients.groupby('TIPO_CLIENTE_TEMP')[col_para_jg].agg(['count', 'sum']).reset_index()
+            
+            for _, row in grupo_clientes.iterrows():
+                cat = row['TIPO_CLIENTE_TEMP']
+                if cat in categorias:
+                    categorias[cat]['cantidad'] = int(row['count'])
+                    categorias[cat]['valor'] = float(row['sum'])
+            
+            # Convertir a lista para el frontend
+            for cat, data in categorias.items():
+                if data['cantidad'] > 0:
+                    clientes_por_tipo.append({
+                        'cliente': cat,
+                        'servicios': data['cantidad'],
+                        'valor': data['valor']
+                    })
+            
+            # Ordenar por valor descendente
+            clientes_por_tipo.sort(key=lambda x: x['valor'], reverse=True)
+            
+            print(f"DEBUG: Resultados Clientes: {clientes_por_tipo}")
+
+        # Actualizar el diccionario de retorno
         return {
             'resumen': resumen, 
             'pendientes_por_mes': pendientes_por_mes,
@@ -215,6 +322,7 @@ class AnalyticsService:
                 'no_se_cobra_domicilio': total_no_se_cobra_domicilio,
                 'cotizacion': total_cotizacion
             },
+            'clientes_recurrentes': clientes_por_tipo, # Dato real ahora
             'success': True
         }
 
@@ -298,20 +406,39 @@ class AnalyticsService:
                 total_valor = grupo_mes[col_para_jg].sum()
 
             dias_sin_relacionar = grupo_mes['dias_sin_relacionar'].max() if not grupo_mes.empty else 0
+            
+            # Calcular fecha más antigua de servicios pendientes en este mes
+            # Solo consideramos los que están realmente pendientes (no YA RELACIONADO)
+            # Aunque grupo_mes ya está filtrado por status? 
+            # get_general_analytics filtró df antes (df_filtrado). Sí.
+            
+            if not grupo_mes.empty:
+                 fecha_mas_antigua = grupo_mes[col_fecha].min()
+                 fecha_mas_antigua_str = fecha_mas_antigua.strftime('%Y-%m-%d') if pd.notna(fecha_mas_antigua) else 'N/A'
+            else:
+                 fecha_mas_antigua_str = '9999-12-31'
 
             servicios_antiguos = grupo_mes[grupo_mes['dias_sin_relacionar'] > 30]
-            tiene_pendientes = len(servicios_antiguos) > 0
+            num_antiguos = len(servicios_antiguos)
+            total_pendientes_mes = len(grupo_mes)
+            tiene_pendientes = total_pendientes_mes > 0
+            tiene_antiguos = num_antiguos > 0
 
-            if tiene_pendientes:
-                advertencia = f"⚠️ ADVERTENCIA: Hay {len(servicios_antiguos)} servicios en efectivo con más de 30 días sin relacionar"
+            if tiene_antiguos:
+                advertencia = f"⚠️ ADVERTENCIA: Hay {num_antiguos} servicios en efectivo con más de 30 días sin relacionar"
+            elif tiene_pendientes:
+                advertencia = f"ℹ️ Hay {total_pendientes_mes} servicios pendientes por relacionar (Recientes)"
             else:
                 advertencia = "✅ Todos los servicios en efectivo están al día"
 
             resumen[mes] = {
-                'total_servicios': len(grupo_mes),
+                'total_servicios': total_pendientes_mes,
                 'total_valor': total_valor,
                 'dias_sin_relacionar': dias_sin_relacionar,
                 'tiene_pendientes': tiene_pendientes,
+                'tiene_antiguos': tiene_antiguos,
+                'num_antiguos': num_antiguos,
+                'fecha_mas_antigua': fecha_mas_antigua_str,
                 'advertencia': advertencia
             }
 

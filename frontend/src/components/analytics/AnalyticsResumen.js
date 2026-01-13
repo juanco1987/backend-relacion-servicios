@@ -74,116 +74,88 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
             key={item.mes}
             color={theme.primario}
             variant="elevated"
+            valueStyle={{ marginBottom: 0 }}
           >
-            <h4 style={{
-              color: theme.textoPrincipal,
-              margin: '0 0 8px 0',
-              fontSize: '16px',
-              fontWeight: 'bold'
-            }}>
-              {item.mes}
-            </h4>
-            <div style={{
-              color: theme.terminalVerde,
-              fontSize: '18px',
-              fontWeight: 'bold',
-              marginBottom: '4px'
-            }}>
-              {formatCurrency(item.total)}
-            </div>
-            <div style={{
-              color: theme.textoSecundario,
-              fontSize: '14px'
-            }}>
-              {item.cantidad_general} servicios
-            </div>
+            {/* Header Conciso */}
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
-              marginTop: '8px',
-              fontSize: '12px'
+              alignItems: 'center',
+              marginBottom: '10px',
             }}>
-              <span style={{ color: theme.terminalVerde }}>
-                💰 {formatCurrency(item.efectivo)}
-              </span>
-              <span style={{ color: theme.textoInfo }}>
-                💳 {formatCurrency(item.transferencia)}
-              </span>
+              <h4 style={{
+                color: theme.textoPrincipal,
+                margin: 0,
+                fontSize: '0.95rem',
+                fontWeight: '800',
+                borderLeft: `3px solid ${theme.terminalVerde}`,
+                paddingLeft: '8px',
+                lineHeight: '1'
+              }}>
+                {item.mes}
+              </h4>
+            </div>
+
+            {/* Total Principal con Degradado Premium */}
+            <div style={{
+              background: `linear-gradient(135deg, ${theme.terminalVerdeNeon} 0%, ${theme.terminalAzul} 100%)`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontSize: '2rem',
+              fontWeight: '900',
+              marginBottom: '10px',
+              letterSpacing: '-1px',
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+            }}>
+              {formatCurrency(item.total)}
+            </div>
+
+            {/* Barra Visual de Proporción */}
+            <div style={{
+              display: 'flex',
+              height: '6px',
+              width: '100%',
+              borderRadius: '3px',
+              overflow: 'hidden',
+              marginBottom: '12px',
+              background: theme.bordePrincipal
+            }}>
+              <div style={{
+                width: `${(item.efectivo / item.total) * 100}%`,
+                background: theme.terminalVerde
+              }} />
+              <div style={{
+                width: `${(item.transferencia / item.total) * 100}%`,
+                background: theme.textoInfo
+              }} />
+            </div>
+
+            {/* Desglose Footer Minimalista */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingTop: '8px',
+              borderTop: `1px solid ${theme.bordePrincipal}`
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1rem' }}>💰</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: theme.terminalVerde }}>
+                  {formatCurrency(item.efectivo)}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: theme.textoInfo }}>
+                  {formatCurrency(item.transferencia)}
+                </span>
+                <span style={{ fontSize: '1rem' }}>💳</span>
+              </div>
             </div>
           </KpiCard>
-        ))}
+        ))
+        }
       </div>
 
-      <div style={{
-        marginTop: '24px',
-        padding: '16px',
-        background: theme.fondoPrincipal,
-        borderRadius: '12px',
-        border: `1px solid ${theme.bordePrincipal}`
-      }}>
-        <h4 style={{
-          color: theme.textoPrincipal,
-          margin: '0 0 12px 0',
-          textAlign: 'center'
-        }}>
-          📊 Estadísticas Generales
-        </h4>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '12px',
-          textAlign: 'center'
-        }}>
-          <KpiCard color={theme.terminalVerde} variant='elevated'>
-            <div style={{ color: theme.terminalVerde, fontWeight: 'bold' }}>
-              {formatCurrency(dataGrafica.reduce((sum, item) => sum + item.efectivo, 0))}
-            </div>
-            <div style={{ color: theme.textoSecundario, fontSize: '12px' }}>
-              Total Efectivo
-            </div>
-          </KpiCard>
-          <KpiCard color={theme.textoInfo} variant='elevated'>
-            <div style={{ color: theme.textoInfo, fontWeight: 'bold' }}>
-              {formatCurrency(dataGrafica.reduce((sum, item) => sum + item.transferencia, 0))}
-            </div>
-            <div style={{ color: theme.textoSecundario, fontSize: '12px' }}>
-              Total Transferencia
-            </div>
-          </KpiCard>
-          <KpiCard color={theme.terminalVerdeNeon} variant='elevated'>
-            <div style={{ color: theme.terminalVerdeNeon, fontWeight: 'bold' }}>
-              {formatCurrency(dataGrafica.reduce((sum, item) => sum + item.total, 0))}
-            </div>
-            <div style={{ color: theme.textoSecundario, fontSize: '12px' }}>
-              Total General
-            </div>
-          </KpiCard>
-          <KpiCard color={theme.terminalOliva} variant='elevated'>
-            <div style={{ color: theme.terminalOliva, fontWeight: 'bold', }}>
-              {dataGrafica.reduce((sum, item) => sum + item.cantidad_general, 0)}
-            </div>
-            <div style={{ color: theme.textoSecundario, fontSize: '12px' }}>
-              Servicios Totales
-            </div>
-          </KpiCard>
-          <KpiCard color={theme.terminalRojo} variant='elevated'>
-            <div style={{ color: theme.terminalRojo, fontWeight: 'bold' }}>
-              {pendientes.total_pendientes_relacionar}
-            </div>
-            <div style={{ color: theme.textoSecundario, fontSize: '12px' }}>
-              Pendientes Relacionar
-            </div>
-          </KpiCard>
-          <KpiCard color={theme.terminalAmarillo} variant='elevated'>
-            <div style={{ color: theme.terminalAmarillo, fontWeight: 'bold' }}>
-              {pendientes.total_pendientes_cobrar}
-            </div>
-            <div style={{ color: theme.textoSecundario, fontSize: '12px' }}>
-              Pendientes Cobrar
-            </div>
-          </KpiCard>
-        </div>
-      </div>
     </div>
   );
 }

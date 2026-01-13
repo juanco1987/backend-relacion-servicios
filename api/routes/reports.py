@@ -37,10 +37,12 @@ def procesar_excel(file, fecha_inicio, fecha_fin):
     """Endpoint para procesar Excel de servicios pendientes."""
     try:
         # Usar fechas por defecto si no se proporcionaron
+        # Usar fechas por defecto si no se proporcionaron (Año actual)
+        current_year = datetime.now().year
         if not fecha_inicio:
-            fecha_inicio = datetime.strptime('2024-01-01', '%Y-%m-%d')
+            fecha_inicio = datetime(current_year, 1, 1)
         if not fecha_fin:
-            fecha_fin = datetime.strptime('2024-12-31', '%Y-%m-%d')
+            fecha_fin = datetime(current_year, 12, 31)
         
         with temporary_excel_file(file) as temp_path:
             success, result, status = ReportService.get_pending_services_report(temp_path, fecha_inicio, fecha_fin)
@@ -55,10 +57,11 @@ def procesar_excel(file, fecha_inicio, fecha_fin):
 def relacion_servicios(file, fecha_inicio, fecha_fin):
     """Endpoint para obtener relación de servicios en efectivo."""
     try:
+        current_year = datetime.now().year
         if not fecha_inicio:
-            fecha_inicio = datetime.strptime('2024-01-01', '%Y-%m-%d')
+            fecha_inicio = datetime(current_year, 1, 1)
         if not fecha_fin:
-            fecha_fin = datetime.strptime('2024-12-31', '%Y-%m-%d')
+            fecha_fin = datetime(current_year, 12, 31)
 
         # Callback para logs
         logs = []
@@ -84,10 +87,11 @@ def relacion_servicios(file, fecha_inicio, fecha_fin):
 def pdf_pendientes(file, fecha_inicio, fecha_fin, notas, nombre_pdf):
     """Endpoint para generar PDF de servicios pendientes."""
     try:
+        current_year = datetime.now().year
         if not fecha_inicio:
-            fecha_inicio = datetime.strptime('2024-01-01', '%Y-%m-%d')
+            fecha_inicio = datetime(current_year, 1, 1)
         if not fecha_fin:
-            fecha_fin = datetime.strptime('2024-12-31', '%Y-%m-%d')
+            fecha_fin = datetime(current_year, 12, 31)
 
         with temporary_excel_file(file) as temp_path:
             success, result, extra = ReportService.generate_pending_services_pdf(
@@ -111,10 +115,12 @@ def pdf_pendientes(file, fecha_inicio, fecha_fin, notas, nombre_pdf):
 def pdf_relacion_servicios(file, fecha_inicio, fecha_fin, notas, nombre_pdf):
     """Endpoint para generar PDF de relación de servicios."""
     try:
+        # Usar fechas por defecto si no se proporcionaron (Año actual)
+        current_year = datetime.now().year
         if not fecha_inicio:
-            fecha_inicio = datetime.strptime('2024-01-01', '%Y-%m-%d')
+            fecha_inicio = datetime(current_year, 1, 1)
         if not fecha_fin:
-            fecha_fin = datetime.strptime('2024-12-31', '%Y-%m-%d')
+            fecha_fin = datetime(current_year, 12, 31)
         
         # Obtener imágenes
         imagenes_json = request.form.get('imagenes', '[]')

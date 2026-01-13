@@ -93,26 +93,61 @@ const ServiciosPendientesEfectivo = ({ file }) => {
     const serviciosNuevos = datosMes.total_servicios || 0;
     const valorNuevo = datosMes.total_valor || 0;
     const diasNuevos = datosMes.dias_sin_relacionar || 0;
+    const numAntiguosNuevos = datosMes.num_antiguos || 0;
 
     const mensajeActual = acc.advertencia;
     const mensajeNuevo = datosMes.advertencia;
-    const usarMensajeNuevo = datosMes.tiene_pendientes &&
-      (!acc.tiene_pendientes || diasNuevos > acc.dias_sin_relacionar);
+
+    // Prioridad de mensajes: Urgente (>30) > Pendiente (>0) > Al día
+    // Si el nuevo tiene antiguos y el acumulado no (o es igual), usamos el nuevo.
+    const nuevosSonAntiguos = datosMes.tiene_antiguos;
+    const acumuladoTieneAntiguos = acc.tiene_antiguos;
+
+    let advertencia = acc.advertencia;
+
+    if (nuevosSonAntiguos) {
+      // Si es urgente, sobrescribimos si no había urgente antes, o si este es más relevante?
+      // Simplificación: Concatenar o usar el más grave. 
+      // Si el global ya tiene antiguos, mantenemos "Hay servicios > 30 días".
+      if (!acumuladoTieneAntiguos) {
+        advertencia = mensajeNuevo; // Primer urgente encontrado
+      }
+    } else if (datosMes.tiene_pendientes && !acumuladoTieneAntiguos) {
+      // Si hay pendientes (no urgentes) y no tenemos urgentes globales, mostrar info
+      if (!acc.tiene_pendientes) {
+        advertencia = mensajeNuevo;
+      }
+    }
 
     return {
       total_servicios: acc.total_servicios + serviciosNuevos,
       total_valor: acc.total_valor + valorNuevo,
       dias_sin_relacionar: Math.max(acc.dias_sin_relacionar, diasNuevos),
+      num_antiguos: (acc.num_antiguos || 0) + numAntiguosNuevos,
+      fecha_mas_antigua: (datosMes.fecha_mas_antigua && datosMes.fecha_mas_antigua < acc.fecha_mas_antigua) ? datosMes.fecha_mas_antigua : acc.fecha_mas_antigua,
       tiene_pendientes: acc.tiene_pendientes || datosMes.tiene_pendientes,
-      advertencia: usarMensajeNuevo ? mensajeNuevo : mensajeActual
+      tiene_antiguos: acc.tiene_antiguos || datosMes.tiene_antiguos, // Nuevo flag
+      advertencia: advertencia // Lógica simplificada, mejor sería reconstruir al final
     };
   }, {
     total_servicios: 0,
     total_valor: 0,
     dias_sin_relacionar: 0,
+    num_antiguos: 0,
+    fecha_mas_antigua: '9999-12-31',
     tiene_pendientes: false,
+    tiene_antiguos: false,
     advertencia: "✅ Todos los servicios en efectivo están al día"
   });
+
+  // Reconstruir advertencia global correcta al final
+  if (mesSeleccionado === 'Total Global') {
+    if (totalGlobal.tiene_antiguos) {
+      totalGlobal.advertencia = `⚠️ ADVERTENCIA: Existen servicios con más de 30 días sin relacionar.`;
+    } else if (totalGlobal.tiene_pendientes) {
+      totalGlobal.advertencia = `ℹ️ Hay ${totalGlobal.total_servicios} servicios pendientes por relacionar (Recientes).`;
+    }
+  }
 
   const datosSeleccionados = mesSeleccionado === 'Total Global'
     ? totalGlobal
@@ -120,6 +155,8 @@ const ServiciosPendientesEfectivo = ({ file }) => {
       total_servicios: 0,
       total_valor: 0,
       dias_sin_relacionar: 0,
+      num_antiguos: 0,
+      fecha_mas_antigua: '9999-12-31',
       tiene_pendientes: false,
       advertencia: "✅ ¡Excelente! No hay servicios pendientes por relacionar para este mes"
     };
@@ -258,13 +295,13 @@ const ServiciosPendientesEfectivo = ({ file }) => {
 
       <div style={{
         padding: '1rem',
-        backgroundColor: datosSeleccionados.tiene_pendientes ? theme.terminalAmarillo + '10' : theme.terminalVerde + '10',
-        border: `1px solid ${datosSeleccionados.tiene_pendientes ? theme.terminalAmarillo : theme.terminalVerde}`,
+        backgroundColor: datosSeleccionados.tiene_antiguos ? theme.terminalAmarillo + '10' : (datosSeleccionados.tiene_pendientes ? theme.terminalAzul + '10' : theme.terminalVerde + '10'),
+        border: `1px solid ${datosSeleccionados.tiene_antiguos ? theme.terminalAmarillo : (datosSeleccionados.tiene_pendientes ? theme.terminalAzul : theme.terminalVerde)}`,
         borderRadius: '8px',
         marginBottom: '1rem',
-        color: datosSeleccionados.tiene_pendientes ? theme.terminalAmarillo : theme.terminalVerde
+        color: datosSeleccionados.tiene_antiguos ? theme.terminalAmarillo : (datosSeleccionados.tiene_pendientes ? theme.terminalAzul : theme.terminalVerde)
       }}>
-        <strong>{datosSeleccionados.tiene_pendientes ? '⚠️ ADVERTENCIA:' : '✅ ÉXITO:'}</strong> {datosSeleccionados.advertencia}
+        <strong>{datosSeleccionados.tiene_antiguos ? '⚠️ ADVERTENCIA:' : (datosSeleccionados.tiene_pendientes ? 'ℹ️ INFORMACIÓN:' : '✅ ÉXITO:')}</strong> {datosSeleccionados.advertencia}
       </div>
 
       <div style={{
@@ -291,6 +328,17 @@ const ServiciosPendientesEfectivo = ({ file }) => {
           </div>
         </KpiCard>
 
+        {/* Estilo igual a Pendientes Cobrar para el contador +30 */}
+        <KpiCard color={theme.terminalRosa} variant='elevated'>
+          <div style={{ color: theme.terminalRosa, fontWeight: 'bold', fontSize: '28px' }}>
+            {formatInteger(datosSeleccionados.num_antiguos || 0)}
+          </div>
+          <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
+            Con +30 días de retraso
+          </div>
+        </KpiCard>
+
+        {/* Días Máximos (Rojo) */}
         <KpiCard color={theme.terminalRojo} variant='elevated'>
           <div style={{ color: theme.terminalRojo, fontWeight: 'bold', fontSize: '28px' }}>
             {datosSeleccionados.dias_sin_relacionar}
@@ -300,20 +348,32 @@ const ServiciosPendientesEfectivo = ({ file }) => {
           </div>
         </KpiCard>
 
-        <KpiCard color={datosSeleccionados.tiene_pendientes ? theme.terminalAmarillo : theme.terminalVerde} variant='elevated'>
+        {/* Servicio más antiguo (Info) */}
+        <KpiCard color={theme.textoInfo} variant='elevated'>
+          <div style={{ color: theme.textoInfo, fontWeight: 'bold', fontSize: '16px' }}>
+            {datosSeleccionados.fecha_mas_antigua && datosSeleccionados.fecha_mas_antigua !== '9999-12-31'
+              ? datosSeleccionados.fecha_mas_antigua
+              : 'N/A'}
+          </div>
+          <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
+            Servicio más antiguo
+          </div>
+        </KpiCard>
+
+        <KpiCard color={datosSeleccionados.tiene_antiguos ? theme.terminalAmarillo : (datosSeleccionados.tiene_pendientes ? theme.terminalAzul : theme.terminalVerde)} variant='elevated'>
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
             justifyContent: 'center',
-            color: datosSeleccionados.tiene_pendientes ? theme.terminalAmarillo : theme.terminalVerde,
+            color: datosSeleccionados.tiene_antiguos ? theme.terminalAmarillo : (datosSeleccionados.tiene_pendientes ? theme.terminalAzul : theme.terminalVerde),
             fontWeight: 'bold',
             fontSize: '18px'
           }}>
             <span style={{ fontSize: '24px' }}>
-              {datosSeleccionados.tiene_pendientes ? '⚠️' : '✅'}
+              {datosSeleccionados.tiene_antiguos ? '⚠️' : (datosSeleccionados.tiene_pendientes ? 'ℹ️' : '✅')}
             </span>
-            {datosSeleccionados.tiene_pendientes ? 'Pendiente' : 'Al día'}
+            {datosSeleccionados.tiene_antiguos ? 'Urgente' : (datosSeleccionados.tiene_pendientes ? 'Pendiente' : 'Al día')}
           </div>
           <div style={{ color: theme.textoSecundario, fontSize: '12px', marginTop: '4px' }}>
             Estado

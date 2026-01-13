@@ -14,19 +14,29 @@ const KpiCard = React.memo(({
 }) => {
   const { theme } = useTheme();
 
-  // Estilos base según variante
+  // Diseño Moderno Minimalista
   const baseStyles = {
-    background: theme.fondoContenedor,
-    borderRadius: '18px',
+    background: theme.fondoContenedor, // Fondo base
+    borderRadius: '16px', // Mismo radio que las tablas
     p: 3,
     textAlign: 'center',
-    transition: 'all 0.3s ease',
-    border: variant === 'flat' ? 'none' : `2px solid ${color ? `${color}20` : theme.bordePrincipal}`,
-    boxShadow: variant === 'flat' ? 'none' : theme.sombraComponente,
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    position: 'relative',
+    overflow: 'hidden',
+
+    // Borde sutil
+    border: variant === 'flat' ? 'none' : `1px solid ${theme.bordePrincipal}`,
+
+    // Sombra suave
+    boxShadow: variant === 'flat' ? 'none' : `0 4px 20px rgba(0,0,0,0.1)`,
+
+    // Borde inferior Accent (Glow)
+    borderBottom: variant === 'flat' || !color ? 'none' : `3px solid ${color}`,
+
     '&:hover': variant === 'flat' ? {} : {
-      transform: 'translateY(-4px)',
-      boxShadow: theme.sombraHover,
-      borderColor: color ? `${color}40` : theme.bordePrincipal,
+      transform: 'translateY(-5px)',
+      boxShadow: `0 12px 30px rgba(0,0,0,0.2), 0 0 15px ${color}30`, // Glow del color
+      borderColor: theme.bordePrincipal, // Mantener borde sutil
     }
   };
 
@@ -39,9 +49,12 @@ const KpiCard = React.memo(({
           {title && (
             <Typography variant="h6" sx={{
               color: theme.textoSecundario,
-              fontWeight: 600,
+              fontWeight: 700,
               mb: 1,
-              fontSize: '0.9rem'
+              fontSize: '0.85rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              opacity: 0.8
             }}>
               {title}
             </Typography>
@@ -50,19 +63,21 @@ const KpiCard = React.memo(({
             <Typography variant="h4" sx={{
               color: color || theme.primario,
               fontWeight: 800,
-              mb: 1,
-              textShadow: color ? `0 0 10px ${color}40` : 'none',
-              fontSize: { xs: '1.5rem', md: '2rem' }
-              , ...valueStyle
+              mb: 0.5,
+              fontSize: { xs: '1.8rem', md: '2.4rem' }, // Más grande e impactante
+              textShadow: color ? `0 0 20px ${color}20` : 'none', // Sombra de texto suave
+              ...valueStyle
             }}>
               {value}
             </Typography>
           )}
           {subtitle && (
             <Typography variant="body2" sx={{
-              color: theme.textoSecundario,
+              color: theme.textoPrincipal,
               fontWeight: 500,
-              fontSize: '0.8rem'
+              fontSize: '0.85rem',
+              mt: 1,
+              opacity: 0.7
             }}>
               {subtitle}
             </Typography>

@@ -91,5 +91,9 @@ class ColumnMapper:
             ],
             'VALOR_SERVICIO': [
                 'VALOR SERVICIO', 'Valor Servicio', 'VALOR', 'Valor', 'PRECIO'
+            ],
+            EXCEL_COLUMNS.get('TORRE_APTO', 'TORRE/APTO'): [
+                'TORRE/APTO', 'Torre/Apto', 'TORRE', 'Torre', 'APTO', 'Apto', 
+                'INTERIOR', 'Interior', 'OFICINA', 'Oficina', 'DIRECCION', 'Direccion' # Fallback a Dirección si es necesario, pero mejor explícito
             ]
         }

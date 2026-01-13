@@ -25,6 +25,8 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   const [estadosGrafico, setEstadosGrafico] = useState(null);
   const [totalesEstadosEspeciales, setTotalesEstadosEspeciales] = useState(null);
   const [estadosEspecialesPorMes, setEstadosEspecialesPorMes] = useState(null);
+  const [clientesData, setClientesData] = useState([]);
+  const [pendientesGlobales, setPendientesGlobales] = useState({ relacionar: 0, cobrar: 0 }); // Nuevo estado
   const [loading, setLoading] = useState(false);
 
   // Colores para el gráfico - Memoizados para evitar recreación
@@ -71,20 +73,17 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         const data = await response.json();
 
         console.log('✅ Data recibida:', data);
-        console.log('📊 resumen:', data.resumen);
-        console.log('📊 estados_grafico:', data.estados_grafico);
-        console.log('📊 totales_estados_especiales:', data.totales_estados_especiales);
-        console.log('📊 estados_especiales_por_mes:', data.estados_especiales_por_mes);
-
-        // DEBUG: Mostrar exactamente qué campos tiene estados_grafico
-        console.log('🔍 CAMPOS DE estados_grafico:', Object.keys(data.estados_grafico || {}));
-        console.log('🔍 Valor de OTROS:', data.estados_grafico?.OTROS);
-        console.log('🔍 Valor de TOTAL_SERVICIOS:', data.estados_grafico?.TOTAL_SERVICIOS);
-
         setAnalyticsData(data.resumen);
         setEstadosGrafico(data.estados_grafico);
         setTotalesEstadosEspeciales(data.totales_estados_especiales);
         setEstadosEspecialesPorMes(data.estados_especiales_por_mes);
+        setClientesData(data.clientes_recurrentes || []);
+
+        // Guardar pendientes globales
+        setPendientesGlobales({
+          relacionar: data.total_pendientes_relacionar || 0,
+          cobrar: data.total_pendientes_cobrar || 0
+        });
 
         console.log('✅ Estados actualizados en React');
 
@@ -201,7 +200,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         }
       ];
 
-      // Datos de ejemplo para servicios por tipo y clientes
+      // Datos de ejemplo para servicios por tipo (MOCK - Pendiente Fase 2)
       const serviciosPorTipo = [
         { tipo: 'Instalación', cantidad: Math.round(totalServicios * 0.4), valor: Math.round(totalIngresos * 0.4) },
         { tipo: 'Mantenimiento', cantidad: Math.round(totalServicios * 0.25), valor: Math.round(totalIngresos * 0.25) },
@@ -209,12 +208,9 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         { tipo: 'Revisión', cantidad: Math.round(totalServicios * 0.15), valor: Math.round(totalIngresos * 0.15) }
       ];
 
-      const clientesRecurrentes = [
-        { cliente: 'EMPRESAS', servicios: Math.round(totalServicios * 0.3), valor: Math.round(totalIngresos * 0.3) },
-        { cliente: 'CASA', servicios: Math.round(totalServicios * 0.4), valor: Math.round(totalIngresos * 0.4) },
-        { cliente: 'ADMINISTRACIÓN', servicios: Math.round(totalServicios * 0.2), valor: Math.round(totalIngresos * 0.2) },
-        { cliente: 'LOCAL', servicios: Math.round(totalServicios * 0.1), valor: Math.round(totalIngresos * 0.1) }
-      ];
+      // Datos REALES de clientes (Fase 1 completada)
+      // Usamos el estado clientesData que guarda lo que viene del backend
+      const clientesRecurrentes = clientesData || [];
 
       setRealData({
         serviciosPorTipo,
@@ -223,7 +219,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         estadosServicio
       });
     }
-  }, [analyticsData, estadosGrafico]);
+  }, [analyticsData, estadosGrafico, clientesData]);
 
   const dataToUse = analyticsData ? realData : {
     serviciosPorTipo: [],
@@ -234,37 +230,15 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
 
   const renderGeneralView = () => {
     console.log('🎨 Renderizando vista general');
-    console.log('📋 estadosGrafico:', estadosGrafico);
-    console.log('📋 totalesEstadosEspeciales:', totalesEstadosEspeciales);
-    console.log('📋 dataToUse:', dataToUse);
-
-    if (!estadosGrafico) {
-      return (
-        <div style={{
-          padding: '40px',
-          color: theme.textoPrincipal,
-          background: theme.fondoContenedor,
-          borderRadius: '16px',
-          textAlign: 'center'
-        }}>
-          <p style={{ fontSize: '1.2rem', marginBottom: '10px' }}>
-            No hay datos de estados disponibles
-          </p>
-          <p style={{ color: theme.textoSecundario }}>
-            Verifica que el backend esté retornando 'estados_grafico'
-          </p>
-        </div>
-      );
-    }
-
     const totalServicios = estadosGrafico?.TOTAL_SERVICIOS || 0;
     const totalIngresos = dataToUse.tendenciaMensual.reduce((sum, item) => sum + item.ingresos, 0);
-    const serviciosPendientes = estadosGrafico?.PENDIENTE_COBRAR || 0;
+    const serviciosPendientesCobrar = estadosGrafico?.PENDIENTE_COBRAR || 0;
+    // Usar el estado nuevo o fallback
+    const serviciosPendientesRelacionar = pendientesGlobales.relacionar;
+
     const efectividad = totalServicios > 0
       ? Math.round((estadosGrafico?.YA_RELACIONADO / totalServicios) * 100)
       : 0;
-
-    console.log('📊 Calculados - Total:', totalServicios, 'Ingresos:', totalIngresos, 'Pendientes:', serviciosPendientes, 'Efectividad:', efectividad);
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -283,10 +257,16 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
             color={theme.terminalVerde}
           />
           <KpiCard
-            title="Servicios Pendientes"
-            value={serviciosPendientes.toString()}
+            title="Pendientes Cobrar"
+            value={serviciosPendientesCobrar.toString()}
             subtitle="Por cobrar"
             color={theme.textoAdvertencia}
+          />
+          <KpiCard
+            title="Pendientes Relacionar"
+            value={serviciosPendientesRelacionar.toString()}
+            subtitle="Por relacionar"
+            color={theme.terminalRojo}
           />
           <KpiCard
             title="Efectividad"
@@ -299,7 +279,15 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         {/* KPIs de Estados Especiales */}
         {totalesEstadosEspeciales && (
           <div>
-            <h3 style={{ marginBottom: '16px', color: theme.textoPrincipal }}>
+            <h3 style={{
+              marginBottom: '20px',
+              color: theme.textoPrincipal,
+              fontSize: '1.1rem',
+              borderLeft: `4px solid ${theme.terminalAmarillo}`,
+              paddingLeft: '12px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
               Estados Especiales
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
@@ -338,14 +326,22 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         )}
 
         {/* Gráfico de Tendencia Mensual */}
+        {/* Gráfico de Tendencia Mensual */}
         <div style={{
           background: theme.fondoContenedor,
           borderRadius: '16px',
-          padding: '20px',
-          boxShadow: theme.sombraComponente,
-          border: `1px solid ${theme.bordePrincipal}`
+          padding: '24px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          border: `1px solid ${theme.bordePrincipal}`,
+          position: 'relative'
         }}>
-          <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>
+          <h3 style={{
+            marginBottom: '24px',
+            color: theme.textoPrincipal,
+            fontSize: '1.2rem',
+            borderBottom: `1px solid ${theme.bordePrincipal}`,
+            paddingBottom: '12px'
+          }}>
             Tendencia de Servicios e Ingresos
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -611,16 +607,31 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       }}>
         <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>Mejores Clientes</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-          {dataToUse.clientesRecurrentes.map((cliente, index) => (
-            <KpiCard
-              key={cliente.cliente}
-              title={`${cliente.cliente}`}
-              value={formatCurrency(cliente.valor)}
-              subtitle={`${cliente.servicios} servicios`}
-              color={index === 0 ? theme.terminalVerde : index === 1 ? theme.textoInfo : theme.textoSecundario}
-              valueStyle={{ fontSize: '1rem' }}
-            />
-          ))}
+          {dataToUse.clientesRecurrentes.map((cliente, index) => {
+            const colors = [
+              theme.terminalAzul,
+              theme.terminalVerde,
+              theme.terminalMorado,
+              theme.terminalRosa,
+              theme.terminalAmarillo,
+              theme.terminalCyan, // Nuevo
+              theme.terminalNaranja, // Nuevo uso
+              theme.terminalVerdeNeon
+            ];
+            // Ciclado de colores seguro
+            const color = colors[index % colors.length] || theme.textoInfo;
+
+            return (
+              <KpiCard
+                key={cliente.cliente}
+                title={`${cliente.cliente}`}
+                value={formatCurrency(cliente.valor)}
+                subtitle={`${cliente.servicios} servicios`}
+                color={color}
+                valueStyle={{ fontSize: '1rem' }}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

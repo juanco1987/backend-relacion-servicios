@@ -19,7 +19,8 @@ EXCEL_COLUMNS = {
     "IVA": "IVA",
     "SUBTOTAL": "SUBTOTAL",        # Columna calculada
     "TOTAL_EMPRESA": "TOTAL EMPRESA", # Columna calculada
-    "VALOR_COMBINADO": "VALOR_COMBINADO" # Columna calculada
+    "VALOR_COMBINADO": "VALOR_COMBINADO", # Columna calculada
+    "TORRE_APTO": "TORRE/APTO" # Columna para categorización de clientes
 }
 
 # --- Criterios de Filtrado ---
