@@ -98,7 +98,7 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
 
             {/* Total Principal con Degradado Premium */}
             <div style={{
-              background: `linear-gradient(135deg, ${theme.terminalVerdeNeon} 0%, ${theme.terminalAzul} 100%)`,
+              background: `linear-gradient(135deg, ${theme.terminalVerdeNeon} 40%, ${theme.terminalAzul} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               fontSize: '2rem',

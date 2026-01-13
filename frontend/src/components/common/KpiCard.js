@@ -64,7 +64,7 @@ const KpiCard = React.memo(({
               color: color || theme.primario,
               fontWeight: 800,
               mb: 0.5,
-              fontSize: { xs: '1.8rem', md: '2.4rem' }, // Más grande e impactante
+              fontSize: { xs: '1.8rem', md: '2.1rem' }, // Más grande e impactante
               textShadow: color ? `0 0 20px ${color}20` : 'none', // Sombra de texto suave
               ...valueStyle
             }}>
