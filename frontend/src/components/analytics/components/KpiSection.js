@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { formatNumber, formatCurrency } from '../../../utils/numberFormatters';
+import { formatCurrency } from '../../../utils/numberFormatters';
 import { useTheme } from '../../../context/ThemeContext';
 import KpiCard from '../../common/KpiCard';
 
@@ -43,11 +43,11 @@ function KpiSection({ kpi, pendientesSeleccionados }) {
   return (
     <>
       {/* KPIs de montos */}
-      <Box sx={{ 
-        display: 'grid', 
-        gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, 
-        gap: 3, 
-        mb: 4 
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+        gap: 3,
+        mb: 4
       }}>
         <KpiCard
           title="Total Efectivo"
@@ -70,11 +70,11 @@ function KpiSection({ kpi, pendientesSeleccionados }) {
       </Box>
 
       {/* KPIs de pendientes */}
-      <Box sx={{ 
-        display: 'grid', 
-        gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, 
-        gap: 3, 
-        mb: 4 
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+        gap: 3,
+        mb: 4
       }}>
         <KpiCard
           title="Pendientes Relacionar"

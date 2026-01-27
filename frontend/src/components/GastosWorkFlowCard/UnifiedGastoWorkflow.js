@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Box, Grid, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 import { API_CONFIG } from '../../config/appConfig';
 import WorkflowHeader from '../UnifiedWorkflowCard/WorkflowHeader';

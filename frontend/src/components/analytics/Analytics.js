@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Box, Typography, Select, MenuItem, FormControl, InputLabel,
-  Paper, Chip, Grow } from '@mui/material';
+import {
+  Box, Typography, Select, MenuItem, FormControl, InputLabel,
+  Paper, Chip, Grow
+} from '@mui/material';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
@@ -20,11 +22,10 @@ import { useAnalyticsData } from '../../hooks';
 // Componente externo
 import AnalyticsResumen from './AnalyticsResumen';
 
-function Analytics({ excelData, workMode, onFileChange, onClearFile }) { 
+function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
   const { theme } = useTheme();
   const [mesSeleccionado, setMesSeleccionado] = useState('Total Global');
   const [analyticsFile, setAnalyticsFile] = useState(null);
-  const [inputKey, setInputKey] = useState(0);
 
   // Hook personalizado para manejo de datos
   const {
@@ -42,26 +43,17 @@ function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
     if (file) {
       console.log('Analytics file selected:', file.name);
       setAnalyticsFile(file);
-      
+
       if (onFileChange) {
         console.log('Propagando archivo desde Analytics al padre:', file.name);
         onFileChange(file);
       }
-      
+
       setMesSeleccionado('Total Global');
     }
   };
 
-  const handleClearFile = () => {
-    console.log('handleClearFile ejecutado');
-    if (onClearFile) {
-      console.log('Llamando onClearFile del padre');
-      onClearFile();
-    }
-    setAnalyticsFile(null);
-    setMesSeleccionado('Total Global');
-    setInputKey(prev => prev + 1);
-  };
+
 
   // Estados condicionales
   if (loading) {
@@ -88,19 +80,19 @@ function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
   const totalGlobal = calculateGlobalTotals(dataGrafica);
   const mesesOrdenados = filterValidMonths(analyticsData);
 
-  const datosSeleccionados = mesSeleccionado === 'Total Global' 
-    ? totalGlobal 
+  const datosSeleccionados = mesSeleccionado === 'Total Global'
+    ? totalGlobal
     : analyticsData[mesSeleccionado] || {};
 
   const pendientesSeleccionados = mesSeleccionado === 'Total Global'
     ? {
-        total_pendientes_relacionar: pendientesData.total_pendientes_relacionar,
-        total_pendientes_cobrar: pendientesData.total_pendientes_cobrar
-      }
-    : pendientesData.pendientes_por_mes[mesSeleccionado] || { 
-        total_pendientes_relacionar: 0, 
-        total_pendientes_cobrar: 0 
-      };
+      total_pendientes_relacionar: pendientesData.total_pendientes_relacionar,
+      total_pendientes_cobrar: pendientesData.total_pendientes_cobrar
+    }
+    : pendientesData.pendientes_por_mes[mesSeleccionado] || {
+      total_pendientes_relacionar: 0,
+      total_pendientes_cobrar: 0
+    };
 
   const kpi = {
     efectivo_total: Number(datosSeleccionados?.efectivo_total || 0),
@@ -129,22 +121,22 @@ function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
         }}
       >
         {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-between',
           mb: 4,
           flexDirection: { xs: 'column', sm: 'row' },
           gap: 2
         }}>
-          <Typography variant="h5" sx={{ 
-            color: theme.textoPrincipal, 
+          <Typography variant="h5" sx={{
+            color: theme.textoPrincipal,
             fontWeight: 'bold',
             textAlign: { xs: 'center', sm: 'left' }
           }}>
             📊 Analytics - Análisis de Datos
           </Typography>
-          
+
           <Grow in={true} timeout={300}>
             <Chip
               label={`Archivo: ${(analyticsFile || excelData)?.name || 'Sin archivo'}`}
@@ -179,8 +171,8 @@ function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
         {/* Selector de mes */}
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
           <FormControl variant="outlined" sx={{ minWidth: 200 }}>
-            <InputLabel 
-              id="mes-selector-label" 
+            <InputLabel
+              id="mes-selector-label"
               sx={getCustomLabelSx(theme)}
             >
               Seleccionar Mes
@@ -212,18 +204,18 @@ function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
         </Box>
 
         {/* KPIs */}
-        <KpiSection 
-          kpi={kpi} 
-          pendientesSeleccionados={pendientesSeleccionados} 
+        <KpiSection
+          kpi={kpi}
+          pendientesSeleccionados={pendientesSeleccionados}
         />
 
         {/* Gráfico */}
         <AnalyticsChart dataGrafica={dataGrafica} />
 
         {/* Resumen detallado */}
-        <AnalyticsResumen 
-          resumen={analyticsData} 
-          pendientes={pendientesData} 
+        <AnalyticsResumen
+          resumen={analyticsData}
+          pendientes={pendientesData}
         />
       </Paper>
     </motion.div>

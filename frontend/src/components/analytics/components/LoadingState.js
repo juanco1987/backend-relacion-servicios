@@ -1,14 +1,14 @@
 import React from 'react';
-import { Box, Typography, Paper, CircularProgress } from '@mui/material';
+import { Typography, Paper, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../../context/ThemeContext';
 import FileControlSection from './FileControlSection';
 
-function LoadingState({ 
-  analyticsFile, 
-  excelData, 
-  onFileChange, 
-  inputKey 
+function LoadingState({
+  analyticsFile,
+  excelData,
+  onFileChange,
+  inputKey
 }) {
   const { theme } = useTheme();
 
@@ -40,22 +40,22 @@ function LoadingState({
           onFileChange={onFileChange}
           inputKey={inputKey}
         />
-        
-        <CircularProgress 
-          sx={{ 
+
+        <CircularProgress
+          sx={{
             color: theme.terminalVerdeNeon,
             mb: 3
-          }} 
+          }}
           size={60}
         />
-        <Typography variant="h6" sx={{ 
+        <Typography variant="h6" sx={{
           fontWeight: 'bold',
           color: theme.textoPrincipal,
           mb: 1
         }}>
           Procesando datos...
         </Typography>
-        <Typography variant="body2" sx={{ 
+        <Typography variant="body2" sx={{
           color: theme.textoSecundario,
           textAlign: 'center'
         }}>

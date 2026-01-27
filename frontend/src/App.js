@@ -1,13 +1,12 @@
 // App.js - Componente principal de la aplicación
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button as MuiButton } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useTheme } from './context/ThemeContext';
-import Header from './components/common/Header';
+
 import DashboardLayout from './components/layout/DashboardLayout';
 import ContentArea from './components/layout/ContentArea';
-import ModeTransitionAnimation from './components/animations/ModeTransitionAnimation';
 import { STAGGER_VARIANTS, STAGGER_ITEM_VARIANTS } from './config/animations';
 import dayjs from 'dayjs';
 import { generarPDFServiciosEfectivo, generarPDFPendientes } from './services/pdfService';
@@ -39,8 +38,7 @@ function App() {
     categoria: '',
     notas: ''
   });
-  const [showModeTransition, setShowModeTransition] = useState(false);
-  const [modeTransitionData, setModeTransitionData] = useState({ from: '', to: '' });
+
 
   // Handlers optimizados con useCallback
   const handleFileChange = useCallback((event) => {
@@ -347,24 +345,7 @@ function App() {
           </motion.div>
 
           {/* Overlay de transición de modo */}
-          {showModeTransition && (
-            <Box
-              sx={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100vw',
-                height: '100vh',
-                zIndex: 9999,
-                background: 'rgba(0,0,0,0.8)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <ModeTransitionAnimation fromMode={modeTransitionData.from} toMode={modeTransitionData.to} />
-            </Box>
-          )}
+
 
           {/* Diálogo de confirmación para conservar nota */}
           <Dialog open={showNoteDialog} onClose={handleKeepNote}>

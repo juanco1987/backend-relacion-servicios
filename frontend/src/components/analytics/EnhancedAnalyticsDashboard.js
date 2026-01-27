@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart, Line } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../utils/numberFormatters';
@@ -20,7 +20,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   useEffect(() => {
     setSelectedView(defaultView);
   }, [defaultView]);
-  const [selectedMonth, setSelectedMonth] = useState('Total Global');
+
   const [analyticsData, setAnalyticsData] = useState(null);
   const [estadosGrafico, setEstadosGrafico] = useState(null);
   const [totalesEstadosEspeciales, setTotalesEstadosEspeciales] = useState(null);

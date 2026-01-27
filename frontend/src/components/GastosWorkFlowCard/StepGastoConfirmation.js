@@ -29,7 +29,7 @@ const StepGastoConfirmation = ({
 
   useEffect(() => {
     if (!pdfName) onPdfNameChange(defaultName);
-  }, [defaultName]);
+  }, [defaultName, pdfName, onPdfNameChange]);
 
   return (
     <Box sx={{ mt: 2 }}>

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import {  Paper, } from '@mui/material';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Paper, } from '@mui/material';
 
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
@@ -51,15 +51,9 @@ const UnifiedWorkflowCard = ({
   const [processCompleted, setProcessCompleted] = useState(false);
   const [dataProcessed, setDataProcessed] = useState(false);
   const [showNewProcessDialog, setShowNewProcessDialog] = useState(false);
-  const [shouldClearFile, setShouldClearFile] = useState(false);
-  const prevActiveStepRef = useRef(0);
-  const [pdfGenerated, setPdfGenerated] = useState(false);
-  const [hasData, setHasData] = useState(false);
-
   // Estados para el selector de fechas
   const currentYear = dayjs().year();
-  const [month, setMonth] = useState(dayjs().month());
-  const [year, setYear] = useState(currentYear);
+  const [pdfGenerated, setPdfGenerated] = useState(false);
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [userHasConfiguredDates, setUserHasConfiguredDates] = useState(false);
@@ -68,8 +62,7 @@ const UnifiedWorkflowCard = ({
   useEffect(() => {
     if (fechaInicio) {
       setFromDate(dayjs(fechaInicio));
-      setMonth(dayjs(fechaInicio).month());
-      setYear(dayjs(fechaInicio).year());
+      setFromDate(dayjs(fechaInicio));
     }
   }, [fechaInicio]);
 
@@ -82,7 +75,7 @@ const UnifiedWorkflowCard = ({
 
 
   // Generar nombre por defecto
-  const generateDefaultName = () => {
+  const generateDefaultName = useCallback(() => {
     const dateStr = dayjs().format('YYYY-MM-DD');
     const timeStr = dayjs().format('HH-mm-ss');
     if (workMode === 0) {
@@ -90,12 +83,12 @@ const UnifiedWorkflowCard = ({
     } else {
       return `Pendientes_de_Pago_${dateStr}_${timeStr}.pdf`;
     }
-  };
+  }, [workMode]);
 
 
   useEffect(() => {
     setReportName(generateDefaultName());
-  }, [workMode]);
+  }, [workMode, generateDefaultName]);
 
   // Función para manejar el inicio de un nuevo proceso
   const handleNewProcess = () => {
@@ -110,16 +103,10 @@ const UnifiedWorkflowCard = ({
     setProcessCompleted(false);
     setDataProcessed(false);
     setPdfGenerated(false);
-    setShouldClearFile(false);
-
     // Resetear fechas
     setFromDate(null);
     setToDate(null);
     setUserHasConfiguredDates(false);
-
-    // Resetear mes y año
-    setMonth(dayjs().month());
-    setYear(currentYear);
 
     // Limpiar los datos del archivo y fechas
     if (onFileChange) {

@@ -83,7 +83,7 @@ const CustomTable = React.memo(({ headers, data, renderRow, wrapperStyles = {}, 
                     <tbody>
                         {data.map((item, index) => {
                             // Alternating row colors (muy sutil)
-                            const isEven = index % 2 === 0;
+
                             const bgBase = 'transparent';
 
                             return (

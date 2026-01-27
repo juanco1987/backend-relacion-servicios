@@ -1,5 +1,5 @@
 import React from 'react';
-import { 
+import {
   Box, Typography, TextField, Grid
 } from '@mui/material';
 import CustomButton from '../common/CustomButton';
@@ -27,8 +27,8 @@ const StepReportGeneration = ({
               component="img"
               src={pdfIcon}
               alt="PDF"
-              sx={{ 
-                width: 20, 
+              sx={{
+                width: 20,
                 height: 20,
                 filter: theme.modo === 'oscuro' ? 'invert(1)' : 'none'
               }}
@@ -38,9 +38,9 @@ const StepReportGeneration = ({
             </Typography>
           </Box>
           {!dataProcessed && (
-            <Typography variant="caption" sx={{ 
-              color: theme.textoDeshabilitado, 
-              mb: 1, 
+            <Typography variant="caption" sx={{
+              color: theme.textoDeshabilitado,
+              mb: 1,
               display: 'block',
               fontStyle: 'italic'
             }}>
@@ -61,7 +61,7 @@ const StepReportGeneration = ({
                 borderRadius: '16px',
                 transition: 'all 0.3s ease',
                 '&:hover': {
-                  '& > fieldset': { 
+                  '& > fieldset': {
                     borderColor: dataProcessed ? theme.bordeHover : theme.bordeDeshabilitado,
                     borderWidth: '2px',
                   },
@@ -69,7 +69,7 @@ const StepReportGeneration = ({
                   boxShadow: dataProcessed ? '0 6px 12px rgba(0,0,0,0.1)' : 'none',
                 },
                 '&.Mui-focused': {
-                  '& > fieldset': { 
+                  '& > fieldset': {
                     borderColor: dataProcessed ? theme.bordeHover : theme.bordeDeshabilitado,
                     borderWidth: '2px',
                   },
@@ -118,7 +118,7 @@ const StepReportGeneration = ({
               sx={{
                 background: theme.gradientes.botonProcesar,
                 color: theme.textoContraste,
-                color: theme.textoContraste,
+
                 borderRadius: '20px',
                 height: '40px',
                 px: 4,

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useTheme } from '../../context/ThemeContext';
 import { getCustomSelectSx, getCustomMenuProps, getCustomLabelSx } from '../../utils/selectStyles';
-import { generateMonthsUntilNow, formatMonth, generateMonthsFromData } from '../../utils/dateUtils';
+import { formatMonth, generateMonthsFromData } from '../../utils/dateUtils';
 import KpiCard from '../common/KpiCard';
 import CustomTable from '../common/CustomTable';
 import { formatCurrency, formatInteger } from '../../utils/numberFormatters';
@@ -95,7 +95,7 @@ const ServiciosPendientesEfectivo = ({ file }) => {
     const diasNuevos = datosMes.dias_sin_relacionar || 0;
     const numAntiguosNuevos = datosMes.num_antiguos || 0;
 
-    const mensajeActual = acc.advertencia;
+
     const mensajeNuevo = datosMes.advertencia;
 
     // Prioridad de mensajes: Urgente (>30) > Pendiente (>0) > Al día
