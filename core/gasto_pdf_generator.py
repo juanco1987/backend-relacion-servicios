@@ -12,7 +12,9 @@ from reportlab.lib.pagesizes import landscape, letter, A4
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import ( SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak,)
-from reportlab.pdfgen import canvas    
+from reportlab.pdfgen import canvas
+from PIL import Image as PILImage
+from PIL import ExifTags    
     
 # === IMPORTS NECESARIOS PARA FUENTES ===
 from reportlab.pdfbase import pdfmetrics
@@ -60,7 +62,7 @@ except:
 
 
 def guardar_imagen_base64_temp(base64_data):
-    """Decodifica una cadena Base64 y la guarda en un archivo temporal."""
+    """Decodifica una cadena Base64, corrige su orientación EXIF y la guarda en un archivo temporal."""
     if not isinstance(base64_data, str) or len(base64_data) < 100:
         return None 
 
@@ -79,14 +81,38 @@ def guardar_imagen_base64_temp(base64_data):
             extension = '.png'
         else:
             extension = '.png' 
+        
+        # Abrir la imagen con PIL
+        image = PILImage.open(io.BytesIO(data))
+        
+        # Corregir orientación basada en EXIF usando el método moderno
+        try:
+            # ImageOps.exif_transpose() maneja automáticamente todas las orientaciones EXIF
+            # y devuelve None si no hay datos EXIF o si la orientación ya es correcta
+            from PIL import ImageOps
+            corrected_image = ImageOps.exif_transpose(image)
             
+            if corrected_image is not None:
+                image = corrected_image
+                logger.info("Orientación EXIF corregida automáticamente")
+            else:
+                logger.info("No se requirió corrección de orientación EXIF")
+                
+        except Exception as exif_error:
+            # Si hay error leyendo EXIF, continuar con la imagen original
+            logger.warning(f"No se pudo leer/aplicar orientación EXIF: {exif_error}")
+        
+        # Guardar la imagen corregida en un archivo temporal
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=extension)
-        temp_file.close() 
-
-        with open(temp_file.name, 'wb') as f:
-            f.write(data)
+        temp_file.close()
+        
+        # Guardar con el formato apropiado
+        if extension == '.jpg':
+            image.save(temp_file.name, 'JPEG', quality=95)
+        else:
+            image.save(temp_file.name, 'PNG')
             
-        logger.info(f"Imagen decodificada: {temp_file.name}") 
+        logger.info(f"Imagen decodificada y orientación corregida: {temp_file.name}") 
         return temp_file.name
     except Exception as e:
         logger.error(f"Error decodificando Base64: {e}")
@@ -524,6 +550,7 @@ class PDFGastoSideBySide:
         imagenes_gastos = data.get("imagenesGastos", [])
         imagenes_consignaciones = data.get("imagenesConsignaciones", [])
         imagenes_devoluciones = data.get("imagenesDevoluciones", [])
+        notas = data.get("notas", "")
 
         doc = SimpleDocTemplate(
             self.filename,
@@ -538,6 +565,33 @@ class PDFGastoSideBySide:
         self.tabla_consignaciones(consignaciones)
         self.tabla_gastos(gastos)
         self.tabla_balance(gastos, consignaciones)
+        
+        # Agregar notas si existen
+        if notas and notas.strip():
+            self.elements.append(Paragraph("NOTAS DEL REPORTE", self.estilo_subtitulo))
+            self.elements.append(Spacer(1, 5))
+            
+            # Crear un párrafo con las notas
+            notas_paragraph = Paragraph(notas.strip().replace('\n', '<br/>'), self.estilo_normal)
+            
+            # Crear una tabla para las notas con borde
+            notas_table = Table([[notas_paragraph]], colWidths=[7*inch])
+            notas_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FFF9E6")),
+                ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#424242")),
+                ("FONTNAME", (0, 0), (-1, -1), FONTE_PRINCIPAL_REGULAR),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#90CAF9")),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+            ]))
+            
+            self.elements.append(notas_table)
+            self.elements.append(Spacer(1, 15))
+        
         self.seccion_imagenes_sidebyside(imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones)
         
         # Línea de borrado de imágenes eliminada.
@@ -546,13 +600,14 @@ class PDFGastoSideBySide:
     # MÉTODO _borrar_imagenes_temp ELIMINADO DE LA CLASE
     
 
-def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
+def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf, notas=""):
     """
     Función principal llamada desde routes_excel.py
     Retorna (exito, pdf_bytes)
     """
     logger.info(f"Iniciando generar_pdf_gasto con: gastos={len(gasto_data_formateado.get('gastos', []))}, consignaciones={len(gasto_data_formateado.get('consignaciones', []))}")
     logger.info(f"Imágenes recibidas: {imagenes}")
+    logger.info(f"Notas recibidas: {notas}")
     rutas_temp_generadas = [] 
 
     try:
@@ -606,6 +661,7 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf):
             "imagenesGastos": imagenes_gastos,
             "imagenesConsignaciones": imagenes_consignaciones,
             "imagenesDevoluciones": imagenes_devoluciones,
+            "notas": notas,  # Agregar notas a los datos
         }
 
         # Generar PDF

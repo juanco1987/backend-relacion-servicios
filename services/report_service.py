@@ -273,6 +273,7 @@ class ReportService:
             gastos = data.get('gastos', [])
             consignaciones = data.get('consignaciones', [])
             nombre_pdf = data.get('nombrePDF', 'Reporte_Gastos')
+            notas = data.get('notas', '')  # Notas generales del reporte
             
             # Fallback gasto único
             gasto_data_single = data.get('gastoData', {}) 
@@ -325,7 +326,8 @@ class ReportService:
                 gasto_data_formateado=data_para_pdf,
                 calculos=calculos,
                 imagenes=imagenes_safe,
-                nombre_pdf=nombre_pdf
+                nombre_pdf=nombre_pdf,
+                notas=notas  # Pasar las notas al generador
             )
             
             if exito and pdf_bytes:

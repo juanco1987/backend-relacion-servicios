@@ -18,6 +18,7 @@ const Header = React.memo(() => {
         borderRadius: 0,
         boxShadow: 'none',
         p: { xs: 1, md: 2 },
+        pr: { xs: 7, md: 2 }, // Padding extra a la derecha en móviles para el botón de tema
         mb: 0,
         display: 'flex',
         alignItems: 'center',
@@ -102,7 +103,13 @@ const Header = React.memo(() => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start' }}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          maxWidth: { xs: 'calc(100% - 60px)', md: '100%' }, // Limitar ancho en móviles
+        }}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -117,6 +124,9 @@ const Header = React.memo(() => {
                 letterSpacing: '-1px',
                 lineHeight: 1.1,
                 fontSize: { xs: '1.8rem', md: '2.5rem' },
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                hyphens: 'auto',
               }}
             >
               {APP_MESSAGES.APP_TITLE}

@@ -13,6 +13,8 @@ const StepGastoConfirmation = ({
   imagenesDevoluciones,
   pdfName,
   onPdfNameChange,
+  notas,
+  onNotasChange,
   onGeneratePDF,
   processing,
 }) => {
@@ -212,6 +214,60 @@ const StepGastoConfirmation = ({
                   </Box>
                 </Grid>
               </Grid>
+            </Box>
+          </Grid>
+
+          {/* -------------------- NOTAS GENERALES -------------------- */}
+          <Grid item xs={12}>
+            <Box
+              sx={{
+                background: theme.fondoOverlay,
+                borderRadius: '16px',
+                p: 3,
+                border: `2px solid ${theme.bordePrincipal}`,
+                mb: 3,
+              }}
+            >
+              <Typography variant="h6" sx={{ color: theme.textoPrincipal, mb: 2, fontWeight: 700 }}>
+                📝 Notas del Reporte (Opcional)
+              </Typography>
+              <TextField
+                label="Escribe tus notas u observaciones aquí..."
+                value={notas || ''}
+                onChange={(e) => onNotasChange(e.target.value)}
+                multiline
+                rows={4}
+                fullWidth
+                size="small"
+                placeholder="Ejemplo: Este reporte incluye gastos del proyecto X realizados durante la semana..."
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    background: theme.fondoContenedor,
+                    borderRadius: '12px',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      '& > fieldset': {
+                        borderColor: theme.bordeHover,
+                        borderWidth: '2px',
+                      },
+                    },
+                    '&.Mui-focused': {
+                      '& > fieldset': {
+                        borderColor: theme.bordeHover,
+                        borderWidth: '2px',
+                      },
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: theme.textoSecundario,
+                    fontWeight: 500,
+                  },
+                  '& .MuiInputBase-input': {
+                    color: theme.textoPrincipal,
+                    fontWeight: 500,
+                  },
+                }}
+              />
             </Box>
           </Grid>
 

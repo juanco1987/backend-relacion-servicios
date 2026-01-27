@@ -37,7 +37,10 @@ const UnifiedGastoWorkflow = ({
   const [imagenesGastos, setImagenesGastos] = useState([]);
   const [imagenesConsignaciones, setImagenesConsignaciones] = useState([]);
   const [imagenesDevoluciones, setImagenesDevoluciones] = useState([]);
-  
+
+  // Estado para notas generales
+  const [notasGenerales, setNotasGenerales] = useState('');
+
   // Estado para controlar si el paso de imágenes fue completado
   const [pasoImagenesCompletado, setPasoImagenesCompletado] = useState(false);
   const [showImageConfirmDialog, setShowImageConfirmDialog] = useState(false);
@@ -156,13 +159,14 @@ const UnifiedGastoWorkflow = ({
       console.log('Imagenes Gastos:', imagenesGastos.length, imagenesGastos);
       console.log('Imagenes Consignaciones:', imagenesConsignaciones.length, imagenesConsignaciones);
       console.log('Imagenes Devoluciones:', imagenesDevoluciones.length, imagenesDevoluciones);
-      
+
       const requestData = {
         gastos,
         consignaciones,
         imagenesGastos,
         imagenesConsignaciones,
         imagenesDevoluciones,
+        notas: notasGenerales,
         nombrePDF: pdfNameParam || pdfName || 'Reporte_Gastos',
       };
       console.log('Datos completos enviados:', requestData);
@@ -334,6 +338,8 @@ const UnifiedGastoWorkflow = ({
           imagenesDevoluciones={imagenesDevoluciones}
           pdfName={pdfName}
           onPdfNameChange={setPdfName}
+          notas={notasGenerales}
+          onNotasChange={setNotasGenerales}
           onGeneratePDF={handleGenerarPDF}
           processing={processing}
         />
@@ -348,6 +354,7 @@ const UnifiedGastoWorkflow = ({
     setImagenesGastos([]);
     setImagenesConsignaciones([]);
     setImagenesDevoluciones([]);
+    setNotasGenerales('');
     setPdfName('');
     setActiveStep(0);
     setProcessCompleted(false);
