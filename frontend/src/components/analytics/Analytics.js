@@ -26,6 +26,7 @@ function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
   const { theme } = useTheme();
   const [mesSeleccionado, setMesSeleccionado] = useState('Total Global');
   const [analyticsFile, setAnalyticsFile] = useState(null);
+  const [inputKey, setInputKey] = useState(0);
 
   // Hook personalizado para manejo de datos
   const {
@@ -51,6 +52,17 @@ function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
 
       setMesSeleccionado('Total Global');
     }
+  };
+
+  const handleClearFile = () => {
+    console.log('handleClearFile ejecutado');
+    if (onClearFile) {
+      console.log('Llamando onClearFile del padre');
+      onClearFile();
+    }
+    setAnalyticsFile(null);
+    setMesSeleccionado('Total Global');
+    setInputKey(prev => prev + 1);
   };
 
 
@@ -165,6 +177,7 @@ function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
           analyticsFile={analyticsFile}
           excelData={excelData}
           onFileChange={handleFileChange}
+          onClearFile={handleClearFile}
           inputKey={inputKey}
         />
 

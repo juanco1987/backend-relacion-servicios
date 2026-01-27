@@ -52,7 +52,6 @@ const UnifiedWorkflowCard = ({
   const [dataProcessed, setDataProcessed] = useState(false);
   const [showNewProcessDialog, setShowNewProcessDialog] = useState(false);
   // Estados para el selector de fechas
-  const currentYear = dayjs().year();
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
@@ -126,7 +125,7 @@ const UnifiedWorkflowCard = ({
     }
 
     setShowNewProcessDialog(false);
-  }, [currentYear, generateDefaultName, onFileChange, onFechaInicioChange, onFechaFinChange, onNoteChange, onImageChange]);
+  }, [generateDefaultName, onFileChange, onFechaInicioChange, onFechaFinChange, onNoteChange, onImageChange]);
 
   // Función para cancelar el nuevo proceso
   const cancelNewProcess = useCallback(() => {
