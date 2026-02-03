@@ -95,5 +95,9 @@ class ColumnMapper:
             EXCEL_COLUMNS.get('TORRE_APTO', 'TORRE/APTO'): [
                 'TORRE/APTO', 'Torre/Apto', 'TORRE', 'Torre', 'APTO', 'Apto', 
                 'INTERIOR', 'Interior', 'OFICINA', 'Oficina', 'DIRECCION', 'Direccion' # Fallback a Dirección si es necesario, pero mejor explícito
+            ],
+            EXCEL_COLUMNS.get('FECHA_RELACION', 'FECHA DE RELACION DEL SERVICIO'): [
+                'FECHA DE RELACION DEL SERVICIO', 'Fecha de Relación del Servicio', 'FECHA RELACION', 'Fecha Relacion', 
+                'FECHA PAGO', 'Fecha Pago', 'FECHA DE PAGO'
             ]
         }

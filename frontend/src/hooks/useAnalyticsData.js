@@ -121,7 +121,7 @@ function useAnalyticsData(analyticsFile, excelData) {
       })
       .map(([mes, datos]) => ({
         mes,
-        Efectivo: Number(datos?.efectivo_total || 0),
+        Efectivo: Number(datos?.efectivo_total_jg || datos?.efectivo_total || 0),
         Transferencia: Number(datos?.transferencia_total || 0),
         'Total General': Number(datos?.total_general || 0),
         efectivo_cantidad: Number(datos?.efectivo_cantidad || 0),

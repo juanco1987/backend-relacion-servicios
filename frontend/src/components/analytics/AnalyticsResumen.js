@@ -20,7 +20,7 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
     })
     .map(([mes, datos]) => {
       datos = datos || {};
-      const efectivo_total = Number(datos.efectivo_total) || 0;
+      const efectivo_total = Number(datos.efectivo_total_jg || datos.efectivo_total) || 0;
       const transferencia_total = Number(datos.transferencia_total) || 0;
       const total_general = Number(datos.total_general) || 0;
 

@@ -61,6 +61,7 @@ const TEMA_OSCURO = {
   terminalMorado: "#9333EA",
   terminalRojoEncendido: "#e00d0dff",
   terminalCyan: "#00E5FF", // Nuevo color premium
+  terminalEsmeralda: "#00d084", // Verde esmeralda para recaudos
 
 
   // Gradientes y efectos
@@ -129,6 +130,8 @@ const TEMA_CLARO = {
   terminalRosa: "#FF1493",
   terminalMorado: "#9333EA",
   terminalRojoEncendido: "#e00d0dff",
+  terminalCyan: "#1976d2", // Azul información para el tema claro
+  terminalEsmeralda: "#10b981", // Verde esmeralda para el tema claro
 
   // Gradientes y efectos
   gradientes: {

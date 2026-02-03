@@ -4,31 +4,29 @@ import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../utils/numberFormatters';
 import { formatMonthAbbreviation } from '../../utils/dateFormatters';
 import KpiCard from '../common/KpiCard';
-import CustomButton from '../common/CustomButton';
+import CustomButton from '../common/CustomButton/index';
 import CustomTooltip from '../common/CustomTooltip';
 import ServiciosPendientesEfectivo from './ServiciosPendientesEfectivo';
 import ServiciosPendientesCobrar from './ServiciosPendientesCobrar';
 import { API_CONFIG } from '../../config/appConfig';
-
 const API_BASE = API_CONFIG.BASE_URL;
-
 const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView = 'general', onRequestOpenUploader }) => {
   const { theme } = useTheme();
   const [selectedView, setSelectedView] = useState(defaultView);
-
   // Actualizar selectedView cuando cambie defaultView
   useEffect(() => {
     setSelectedView(defaultView);
   }, [defaultView]);
-
   const [analyticsData, setAnalyticsData] = useState(null);
   const [estadosGrafico, setEstadosGrafico] = useState(null);
   const [totalesEstadosEspeciales, setTotalesEstadosEspeciales] = useState(null);
   const [estadosEspecialesPorMes, setEstadosEspecialesPorMes] = useState(null);
   const [clientesData, setClientesData] = useState([]);
-  const [pendientesGlobales, setPendientesGlobales] = useState({ relacionar: 0, cobrar: 0 }); // Nuevo estado
+  const [pendientesGlobales, setPendientesGlobales] = useState({ relacionar: 0, cobrar: 0 });
+  const [tiemposRelacion, setTiemposRelacion] = useState(null); // Nuevo estado para tiempos de relación
+  const [recaudacionPorMes, setRecaudacionPorMes] = useState(null); // Recaudación mensual por fecha de relación
+  const [efectivoPendienteInfo, setEfectivoPendienteInfo] = useState(null); // Información de efectivo pendiente
   const [loading, setLoading] = useState(false);
-
   // Colores para el gráfico - Memoizados para evitar recreación
   const COLORS = useMemo(() => ({
     YA_RELACIONADO: theme.terminalVerde,
@@ -40,53 +38,47 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     CANCELADO: theme.terminalRojoEncendido,
     OTROS: theme.terminalRosa
   }), [theme]);
-
   useEffect(() => {
     if (!file) {
       console.log('⚠️ No hay archivo cargado');
       return;
     }
-
     const fetchAnalytics = async () => {
       setLoading(true);
       console.log('📄 Iniciando fetch de analytics...');
-
       try {
         const formData = new FormData();
         formData.append('file', file);
-
         console.log('📤 Enviando archivo:', file.name);
-
         const response = await fetch(`${API_BASE}/api/analytics`, {
           method: 'POST',
           body: formData,
         });
-
         console.log('📥 Response status:', response.status);
-
         if (!response.ok) {
           const errorText = await response.text();
           console.error('❌ Error response:', errorText);
           throw new Error(`Error al obtener analytics: ${response.status}`);
         }
-
         const data = await response.json();
-
         console.log('✅ Data recibida:', data);
         setAnalyticsData(data.resumen);
         setEstadosGrafico(data.estados_grafico);
         setTotalesEstadosEspeciales(data.totales_estados_especiales);
         setEstadosEspecialesPorMes(data.estados_especiales_por_mes);
         setClientesData(data.clientes_recurrentes || []);
-
         // Guardar pendientes globales
         setPendientesGlobales({
           relacionar: data.total_pendientes_relacionar || 0,
           cobrar: data.total_pendientes_cobrar || 0
         });
-
+        // Guardar tiempos de relación
+        setTiemposRelacion(data.tiempos_relacion || null);
+        // Guardar recaudación por mes
+        setRecaudacionPorMes(data.recaudacion_por_mes || null);
+        // Guardar información de efectivo pendiente
+        setEfectivoPendienteInfo(data.efectivo_pendiente_info || null);
         console.log('✅ Estados actualizados en React');
-
       } catch (error) {
         console.error('❌ Error fetching analytics:', error);
         console.error('❌ Error details:', error.message);
@@ -94,14 +86,11 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         setLoading(false);
       }
     };
-
     fetchAnalytics();
   }, [file]);
-
   // Procesar datos para el gráfico de dona - Memoizado para evitar recálculos
   const getEstadosParaDona = useMemo(() => {
     if (!estadosGrafico) return [];
-
     return [
       {
         estado: 'Ya Relacionado',
@@ -140,7 +129,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       }
     ].filter(item => item.cantidad > 0);
   }, [estadosGrafico, COLORS]);
-
   // Procesar datos reales del Excel
   const [realData, setRealData] = useState({
     serviciosPorTipo: [],
@@ -148,7 +136,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     clientesRecurrentes: [],
     estadosServicio: []
   });
-
   useEffect(() => {
     if (analyticsData && estadosGrafico) {
       // Procesar tendencia mensual
@@ -176,11 +163,9 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           if (añoA !== añoB) return añoA - añoB;
           return mesA - mesB;
         });
-
       // Calcular totales
       const totalServicios = estadosGrafico.TOTAL_SERVICIOS || 0;
       const totalIngresos = tendenciaMensual.reduce((sum, item) => sum + item.ingresos, 0);
-
       // Estados de servicio para KPIs
       const estadosServicio = [
         {
@@ -199,7 +184,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           porcentaje: totalServicios > 0 ? Math.round((estadosGrafico.COTIZACION / totalServicios) * 100) : 0
         }
       ];
-
       // Datos de ejemplo para servicios por tipo (MOCK - Pendiente Fase 2)
       const serviciosPorTipo = [
         { tipo: 'Instalación', cantidad: Math.round(totalServicios * 0.4), valor: Math.round(totalIngresos * 0.4) },
@@ -207,30 +191,28 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         { tipo: 'Reparación', cantidad: Math.round(totalServicios * 0.2), valor: Math.round(totalIngresos * 0.2) },
         { tipo: 'Revisión', cantidad: Math.round(totalServicios * 0.15), valor: Math.round(totalIngresos * 0.15) }
       ];
-
       // Datos REALES de clientes (Fase 1 completada)
       // Usamos el estado clientesData que guarda lo que viene del backend
       const clientesRecurrentes = clientesData || [];
-
       setRealData({
         serviciosPorTipo,
         tendenciaMensual,
         clientesRecurrentes,
-        estadosServicio
+        estadosServicio,
+        tiemposRelacion
       });
     }
-  }, [analyticsData, estadosGrafico, clientesData]);
-
+  }, [analyticsData, estadosGrafico, clientesData, tiemposRelacion]);
   const dataToUse = analyticsData ? realData : {
     serviciosPorTipo: [],
     tendenciaMensual: [],
     clientesRecurrentes: [],
     estadosServicio: []
   };
-
   const renderGeneralView = () => {
     console.log('🎨 Renderizando vista general');
     const totalServicios = estadosGrafico?.TOTAL_SERVICIOS || 0;
+    const serviciosFacturables = estadosGrafico?.SERVICIOS_FACTURABLES || 0;
     const totalIngresos = dataToUse.tendenciaMensual.reduce((sum, item) => sum + item.ingresos, 0);
     const serviciosPendientesCobrar = estadosGrafico?.PENDIENTE_COBRAR || 0;
     // Usar el estado nuevo o fallback
@@ -240,44 +222,60 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       ? Math.round((estadosGrafico?.YA_RELACIONADO / totalServicios) * 100)
       : 0;
 
+    // Calcular totales de efectivo relacionado y pendiente
+    let totalEfectivoRelacionado = 0;
+    let totalEfectivoPendiente = 0;
+    let cantidadEfectivoRelacionado = 0;
+    let cantidadEfectivoPendiente = 0;
+
+    let totalEfectivoTotalJG = 0;
+    if (analyticsData) {
+      Object.values(analyticsData).forEach(mesData => {
+        totalEfectivoRelacionado += mesData.efectivo_relacionado || 0;
+        totalEfectivoPendiente += mesData.efectivo_pendiente_relacionar || 0;
+        totalEfectivoTotalJG += mesData.efectivo_total_jg || 0;
+        cantidadEfectivoRelacionado += mesData.efectivo_relacionado_cantidad || 0;
+        cantidadEfectivoPendiente += mesData.efectivo_pendiente_cantidad || 0;
+      });
+    }
+
+    // Obtener deuda a Abrecar desde efectivoPendienteInfo o calcular desde analyticsData
+    const totalDeudaAbrecar = efectivoPendienteInfo?.total_deuda_abrecar ||
+      (analyticsData ? Object.values(analyticsData).reduce((sum, mesData) =>
+        sum + (mesData.deuda_abrecar_pendiente || 0), 0) : 0);
+
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {/* KPIs Principales - Usando KpiCard */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-          <KpiCard
-            title="Total Servicios"
-            value={totalServicios.toString()}
-            subtitle="Total general"
-            color={theme.textoInfo}
-          />
-          <KpiCard
-            title="Ingresos Totales"
-            value={formatCurrency(totalIngresos)}
-            subtitle="Total general"
-            color={theme.terminalVerde}
-          />
-          <KpiCard
-            title="Pendientes Cobrar"
-            value={serviciosPendientesCobrar.toString()}
-            subtitle="Por cobrar"
-            color={theme.textoAdvertencia}
-          />
-          <KpiCard
-            title="Pendientes Relacionar"
-            value={serviciosPendientesRelacionar.toString()}
-            subtitle="Por relacionar"
-            color={theme.terminalRojo}
-          />
-          <KpiCard
-            title="Efectividad"
-            value={`${efectividad}%`}
-            subtitle="Servicios completados"
-            color={theme.terminalVerde}
-          />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+        {/* BLOQUE A: Tablero Financiero (Nivel Gerencial) */}
+        <div>
+          <h3 style={{ marginBottom: '16px', color: theme.textoPrincipal, borderLeft: `4px solid ${theme.terminalVerde}`, paddingLeft: '12px' }}>
+            📊 Resumen Financiero
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+            <KpiCard
+              title="Ingresos Totales"
+              value={formatCurrency(totalIngresos)}
+              subtitle="Dinero real generado"
+              color={theme.terminalVerde}
+            />
+            <KpiCard
+              title="Servicios Facturables"
+              value={serviciosFacturables.toString()}
+              subtitle="Servicios exitosos (sin garantías/cancelados)"
+              color={theme.textoInfo}
+            />
+            <KpiCard
+              title="Pendientes Cobrar"
+              value={serviciosPendientesCobrar.toString()}
+              subtitle="Cartera pendiente"
+              color={theme.textoAdvertencia}
+            />
+          </div>
         </div>
 
-        {/* KPIs de Estados Especiales */}
-        {totalesEstadosEspeciales && (
+        {/* BLOQUE B: Centro de Control de Efectivo */}
+        {(totalEfectivoRelacionado > 0 || totalEfectivoPendiente > 0) && (
           <div>
             <h3 style={{
               marginBottom: '20px',
@@ -288,38 +286,140 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
               display: 'flex',
               alignItems: 'center'
             }}>
-              Estados Especiales
+              💵 Control de Efectivo
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
               <KpiCard
-                title="No Pagaron Domicilio"
-                value={totalesEstadosEspeciales.no_pagaron_domicilio?.toString() || '0'}
-                subtitle="Servicios registrados"
-                color={theme.terminalRojo}
+                title="Efectivo Recaudado"
+                value={formatCurrency(totalEfectivoTotalJG)}
+                subtitle={`${cantidadEfectivoRelacionado + cantidadEfectivoPendiente} servicios en efectivo`}
+                color={theme.terminalEsmeralda}
               />
               <KpiCard
-                title="Garantía"
+                title="Efectivo Relacionado"
+                value={formatCurrency(totalEfectivoRelacionado)}
+                subtitle={`${cantidadEfectivoRelacionado} servicios entregados`}
+                color={theme.terminalVerde}
+              />
+              <KpiCard
+                title="Efectivo Pendiente"
+                value={formatCurrency(totalEfectivoPendiente)}
+                subtitle={`${cantidadEfectivoPendiente} servicios por entregar`}
+                color={theme.terminalAmarillo}
+              />
+            </div>
+
+            {/* Advertencia sobre Deuda a Abrecar */}
+            {totalDeudaAbrecar > 0 && (
+              <div style={{
+                marginTop: '20px',
+                padding: '16px 20px',
+                background: `linear-gradient(135deg, ${theme.terminalRojo}15 0%, ${theme.terminalAmarillo}15 100%)`,
+                borderRadius: '12px',
+                border: `1px solid ${theme.terminalRojo}40`,
+                boxShadow: theme.sombraComponente
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '8px'
+                }}>
+                  <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+                  <h4 style={{
+                    margin: 0,
+                    color: theme.terminalRojo,
+                    fontSize: '1.1rem',
+                    fontWeight: 'bold'
+                  }}>
+                    Acción Requerida: Entregar Efectivo a ABRECAR
+                  </h4>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}>
+                  <div>
+                    <p style={{
+                      margin: '4px 0',
+                      color: theme.textoPrincipal,
+                      fontSize: '0.95rem'
+                    }}>
+                      Tienes <strong style={{ color: theme.terminalRojo, fontSize: '1.2rem' }}>{formatCurrency(totalDeudaAbrecar)}</strong> pendientes de entrega.
+                    </p>
+                    <p style={{
+                      margin: '4px 0',
+                      color: theme.textoSecundario,
+                      fontSize: '0.85rem'
+                    }}>
+                      Corresponden a {cantidadEfectivoPendiente} servicios cobrados en efectivo pero no relacionados.
+                    </p>
+                  </div>
+                  <CustomButton
+                    onClick={() => {
+                      window.location.hash = '#/dashboard/pendientes/efectivo';
+                      setSelectedView('pendientes-efectivo');
+                    }}
+                    variant="contained"
+                    color="error"
+                  >
+                    Gestionar Entrega
+                  </CustomButton>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* BLOQUE C: Auditoría Operativa (El "Ruido" separado) */}
+        {totalesEstadosEspeciales && (
+          <div style={{ paddingTop: '16px', borderTop: `1px dashed ${theme.bordePrincipal}` }}>
+            <h3 style={{
+              marginBottom: '20px',
+              color: theme.textoSecundario,
+              fontSize: '1.0rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              📋 Auditoría Operativa & Excepciones
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+              {/* Total Registros como contexto */}
+              <KpiCard
+                title="Registros Totales en Excel"
+                value={totalServicios.toString()}
+                subtitle="Contexto general"
+                color={theme.terminalCyan}
+              />
+
+              {/* Tarjetas más compactas para excepciones */}
+              <KpiCard
+                title="Garantías"
                 value={totalesEstadosEspeciales.garantia?.toString() || '0'}
-                subtitle="Garantias realizadas"
+                subtitle="Revisar calidad"
                 color={theme.terminalAmarillo}
               />
               <KpiCard
-                title="Cancelado"
+                title="Cancelados"
                 value={totalesEstadosEspeciales.cancelado?.toString() || '0'}
-                subtitle="Servicios cancelados"
-                color={theme.terminalRojoEncendido}
+                subtitle="Servicios perdidos"
+                color={theme.terminalRojo}
               />
               <KpiCard
-                title="No se Cobra Domicilio"
-                value={totalesEstadosEspeciales.no_se_cobra_domicilio?.toString() || '0'}
-                subtitle="Sin cargo domicilio"
-                color={theme.terminalMorado}
+                title="No Pagaron Domicilio"
+                value={totalesEstadosEspeciales.no_pagaron_domicilio?.toString() || '0'}
+                subtitle="Fuga de ingresos"
+                color={theme.terminalRojo}
               />
               <KpiCard
-                title="Cotización"
+                title="Cotizaciones"
                 value={totalesEstadosEspeciales.cotizacion?.toString() || '0'}
-                subtitle="Cotizaciones realizadas"
-                color={theme.textoInfo}
+                subtitle="Solo consulta"
+                color={theme.terminalMorado}
               />
             </div>
           </div>
@@ -427,6 +527,175 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                 <Bar dataKey="Cotización" stackId="a" fill={COLORS.COTIZACION} radius={[16, 16, 16, 16]} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Gráfico de Recaudación Mensual por Fecha de Relación */}
+        {recaudacionPorMes && Object.keys(recaudacionPorMes).length > 0 && (
+          <div style={{
+            background: theme.fondoContenedor,
+            borderRadius: '16px',
+            padding: '24px',
+            boxShadow: theme.sombraComponente,
+            border: `1px solid ${theme.bordePrincipal}`
+          }}>
+            <h3 style={{
+              marginBottom: '24px',
+              color: theme.textoPrincipal,
+              fontSize: '1.2rem',
+              borderBottom: `1px solid ${theme.bordePrincipal}`,
+              paddingBottom: '12px'
+            }}>
+              💰 Recaudación Mensual por Fecha de Pago
+            </h3>
+            <ResponsiveContainer width="100%" height={350}>
+              {(() => {
+                // Procesar y ordenar datos
+                const datosOrdenados = Object.entries(recaudacionPorMes)
+                  .map(([mes, datos]) => {
+                    const partes = mes.split(' ');
+                    return {
+                      mes: partes[0],
+                      año: partes[1] || '',
+                      mesCompleto: mes,
+                      recaudado: datos.total_recaudado || 0,
+                      servicios: datos.cantidad_servicios || 0
+                    };
+                  })
+                  .sort((a, b) => {
+                    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                    const añoA = parseInt(a.año) || 0;
+                    const añoB = parseInt(b.año) || 0;
+                    const mesA = meses.indexOf(a.mes);
+                    const mesB = meses.indexOf(b.mes);
+                    if (añoA !== añoB) return añoA - añoB;
+                    return mesA - mesB;
+                  });
+
+                // Detectar si hay múltiples años
+                const añosUnicos = [...new Set(datosOrdenados.map(d => d.año))];
+                const hayMultiplesAños = añosUnicos.length > 1;
+
+                // Formatear etiquetas del eje X
+                const datosParaGrafico = datosOrdenados.map(d => ({
+                  ...d,
+                  etiquetaEje: hayMultiplesAños
+                    ? `${formatMonthAbbreviation(d.mes)} ${d.año}`
+                    : formatMonthAbbreviation(d.mes)
+                }));
+
+                return (
+                  <ComposedChart
+                    data={datosParaGrafico}
+                    margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
+                    <XAxis
+                      dataKey="etiquetaEje"
+                      stroke={theme.textoPrincipal}
+                      tick={{
+                        fontSize: '0.75rem',
+                        fontWeight: 500
+                      }}
+                      angle={hayMultiplesAños ? -45 : 0}
+                      textAnchor={hayMultiplesAños ? 'end' : 'middle'}
+                      height={hayMultiplesAños ? 80 : 30}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      stroke={theme.textoPrincipal}
+                      label={{ value: 'Recaudado ($)', angle: -90, position: 'insideLeft', fill: theme.textoPrincipal }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke={theme.textoPrincipal}
+                      label={{ value: 'Servicios', angle: 90, position: 'insideRight', fill: theme.textoPrincipal }}
+                    />
+                    <Tooltip
+                      content={
+                        <CustomTooltip
+                          labelFormatter={(label) => {
+                            // El label viene como "Ene 2024" o "Ene" dependiendo de si hay múltiples años
+                            return label;
+                          }}
+                          formatter={(value, name) => {
+                            if (name === 'Recaudado') {
+                              return formatCurrency(value);
+                            }
+                            if (name === 'Servicios') {
+                              return `${value} servicios`;
+                            }
+                            return value;
+                          }}
+                        />
+                      }
+                    />
+                    <Legend />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="recaudado"
+                      fill={theme.terminalVerde}
+                      name="Recaudado"
+                      maxBarSize={50}
+                      radius={[16, 16, 16, 16]}
+                    />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="servicios"
+                      stroke={theme.terminalCyan}
+                      strokeWidth={3}
+                      name="Servicios"
+                      dot={{ fill: theme.terminalCyan, r: 4 }}
+                    />
+                  </ComposedChart>
+                );
+              })()}
+            </ResponsiveContainer>
+
+            {/* Resumen de totales */}
+            <div style={{
+              marginTop: '24px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              paddingTop: '20px',
+              borderTop: `1px solid ${theme.bordePrincipal}`
+            }}>
+              {(() => {
+                const totalRecaudado = Object.values(recaudacionPorMes).reduce(
+                  (sum, datos) => sum + (datos.total_recaudado || 0), 0
+                );
+                const totalServicios = Object.values(recaudacionPorMes).reduce(
+                  (sum, datos) => sum + (datos.cantidad_servicios || 0), 0
+                );
+                const promedioMensual = totalRecaudado / Object.keys(recaudacionPorMes).length;
+
+                return (
+                  <>
+                    <KpiCard
+                      title="Total Recaudado"
+                      value={formatCurrency(totalRecaudado)}
+                      subtitle="Ingresos por relación"
+                      color={theme.terminalVerde}
+                    />
+                    <KpiCard
+                      title="Total Servicios Pagados"
+                      value={totalServicios.toString()}
+                      subtitle="Cantidad cobrada"
+                      color={theme.terminalCyan}
+                    />
+                    <KpiCard
+                      title="Promedio Mensual"
+                      value={formatCurrency(promedioMensual)}
+                      subtitle="Media por mes"
+                      color={theme.textoInfo}
+                    />
+                  </>
+                );
+              })()}
+            </div>
           </div>
         )}
 
@@ -560,11 +829,9 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       </div>
     );
   };
-
   const renderClientesView = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <h2 style={{ color: theme.textoPrincipal, textAlign: 'center' }}>Análisis de Clientes</h2>
-
       <div style={{
         background: theme.fondoContenedor,
         borderRadius: '16px',
@@ -597,7 +864,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           </BarChart>
         </ResponsiveContainer>
       </div>
-
       <div style={{
         background: theme.fondoContenedor,
         borderRadius: '16px',
@@ -620,7 +886,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
             ];
             // Ciclado de colores seguro
             const color = colors[index % colors.length] || theme.textoInfo;
-
             return (
               <KpiCard
                 key={cliente.cliente}
@@ -636,11 +901,9 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       </div>
     </div>
   );
-
   const renderServiciosView = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <h2 style={{ color: theme.textoPrincipal, textAlign: 'center' }}>Análisis de Servicios</h2>
-
       <div style={{
         background: theme.fondoContenedor,
         borderRadius: '16px',
@@ -651,14 +914,12 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>
           Servicios por Tipo
         </h3>
-
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={dataToUse.serviciosPorTipo}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
             <XAxis dataKey="tipo" stroke={theme.textoPrincipal} />
             <YAxis yAxisId="left" stroke={theme.textoPrincipal} />
             <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} />
-
             <Tooltip
               content={
                 <CustomTooltip
@@ -670,9 +931,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                 />
               }
             />
-
             <Legend />
-
             {/* Cantidad de servicios (escala izquierda) */}
             <Bar
               yAxisId="left"
@@ -681,7 +940,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
               radius={[16, 16, 16, 16]}
               name="Cantidad"
             />
-
             {/* Valor total (escala derecha) */}
             <Bar
               yAxisId="right"
@@ -692,14 +950,12 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
             />
           </BarChart>
         </ResponsiveContainer>
-
       </div>
-
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
         <KpiCard
-          title="Servicio Más Común"
-          value="Instalación"
-          subtitle="40% del total"
+          title="Tiempo Promedio de Cobro"
+          value={dataToUse.tiemposRelacion ? `${dataToUse.tiemposRelacion.promedio_dias} días` : 'N/A'}
+          subtitle={dataToUse.tiemposRelacion ? `Min: ${dataToUse.tiemposRelacion.min_dias} - Max: ${dataToUse.tiemposRelacion.max_dias}` : 'Sin datos'}
           color={theme.textoInfo}
         />
         <KpiCard
@@ -709,10 +965,10 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           color={theme.terminalVerde}
         />
         <KpiCard
-          title="Tiempo Promedio"
-          value="2.5 días"
-          subtitle="Para completar"
-          color={theme.textoAdvertencia}
+          title="Eficiencia de Cobro"
+          value={dataToUse.tiemposRelacion ? `${Math.round((dataToUse.tiemposRelacion.distribucion.rapido / dataToUse.tiemposRelacion.total_analizados) * 100)}%` : 'N/A'}
+          subtitle="Cobrados en < 7 días"
+          color={theme.terminalVerde}
         />
         <KpiCard
           title="Satisfacción"
@@ -723,11 +979,9 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       </div>
     </div>
   );
-
   const renderPendientesView = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Los botones de navegación ahora están en el Sidebar */}
-
       {selectedView === 'pendientes-efectivo' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <ServiciosPendientesEfectivo
@@ -748,7 +1002,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       )}
     </div>
   );
-
   if (loading) {
     return (
       <div style={{
@@ -762,7 +1015,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       </div>
     );
   }
-
   // Si no hay archivo, mostrar mensaje claro y opción para ir al uploader
   if (!file) {
     return (
@@ -792,7 +1044,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       </div>
     );
   }
-
   return (
     <div style={{
       maxWidth: '1400px',
@@ -811,9 +1062,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       }}>
         Dashboard Analytics Completo
       </h1>
-
       {/* Los botones de navegación ahora están en el Sidebar, no aquí */}
-
       <div>
         {selectedView === 'general' && renderGeneralView()}
         {selectedView === 'clientes' && renderClientesView()}
@@ -841,5 +1090,4 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     </div>
   );
 };
-
 export default React.memo(EnhancedAnalyticsDashboard);

@@ -107,7 +107,7 @@ function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
     };
 
   const kpi = {
-    efectivo_total: Number(datosSeleccionados?.efectivo_total || 0),
+    efectivo_total: Number(datosSeleccionados?.efectivo_total_jg || datosSeleccionados?.efectivo_total || 0),
     transferencia_total: Number(datosSeleccionados?.transferencia_total || 0),
     total_general: Number(datosSeleccionados?.total_general || 0),
     efectivo_cantidad: Number(datosSeleccionados?.efectivo_cantidad || 0),

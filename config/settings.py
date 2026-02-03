@@ -20,7 +20,8 @@ EXCEL_COLUMNS = {
     "SUBTOTAL": "SUBTOTAL",        # Columna calculada
     "TOTAL_EMPRESA": "TOTAL EMPRESA", # Columna calculada
     "VALOR_COMBINADO": "VALOR_COMBINADO", # Columna calculada
-    "TORRE_APTO": "TORRE/APTO" # Columna para categorización de clientes
+    "TORRE_APTO": "TORRE/APTO", # Columna para categorización de clientes
+    "FECHA_RELACION": "FECHA DE RELACION DEL SERVICIO" # Nueva columna para análisis de tiempos
 }
 
 # --- Criterios de Filtrado ---
