@@ -22,7 +22,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   const [totalesEstadosEspeciales, setTotalesEstadosEspeciales] = useState(null);
   const [estadosEspecialesPorMes, setEstadosEspecialesPorMes] = useState(null);
   const [clientesData, setClientesData] = useState([]);
-  const [pendientesGlobales, setPendientesGlobales] = useState({ relacionar: 0, cobrar: 0 });
   const [tiemposRelacion, setTiemposRelacion] = useState(null); // Nuevo estado para tiempos de relación
   const [recaudacionPorMes, setRecaudacionPorMes] = useState(null); // Recaudación mensual por fecha de relación
   const [efectivoPendienteInfo, setEfectivoPendienteInfo] = useState(null); // Información de efectivo pendiente
@@ -67,11 +66,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         setTotalesEstadosEspeciales(data.totales_estados_especiales);
         setEstadosEspecialesPorMes(data.estados_especiales_por_mes);
         setClientesData(data.clientes_recurrentes || []);
-        // Guardar pendientes globales
-        setPendientesGlobales({
-          relacionar: data.total_pendientes_relacionar || 0,
-          cobrar: data.total_pendientes_cobrar || 0
-        });
         // Guardar tiempos de relación
         setTiemposRelacion(data.tiempos_relacion || null);
         // Guardar recaudación por mes
@@ -215,12 +209,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     const serviciosFacturables = estadosGrafico?.SERVICIOS_FACTURABLES || 0;
     const totalIngresos = dataToUse.tendenciaMensual.reduce((sum, item) => sum + item.ingresos, 0);
     const serviciosPendientesCobrar = estadosGrafico?.PENDIENTE_COBRAR || 0;
-    // Usar el estado nuevo o fallback
-    const serviciosPendientesRelacionar = pendientesGlobales.relacionar;
-
-    const efectividad = totalServicios > 0
-      ? Math.round((estadosGrafico?.YA_RELACIONADO / totalServicios) * 100)
-      : 0;
 
     // Calcular totales de efectivo relacionado y pendiente
     let totalEfectivoRelacionado = 0;
