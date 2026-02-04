@@ -56,6 +56,7 @@ const TEMA_OSCURO = {
   terminalVerdeNeon: "#7FFF00",
   terminalNaranja: "#f6b62cef",
   terminalAzul: "#1E90FF",
+  terminalAzulNeon: "#00D9FF",
   terminalOliva: "#808000",
   terminalRosa: "#FF1493",
   terminalMorado: "#9333EA",
@@ -99,7 +100,7 @@ const TEMA_CLARO = {
   textoLink: "#1976d2",
 
   // Bordes
-  bordePrincipal: "#b5d0e6",
+  bordePrincipal: "#7fa8d1",
   bordeHover: "#64b5f6",
   bordeFocus: "#00bcd4",
   bordeDeshabilitado: "#c9e0f5",
@@ -132,7 +133,7 @@ const TEMA_CLARO = {
   terminalRojoEncendido: "#e00d0dff",
   terminalCyan: "#1976d2", // Azul información para el tema claro
   terminalEsmeralda: "#10b981", // Verde esmeralda para el tema claro
-
+  terminalAzulOscuro: "#0d47a1", // Azul oscuro para contraste en tema claro
   // Gradientes y efectos
   gradientes: {
     servicios: 'linear-gradient(135deg, #b2ebf2 80%, #00eaff 100%)',

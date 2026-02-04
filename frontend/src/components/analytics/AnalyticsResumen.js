@@ -51,17 +51,25 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
       borderRadius: '16px',
       padding: '24px',
       boxShadow: theme.sombraComponente,
-      border: `1px solid ${theme.bordePrincipal}`
+      border: `2px solid ${theme.bordePrincipal}`
     }}>
       <h3 style={{
-        color: theme.textoPrincipal,
+        color: theme.terminalVerdeNeon,
         textAlign: 'center',
-        marginBottom: '24px',
+        marginBottom: '12px',
         fontSize: '20px',
-        fontWeight: 'bold'
+        fontWeight: 700
       }}>
-        📊 Distribución de Servicios por Mes
+        💵 Recaudación Mensual
       </h3>
+      <p style={{
+        textAlign: 'center',
+        color: theme.textoSecundario,
+        fontSize: '0.85rem',
+        marginBottom: '24px'
+      }}>
+        Ingresos por mes según fecha de relación de servicios
+      </p>
 
       <div style={{
         display: 'grid',
@@ -98,14 +106,12 @@ function AnalyticsResumen({ resumen, pendientes = { total_pendientes_relacionar:
 
             {/* Total Principal con Degradado Premium */}
             <div style={{
-              background: `linear-gradient(135deg, ${theme.terminalVerdeNeon} 40%, ${theme.terminalAzul} 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: theme.terminalVerdeNeon,
               fontSize: '2rem',
               fontWeight: '900',
               marginBottom: '10px',
               letterSpacing: '-1px',
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+              textShadow: `3px 3px 0px ${theme.terminalAzulOscuro}, 6px 6px 12px rgba(0,0,0,0.3)`
             }}>
               {formatCurrency(item.total)}
             </div>

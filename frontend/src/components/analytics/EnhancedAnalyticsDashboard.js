@@ -26,6 +26,8 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   const [recaudacionPorMes, setRecaudacionPorMes] = useState(null); // Recaudación mensual por fecha de relación
   const [efectivoPendienteInfo, setEfectivoPendienteInfo] = useState(null); // Información de efectivo pendiente
   const [loading, setLoading] = useState(false);
+  const [periodoDatos, setPeriodoDatos] = useState({ inicio: null, fin: null }); // Estado para las fechas dinámicas
+  
   // Colores para el gráfico - Memoizados para evitar recreación
   const COLORS = useMemo(() => ({
     YA_RELACIONADO: theme.terminalVerde,
@@ -72,6 +74,47 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         setRecaudacionPorMes(data.recaudacion_por_mes || null);
         // Guardar información de efectivo pendiente
         setEfectivoPendienteInfo(data.efectivo_pendiente_info || null);
+        
+        // Extraer fechas dinámicas del resumen
+        if (data.resumen && Object.keys(data.resumen).length > 0) {
+          const mesesValidos = Object.keys(data.resumen)
+            .filter(mes => {
+              if (!mes) return false;
+              const normalizado = mes.trim().toLowerCase();
+              return normalizado &&
+                normalizado !== 'null' &&
+                normalizado !== 'undefined' &&
+                normalizado !== 'invalid date' &&
+                !/^nat$/i.test(normalizado);
+            });
+          
+          if (mesesValidos.length > 0) {
+            const mesesOrdenados = mesesValidos.sort((a, b) => {
+              const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+              const partsA = a.split(' ');
+              const partsB = b.split(' ');
+              const yearA = partsA[1] || '';
+              const yearB = partsB[1] || '';
+              const monthA = meses.indexOf(partsA[0]);
+              const monthB = meses.indexOf(partsB[0]);
+              if (yearA !== yearB) return yearA - yearB;
+              return monthA - monthB;
+            });
+            
+            const primerMes = mesesOrdenados[0]; // "Enero 2026"
+            const ultimoMes = mesesOrdenados[mesesOrdenados.length - 1]; // "Diciembre 2026"
+            
+            // Extraer año y mes
+            const [, yearInicio] = primerMes.split(' ');
+            const [, yearFin] = ultimoMes.split(' ');
+            
+            setPeriodoDatos({
+              inicio: `${yearInicio}-01-01`,
+              fin: `${yearFin}-12-31`
+            });
+          }
+        }
+        
         console.log('✅ Estados actualizados en React');
       } catch (error) {
         console.error('❌ Error fetching analytics:', error);
@@ -233,13 +276,22 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         sum + (mesData.deuda_abrecar_pendiente || 0), 0) : 0);
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', animation: 'fadeIn 0.5s ease-in' }}>
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
 
         {/* BLOQUE A: Tablero Financiero (Nivel Gerencial) */}
         <div>
-          <h3 style={{ marginBottom: '16px', color: theme.textoPrincipal, borderLeft: `4px solid ${theme.terminalVerde}`, paddingLeft: '12px' }}>
+          <h3 style={{ marginBottom: '16px', color: theme.terminalVerdeNeon, borderLeft: `4px solid ${theme.terminalVerdeNeon}`, paddingLeft: '12px', fontSize: '1.1rem', fontWeight: '700' }}>
             📊 Resumen Financiero
           </h3>
+          <p style={{ marginBottom: '20px', color: theme.textoSecundario, fontSize: '0.9rem' }}>
+            Indicadores clave del desempeño financiero en el período
+          </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
             <KpiCard
               title="Ingresos Totales"
@@ -267,15 +319,19 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           <div>
             <h3 style={{
               marginBottom: '20px',
-              color: theme.textoPrincipal,
+              color: theme.terminalVerdeNeon,
               fontSize: '1.1rem',
-              borderLeft: `4px solid ${theme.terminalAmarillo}`,
+              borderLeft: `4px solid ${theme.terminalVerdeNeon}`,
               paddingLeft: '12px',
               display: 'flex',
-              alignItems: 'center'
+              alignItems: 'center',
+              fontWeight: '700'
             }}>
               💵 Control de Efectivo
             </h3>
+            <p style={{ marginBottom: '20px', color: theme.textoSecundario, fontSize: '0.9rem' }}>
+              Seguimiento detallado de cobros en efectivo y entregas a ABRECAR
+            </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
               <KpiCard
                 title="Efectivo Recaudado"
@@ -359,6 +415,42 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                 </div>
               </div>
             )}
+
+            {/* Mensaje de Felicitación - Sin Deuda */}
+            {totalDeudaAbrecar === 0 && (totalEfectivoRelacionado > 0 || totalEfectivoPendiente > 0) && (
+              <div style={{
+                marginTop: '20px',
+                padding: '16px 20px',
+                background: `linear-gradient(135deg, ${theme.terminalVerde}15 0%, ${theme.terminalEsmeralda}15 100%)`,
+                borderRadius: '12px',
+                border: `1px solid ${theme.terminalVerde}40`,
+                boxShadow: theme.sombraComponente
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '8px'
+                }}>
+                  <span style={{ fontSize: '1.5rem' }}>✅</span>
+                  <h4 style={{
+                    margin: 0,
+                    color: theme.terminalVerde,
+                    fontSize: '1.1rem',
+                    fontWeight: 'bold'
+                  }}>
+                    EXCELENTE - Estás al día en la relación de servicios en efectivo
+                  </h4>
+                </div>
+                <p style={{
+                  margin: '8px 0 0 0',
+                  color: theme.textoSecundario,
+                  fontSize: '0.9rem'
+                }}>
+                  Todos los cobros en efectivo han sido entregados a ABRECAR correctamente.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -367,14 +459,18 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           <div style={{ paddingTop: '16px', borderTop: `1px dashed ${theme.bordePrincipal}` }}>
             <h3 style={{
               marginBottom: '20px',
-              color: theme.textoSecundario,
+              color: theme.terminalVerdeNeon,
               fontSize: '1.0rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: '8px',
+              fontWeight: '700'
             }}>
               📋 Auditoría Operativa & Excepciones
             </h3>
+            <p style={{ marginBottom: '20px', color: theme.textoSecundario, fontSize: '0.9rem' }}>
+              Análisis de servicios con estados especiales que requieren revisión
+            </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
               {/* Total Registros como contexto */}
               <KpiCard
@@ -420,7 +516,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           borderRadius: '16px',
           padding: '24px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          border: `1px solid ${theme.bordePrincipal}`,
+          border: `2px solid ${theme.bordePrincipal}`,
           position: 'relative'
         }}>
           <h3 style={{
@@ -472,7 +568,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
             borderRadius: '16px',
             padding: '20px',
             boxShadow: theme.sombraComponente,
-            border: `1px solid ${theme.bordePrincipal}`
+            border: `2px solid ${theme.bordePrincipal}`
           }}>
             <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>
               Estados Especiales por Mes
@@ -525,17 +621,24 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
             borderRadius: '16px',
             padding: '24px',
             boxShadow: theme.sombraComponente,
-            border: `1px solid ${theme.bordePrincipal}`
+            border: `2px solid ${theme.bordePrincipal}`,
+            animation: 'fadeIn 0.5s ease-in'
           }}>
             <h3 style={{
-              marginBottom: '24px',
-              color: theme.textoPrincipal,
+              marginBottom: '8px',
+              color: theme.terminalVerdeNeon,
               fontSize: '1.2rem',
-              borderBottom: `1px solid ${theme.bordePrincipal}`,
-              paddingBottom: '12px'
+              fontWeight: 700
             }}>
               💰 Recaudación Mensual por Fecha de Pago
             </h3>
+            <p style={{
+              marginBottom: '24px',
+              color: theme.textoSecundario,
+              fontSize: '0.85rem'
+            }}>
+              Análisis detallado de ingresos cobrados y servicios procesados por período
+            </p>
             <ResponsiveContainer width="100%" height={350}>
               {(() => {
                 // Procesar y ordenar datos
@@ -818,14 +921,20 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     );
   };
   const renderClientesView = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', animation: 'fadeIn 0.5s ease-in' }}>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       <h2 style={{ color: theme.textoPrincipal, textAlign: 'center' }}>Análisis de Clientes</h2>
       <div style={{
         background: theme.fondoContenedor,
         borderRadius: '16px',
         padding: '20px',
         boxShadow: theme.sombraComponente,
-        border: `1px solid ${theme.bordePrincipal}`
+        border: `2px solid ${theme.bordePrincipal}`
       }}>
         <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>Clientes por Tipo</h3>
         <ResponsiveContainer width="100%" height={400}>
@@ -857,7 +966,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         borderRadius: '16px',
         padding: '20px',
         boxShadow: theme.sombraComponente,
-        border: `1px solid ${theme.bordePrincipal}`
+        border: `2px solid ${theme.bordePrincipal}`
       }}>
         <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>Mejores Clientes</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
@@ -890,14 +999,20 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     </div>
   );
   const renderServiciosView = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', animation: 'fadeIn 0.5s ease-in' }}>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       <h2 style={{ color: theme.textoPrincipal, textAlign: 'center' }}>Análisis de Servicios</h2>
       <div style={{
         background: theme.fondoContenedor,
         borderRadius: '16px',
         padding: '20px',
         boxShadow: theme.sombraComponente,
-        border: `1px solid ${theme.bordePrincipal}`
+        border: `2px solid ${theme.bordePrincipal}`
       }}>
         <h3 style={{ marginBottom: '20px', color: theme.textoPrincipal }}>
           Servicios por Tipo
@@ -968,7 +1083,13 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     </div>
   );
   const renderPendientesView = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', animation: 'fadeIn 0.5s ease-in' }}>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       {/* Los botones de navegación ahora están en el Sidebar */}
       {selectedView === 'pendientes-efectivo' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -1041,15 +1162,39 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       minHeight: '100vh',
       color: theme.textoPrincipal
     }}>
-      <h1 style={{
-        textAlign: 'center',
-        marginBottom: '30px',
-        color: theme.textoPrincipal,
-        fontSize: '32px',
-        fontWeight: 'bold'
-      }}>
-        Dashboard Analytics Completo
-      </h1>
+      {/* Título dinámico según vista */}
+      {(() => {
+        const titles = {
+          'general': '📊 Análisis de Servicios',
+          'clientes': '👥 Análisis de Clientes',
+          'servicios': '🔧 Desglose de Servicios',
+          'pendientes': '⏳ Gestión de Pendientes',
+          'pendientes-efectivo': '💵 Pendientes de Entrega',
+          'pendientes-cobrar': '💰 Pendientes de Cobro'
+        };
+        return (
+          <>
+            <h1 style={{
+              textAlign: 'center',
+              marginBottom: '8px',
+              color: theme.textoPrincipal,
+              fontSize: '32px',
+              fontWeight: 'bold'
+            }}>
+              {titles[selectedView] || '📊 Dashboard Analytics'}
+            </h1>
+            <p style={{
+              textAlign: 'center',
+              marginBottom: '30px',
+              color: theme.textoSecundario,
+              fontSize: '14px',
+              fontWeight: 'normal'
+            }}>
+              {periodoDatos.inicio && periodoDatos.fin ? `Datos del período: ${periodoDatos.inicio} - ${periodoDatos.fin}` : 'Cargando datos del período...'}
+            </p>
+          </>
+        );
+      })()}
       {/* Los botones de navegación ahora están en el Sidebar, no aquí */}
       <div>
         {selectedView === 'general' && renderGeneralView()}

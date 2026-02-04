@@ -142,11 +142,11 @@ function Analytics({ excelData, workMode, onFileChange, onClearFile }) {
           gap: 2
         }}>
           <Typography variant="h5" sx={{
-            color: theme.textoPrincipal,
-            fontWeight: 'bold',
+            color: theme.terminalVerdeNeon,
+            fontWeight: 700,
             textAlign: { xs: 'center', sm: 'left' }
           }}>
-            📊 Analytics - Análisis de Datos
+            📊 Resumen de Recaudación
           </Typography>
 
           <Grow in={true} timeout={300}>

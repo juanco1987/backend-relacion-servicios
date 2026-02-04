@@ -65,7 +65,7 @@ function KpiSection({ kpi, pendientesSeleccionados }) {
           title="Total General"
           value={formatCurrency(kpi.total_general)}
           subtitle={`${kpi.efectivo_cantidad + kpi.transferencia_cantidad} servicios totales`}
-          color={theme.terminalVerdeNeon}
+          color={theme.terminalEsmeralda}
         />
       </Box>
 

@@ -11,19 +11,28 @@ function AnalyticsChart({ dataGrafica }) {
   return (
     <Paper sx={{
       background: theme.fondoOverlay,
-      borderRadius: '25px',
+      borderRadius: '16px',
       padding: '24px',
       boxShadow: theme.sombraComponente,
-      border: `1px solid ${theme.bordePrincipal}`,
-      mb: 4
+      border: `2px solid ${theme.bordePrincipal}`,
+      mb: 4,
+      animation: 'fadeIn 0.5s ease-in'
     }}>
       <Typography variant="h6" sx={{ 
-        color: theme.textoPrincipal, 
-        fontWeight: 'bold', 
-        mb: 2,
+        color: theme.terminalVerdeNeon, 
+        fontWeight: 700, 
+        mb: 1,
         textAlign: 'center'
       }}>
-        Gráfico de Ingresos por Mes
+        💰 Ingresos por Mes
+      </Typography>
+      <Typography sx={{
+        color: theme.textoSecundario,
+        fontSize: '0.85rem',
+        mb: 3,
+        textAlign: 'center'
+      }}>
+        Desglose de efectivo, transferencias e ingresos totales mensuales
       </Typography>
       <ResponsiveContainer width="100%" height={400}>
         <BarChart data={dataGrafica}>
@@ -37,7 +46,7 @@ function AnalyticsChart({ dataGrafica }) {
             axisLine={{ stroke: theme.bordePrincipal }}
             height={60}  // Da más espacio para los labels rotados
             tickFormatter={(value) => {
-              // Formato: "Enero 2024" -> "Ene"
+              // Formato: "Enero" -> "Ene"
               const mes = value.split(' ')[0];
               const abreviaturas = {
                 'Enero': 'Ene',
@@ -65,7 +74,7 @@ function AnalyticsChart({ dataGrafica }) {
           <Legend />
           <Bar dataKey="Efectivo" fill={theme.terminalVerde} radius={[16, 16, 0, 0]} />
           <Bar dataKey="Transferencia" fill={theme.textoInfo} radius={[16, 16, 0, 0]} />
-          <Bar dataKey="Total General" fill={theme.terminalVerdeNeon} radius={[16, 16, 0, 0]} />
+          <Bar dataKey="Total General" fill={theme.terminalEsmeralda} radius={[16, 16, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </Paper>
