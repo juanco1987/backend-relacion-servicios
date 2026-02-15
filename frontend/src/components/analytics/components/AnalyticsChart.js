@@ -5,6 +5,17 @@ import { formatCurrency } from '../../../utils/numberFormatters';
 import { useTheme } from '../../../context/ThemeContext';
 import CustomTooltip from '../../common/CustomTooltip';
 
+// Función para formatear números de forma compacta (30k, 3M, etc)
+const formatCompactNumber = (value) => {
+  if (value >= 1000000) {
+    return `$${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `$${(value / 1000).toFixed(0)}k`;
+  }
+  return `$${value}`;
+};
+
 function AnalyticsChart({ dataGrafica }) {
   const { theme } = useTheme();
 
@@ -18,9 +29,9 @@ function AnalyticsChart({ dataGrafica }) {
       mb: 4,
       animation: 'fadeIn 0.5s ease-in'
     }}>
-      <Typography variant="h6" sx={{ 
-        color: theme.terminalVerdeNeon, 
-        fontWeight: 700, 
+      <Typography variant="h6" sx={{
+        color: theme.terminalVerdeNeon,
+        fontWeight: 700,
         mb: 1,
         textAlign: 'center'
       }}>
@@ -36,9 +47,9 @@ function AnalyticsChart({ dataGrafica }) {
       </Typography>
       <ResponsiveContainer width="100%" height={400}>
         <BarChart data={dataGrafica}>
-          <XAxis 
-            dataKey="mes" 
-            tick={{ 
+          <XAxis
+            dataKey="mes"
+            tick={{
               fill: theme.textoPrincipal,
               fontSize: '0.875rem',
               fontWeight: 500
@@ -65,10 +76,10 @@ function AnalyticsChart({ dataGrafica }) {
               return abreviaturas[mes] || mes;
             }}
           />
-          <YAxis 
+          <YAxis
             tick={{ fill: theme.textoPrincipal }}
             axisLine={{ stroke: theme.bordePrincipal }}
-            tickFormatter={(value) => formatCurrency(value)}
+            tickFormatter={formatCompactNumber}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />

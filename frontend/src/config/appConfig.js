@@ -59,7 +59,7 @@ export const RESOURCE_PATHS = {
 };
 
 export const APP_MESSAGES = {
-  APP_TITLE: "Sistema de Relacion de Servicios",
+  APP_TITLE: "REPORTES JG",
   APP_TITLE_SHORT: "Relaciones de Servicios",
   FILE_SELECT_TITLE: "Seleccionar archivo Excel",
   FILE_TYPES: ["Archivos Excel (*.xlsx *.xls)", "Todos los archivos (*.*)"],
@@ -143,7 +143,7 @@ export const APP_MESSAGES = {
   PDF_OPEN_ICON_WARNING_NAME: "OJO",
   EXCEL_ICON_WARNING_NAME: "excel",
   FOLDER_ICON_WARNING_NAME: "carpeta",
-  HEADER_SUBTITLE: "Genera informes de servicios pagados con tecnología avanzada",
+  HEADER_SUBTITLE: "Sube tu archivo Excel y descubre cómo van tus servicios",
   HEADER_STATUS_LABEL: "Estado:",
   HEADER_STATUS_NORMAL: "Normal",
   MENU_BUTTON_TEXT: "☰",

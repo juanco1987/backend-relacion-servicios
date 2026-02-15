@@ -9,6 +9,18 @@ import CustomTooltip from '../common/CustomTooltip';
 import ServiciosPendientesEfectivo from './ServiciosPendientesEfectivo';
 import ServiciosPendientesCobrar from './ServiciosPendientesCobrar';
 import { API_CONFIG } from '../../config/appConfig';
+
+// Función para formatear números de forma compacta (30k, 3M, etc)
+const formatCompactNumber = (value) => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(0)}k`;
+  }
+  return value.toString();
+};
+
 const API_BASE = API_CONFIG.BASE_URL;
 const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView = 'general', onRequestOpenUploader }) => {
   const { theme } = useTheme();
@@ -27,7 +39,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   const [efectivoPendienteInfo, setEfectivoPendienteInfo] = useState(null); // Información de efectivo pendiente
   const [loading, setLoading] = useState(false);
   const [periodoDatos, setPeriodoDatos] = useState({ inicio: null, fin: null }); // Estado para las fechas dinámicas
-  
+
   // Colores para el gráfico - Memoizados para evitar recreación
   const COLORS = useMemo(() => ({
     YA_RELACIONADO: theme.terminalVerde,
@@ -74,7 +86,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         setRecaudacionPorMes(data.recaudacion_por_mes || null);
         // Guardar información de efectivo pendiente
         setEfectivoPendienteInfo(data.efectivo_pendiente_info || null);
-        
+
         // Extraer fechas dinámicas del resumen
         if (data.resumen && Object.keys(data.resumen).length > 0) {
           const mesesValidos = Object.keys(data.resumen)
@@ -87,7 +99,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                 normalizado !== 'invalid date' &&
                 !/^nat$/i.test(normalizado);
             });
-          
+
           if (mesesValidos.length > 0) {
             const mesesOrdenados = mesesValidos.sort((a, b) => {
               const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -100,21 +112,21 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
               if (yearA !== yearB) return yearA - yearB;
               return monthA - monthB;
             });
-            
+
             const primerMes = mesesOrdenados[0]; // "Enero 2026"
             const ultimoMes = mesesOrdenados[mesesOrdenados.length - 1]; // "Diciembre 2026"
-            
+
             // Extraer año y mes
             const [, yearInicio] = primerMes.split(' ');
             const [, yearFin] = ultimoMes.split(' ');
-            
+
             setPeriodoDatos({
               inicio: `${yearInicio}-01-01`,
               fin: `${yearFin}-12-31`
             });
           }
         }
-        
+
         console.log('✅ Estados actualizados en React');
       } catch (error) {
         console.error('❌ Error fetching analytics:', error);
@@ -540,8 +552,8 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                   fontWeight: 500
                 }}
               />
-              <YAxis yAxisId="left" stroke={theme.textoPrincipal} />
-              <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} />
+              <YAxis yAxisId="left" stroke={theme.textoPrincipal} tickFormatter={formatCompactNumber} />
+              <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} tickFormatter={formatCompactNumber} />
               <Tooltip
                 content={
                   <CustomTooltip
@@ -600,7 +612,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                   stroke={theme.textoPrincipal}
                   tickFormatter={formatMonthAbbreviation}
                 />
-                <YAxis stroke={theme.textoPrincipal} />
+                <YAxis stroke={theme.textoPrincipal} tickFormatter={formatCompactNumber} />
                 <Tooltip content={<CustomTooltip formatter={(value,) => `${value}`} />} />
 
                 <Legend />
@@ -619,7 +631,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           <div style={{
             background: theme.fondoContenedor,
             borderRadius: '16px',
-            padding: '24px',
+            padding: '16px',
             boxShadow: theme.sombraComponente,
             border: `2px solid ${theme.bordePrincipal}`,
             animation: 'fadeIn 0.5s ease-in'
@@ -633,13 +645,13 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
               💰 Recaudación Mensual por Fecha de Pago
             </h3>
             <p style={{
-              marginBottom: '24px',
+              marginBottom: '16px',
               color: theme.textoSecundario,
               fontSize: '0.85rem'
             }}>
               Análisis detallado de ingresos cobrados y servicios procesados por período
             </p>
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={450}>
               {(() => {
                 // Procesar y ordenar datos
                 const datosOrdenados = Object.entries(recaudacionPorMes)
@@ -678,14 +690,14 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                 return (
                   <ComposedChart
                     data={datosParaGrafico}
-                    margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+                    margin={{ top: 20, right: 10, left: 10, bottom: hayMultiplesAños ? 60 : 20 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
                     <XAxis
                       dataKey="etiquetaEje"
                       stroke={theme.textoPrincipal}
                       tick={{
-                        fontSize: '0.75rem',
+                        fontSize: '0.85rem',
                         fontWeight: 500
                       }}
                       angle={hayMultiplesAños ? -45 : 0}
@@ -695,13 +707,15 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
                     <YAxis
                       yAxisId="left"
                       stroke={theme.textoPrincipal}
-                      label={{ value: 'Recaudado ($)', angle: -90, position: 'insideLeft', fill: theme.textoPrincipal }}
+                      tick={{ fontSize: '0.85rem' }}
+                      tickFormatter={formatCompactNumber}
                     />
                     <YAxis
                       yAxisId="right"
                       orientation="right"
                       stroke={theme.textoPrincipal}
-                      label={{ value: 'Servicios', angle: 90, position: 'insideRight', fill: theme.textoPrincipal }}
+                      tick={{ fontSize: '0.85rem' }}
+                      tickFormatter={formatCompactNumber}
                     />
                     <Tooltip
                       content={
@@ -941,8 +955,8 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           <BarChart data={dataToUse.clientesRecurrentes}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
             <XAxis dataKey="cliente" stroke={theme.textoPrincipal} />
-            <YAxis yAxisId="left" stroke={theme.textoPrincipal} />
-            <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} />
+            <YAxis yAxisId="left" stroke={theme.textoPrincipal} tickFormatter={formatCompactNumber} />
+            <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} tickFormatter={formatCompactNumber} />
             <Tooltip
               content={
                 <CustomTooltip
@@ -1021,8 +1035,8 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           <BarChart data={dataToUse.serviciosPorTipo}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme.bordePrincipal} />
             <XAxis dataKey="tipo" stroke={theme.textoPrincipal} />
-            <YAxis yAxisId="left" stroke={theme.textoPrincipal} />
-            <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} />
+            <YAxis yAxisId="left" stroke={theme.textoPrincipal} tickFormatter={formatCompactNumber} />
+            <YAxis yAxisId="right" orientation="right" stroke={theme.textoPrincipal} tickFormatter={formatCompactNumber} />
             <Tooltip
               content={
                 <CustomTooltip

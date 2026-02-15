@@ -36,32 +36,32 @@ function NoDataState({ onFileChange }) {
           component="img"
           src={excelIcon}
           alt="Excel Analytics"
-          sx={{ 
-            width: { xs: 60, md: 80 }, 
+          sx={{
+            width: { xs: 60, md: 80 },
             height: { xs: 60, md: 80 },
             mb: 3,
             filter: theme.modo === 'oscuro' ? 'invert(1)' : 'none',
             opacity: 0.8
           }}
         />
-        
+
         <Typography variant="h4" sx={{
           color: theme.textoPrincipal,
           fontWeight: 'bold',
           mb: 2,
-          fontSize: { xs: '1.8rem', md: '2.2rem' }
+          fontSize: { xs: '1.5rem', md: '2.2rem' }
         }}>
-          📊 Analytics Dashboard
+          📊 Tus Estadísticas
         </Typography>
-        
+
         <Typography variant="h6" sx={{
           color: theme.textoSecundario,
           mb: 4,
           lineHeight: 1.6,
-          maxWidth: 600
+          maxWidth: { xs: '100%', md: 600 },
+          fontSize: { xs: '0.95rem', md: '1.25rem' }
         }}>
-          Para visualizar tus estadísticas y análisis financieros, 
-          carga tu archivo Excel con los datos de Analytics
+          Sube tu archivo Excel y descubre cómo van tus servicios
         </Typography>
 
         <Box sx={{
@@ -80,8 +80,8 @@ function NoDataState({ onFileChange }) {
             component="img"
             src={engraneIcon}
             alt="Configuración"
-            sx={{ 
-              width: 24, 
+            sx={{
+              width: 24,
               height: 24,
               mr: 2,
               filter: theme.modo === 'oscuro' ? 'invert(1)' : 'none'
@@ -96,7 +96,7 @@ function NoDataState({ onFileChange }) {
         </Box>
 
         {/* Campo de carga */}
-        <Box sx={{ width: '100%', maxWidth: 500, mb: 3 }}>          
+        <Box sx={{ width: '100%', maxWidth: 500, mb: 3 }}>
           <motion.div
             whileHover={ANIMATIONS.formFieldHover}
             whileTap={{ scale: 0.98 }}

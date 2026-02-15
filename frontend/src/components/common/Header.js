@@ -15,145 +15,115 @@ const Header = React.memo(() => {
     <Box
       sx={{
         background: 'none',
-        borderRadius: 0,
-        boxShadow: 'none',
-        p: { xs: 1, md: 2 },
-        pr: { xs: 7, md: 2 }, // Padding extra a la derecha en móviles para el botón de tema
-        mb: 0,
+        p: { xs: 2, md: 3 }, // Más aire arriba y a los lados
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: { xs: 100, md: 110 },
+        minHeight: { xs: 90, md: 110 },
         position: 'relative',
+        width: '100%',
       }}
     >
-      {/* Botón de alternancia de tema - esquina superior derecha */}
+      {/* Botón de tema - Más estilizado */}
       <Box
         sx={{
           position: 'absolute',
-          top: { xs: 8, md: 12 },
-          right: { xs: 8, md: 12 },
-          width: 40,
-          height: 40,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          top: { xs: 10, md: 15 },
+          right: { xs: 10, md: 15 },
           zIndex: 10,
         }}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          style={{
-            transformOrigin: 'center',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
         >
           <IconButton
             onClick={alternarTema}
             sx={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              background: theme.fondoOverlay,
-              color: theme.textoPrincipal,
-              border: `2px solid ${theme.bordePrincipal}`,
-              boxShadow: theme.sombraHeader,
-              '&:hover': {
-                background: theme.fondoOverlay,
-                borderColor: theme.bordeHover,
-              },
-              transition: 'all 0.2s ease',
-              transform: 'none',
+              width: 38,
+              height: 38,
+              background: theme.fondoOverlay || 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(4px)',
+              border: `1px solid ${theme.bordePrincipal}`,
+              fontSize: '1.2rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             }}
-            title={`Cambiar a tema ${modo === 'oscuro' ? 'claro' : 'oscuro'}`}
           >
             {modo === 'oscuro' ? '☀️' : '🌙'}
           </IconButton>
         </motion.div>
       </Box>
 
-      {/* Logo con animación de rotación */}
-      <motion.div
-        initial={{ opacity: 0, rotate: -180 }}
-        animate={{ opacity: 1, rotate: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
-        <Avatar
-          src={logo}
-          alt="Logo"
-          sx={{
-            width: 70,
-            height: 70,
-            bgcolor: 'white',
-            mr: { xs: 2, md: 3 },
-            boxShadow: theme.sombraHeader,
-          }}
-        />
-      </motion.div>
+      {/* Contenedor Principal Logo + Texto */}
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        maxWidth: '100%',
+        gap: { xs: 1.5, md: 3 } // Espacio controlado entre logo y texto
+      }}>
 
-      {/* Texto del título y subtítulo */}
-      <motion.div
-        initial={{ opacity: 0, x: -30 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
-      >
+        {/* Logo optimizado para móvil */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Avatar
+            src={logo}
+            alt="Logo"
+            sx={{
+              width: { xs: 55, md: 75 }, // Un poco más pequeño en móvil
+              height: { xs: 55, md: 75 },
+              bgcolor: 'white',
+              boxShadow: theme.sombraHeader || 3,
+              border: `2px solid ${theme.bordePrincipal}`,
+            }}
+          />
+        </motion.div>
+
+        {/* Textos: Título y Subtítulo */}
         <Box sx={{
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          maxWidth: { xs: 'calc(100% - 60px)', md: '100%' }, // Limitar ancho en móviles
+          textAlign: 'left'
         }}>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
             <Typography
-              variant="h3"
-              component="div"
+              variant="h1"
               sx={{
                 color: theme.textoPrincipal,
                 fontWeight: 800,
-                letterSpacing: '-1px',
-                lineHeight: 1.1,
-                fontSize: { xs: '1.8rem', md: '2.5rem' },
-                wordWrap: 'break-word',
-                overflowWrap: 'break-word',
-                hyphens: 'auto',
+                fontSize: { xs: '1.4rem', md: '2.2rem' }, // Tamaño ajustado
+                lineHeight: 1,
+                letterSpacing: '-0.5px',
+                mb: 0.5
               }}
             >
               {APP_MESSAGES.APP_TITLE}
             </Typography>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
-          >
+
             <Typography
-              variant="subtitle1"
-              component="div"
+              variant="subtitle2"
               sx={{
                 color: theme.textoSecundario,
-                fontWeight: 400,
-                fontSize: { xs: '1rem', md: '1.2rem' },
-                mt: 0.5,
+                fontWeight: 500,
+                fontSize: { xs: '0.75rem', md: '1rem' },
+                opacity: 0.8,
+                maxWidth: { xs: '200px', md: '100%' }, // Evita que el subtítulo se estire demasiado
+                lineHeight: 1.2
               }}
             >
               {APP_MESSAGES.HEADER_SUBTITLE}
             </Typography>
           </motion.div>
         </Box>
-      </motion.div>
+      </Box>
     </Box>
   );
 });
 
-export default Header; 
+export default Header;
