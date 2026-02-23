@@ -36,7 +36,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
   const [clientesData, setClientesData] = useState([]);
   const [tiemposRelacion, setTiemposRelacion] = useState(null); // Nuevo estado para tiempos de relación
   const [recaudacionPorMes, setRecaudacionPorMes] = useState(null); // Recaudación mensual por fecha de relación
-  const [efectivoPendienteInfo, setEfectivoPendienteInfo] = useState(null); // Información de efectivo pendiente
   const [loading, setLoading] = useState(false);
   const [periodoDatos, setPeriodoDatos] = useState({ inicio: null, fin: null }); // Estado para las fechas dinámicas
 
@@ -84,8 +83,6 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
         setTiemposRelacion(data.tiempos_relacion || null);
         // Guardar recaudación por mes
         setRecaudacionPorMes(data.recaudacion_por_mes || null);
-        // Guardar información de efectivo pendiente
-        setEfectivoPendienteInfo(data.efectivo_pendiente_info || null);
 
         // Extraer fechas dinámicas del resumen
         if (data.resumen && Object.keys(data.resumen).length > 0) {
@@ -282,7 +279,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
       });
     }
 
-    // Obtener deuda a Abrecar desde efectivoPendienteInfo o calcular desde analyticsData
+    // Obtener deuda a Abrecar calcular desde analyticsData
     const totalDeudaAbrecar =
       (analyticsData ? Object.values(analyticsData).reduce((sum, mesData) =>
         sum + (mesData.deuda_abrecar_pendiente || 0), 0) : 0);
