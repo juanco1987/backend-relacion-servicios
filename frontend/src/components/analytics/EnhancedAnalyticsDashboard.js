@@ -283,7 +283,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
     }
 
     // Obtener deuda a Abrecar desde efectivoPendienteInfo o calcular desde analyticsData
-    const totalDeudaAbrecar = efectivoPendienteInfo?.total_deuda_abrecar ||
+    const totalDeudaAbrecar =
       (analyticsData ? Object.values(analyticsData).reduce((sum, mesData) =>
         sum + (mesData.deuda_abrecar_pendiente || 0), 0) : 0);
 
@@ -1075,12 +1075,7 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           subtitle={dataToUse.tiemposRelacion ? `Min: ${dataToUse.tiemposRelacion.min_dias} - Max: ${dataToUse.tiemposRelacion.max_dias}` : 'Sin datos'}
           color={theme.textoInfo}
         />
-        <KpiCard
-          title="Valor Promedio"
-          value={formatCurrency(145000)}
-          subtitle="Por servicio"
-          color={theme.terminalVerde}
-        />
+
         <KpiCard
           title="Eficiencia de Cobro"
           value={dataToUse.tiemposRelacion ? `${Math.round((dataToUse.tiemposRelacion.distribucion.rapido / dataToUse.tiemposRelacion.total_analizados) * 100)}%` : 'N/A'}
@@ -1088,9 +1083,9 @@ const EnhancedAnalyticsDashboard = ({ file, fechaInicio, fechaFin, defaultView =
           color={theme.terminalVerde}
         />
         <KpiCard
-          title="Satisfacción"
-          value="4.8/5"
-          subtitle="Promedio cliente"
+          title="Valor Promedio"
+          value={formatCurrency(dataToUse.kpis_servicios?.valor_promedio || 0)}
+          subtitle="Por servicio"
           color={theme.terminalVerde}
         />
       </div>

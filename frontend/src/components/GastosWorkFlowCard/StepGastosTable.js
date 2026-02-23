@@ -14,6 +14,12 @@ const CATEGORIAS_PRESET = [
   'Otros'
 ];
 
+const PAGADO_POR_OPTIONS = [
+  'ABRECAR',
+  'JG (TÉCNICO)',
+  'OTROS'
+];
+
 const StepGastosTable = forwardRef(({
   theme,
   gastos,
@@ -26,6 +32,7 @@ const StepGastosTable = forwardRef(({
     categoria: '',
     monto: '',
     descripcion: '',
+    pagadoPor: 'ABRECAR',
     notas: '',
   });
 
@@ -46,6 +53,7 @@ const StepGastosTable = forwardRef(({
       categoria: '',
       monto: '',
       descripcion: '',
+      pagadoPor: 'ABRECAR',
       notas: '',
     });
   };
@@ -254,6 +262,53 @@ const StepGastosTable = forwardRef(({
                   />
                 </Grid>
 
+                <Grid item xs={12} sm={6} md={3}>
+                  <TextField
+                    select
+                    label="Pagado por"
+                    value={formData.pagadoPor}
+                    onChange={(e) => setFormData({ ...formData, pagadoPor: e.target.value })}
+                    size="small"
+                    fullWidth
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        background: theme.fondoOverlay,
+                        borderRadius: "25px",
+                        transition: "all 0.3s ease",
+                        boxShadow: theme.sombraContenedor,
+                        "&:hover": {
+                          "& > fieldset": {
+                            borderColor: theme.bordeHover,
+                            borderWidth: "2px",
+                          },
+                        },
+                        "&.Mui-focused": {
+                          "& > fieldset": {
+                            borderColor: theme.bordeHover,
+                            borderWidth: "2px",
+                          },
+                        },
+                        "& > fieldset": {
+                          borderColor: theme.bordePrincipal,
+                          borderWidth: "1.5px",
+                        },
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: theme.textoSecundario,
+                        "&.Mui-focused": {
+                          color: theme.textoPrincipal,
+                        },
+                      },
+                    }}
+                  >
+                    {PAGADO_POR_OPTIONS.map((opt) => (
+                      <MenuItem key={opt} value={opt}>
+                        {opt}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+
                 <Grid item xs={12}>
                   <TextField
                     label="Descripción"
@@ -393,6 +448,7 @@ const StepGastosTable = forwardRef(({
                       <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Fecha</th>
                       <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Categoría</th>
                       <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Descripción</th>
+                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Pagado por</th>
                       <th style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold' }}>Monto</th>
                       <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold' }}>Acción</th>
                     </tr>
@@ -403,6 +459,7 @@ const StepGastosTable = forwardRef(({
                         <td style={{ padding: '12px' }}>{gasto.fecha}</td>
                         <td style={{ padding: '12px' }}>{gasto.categoria}</td>
                         <td style={{ padding: '12px' }}>{gasto.descripcion}</td>
+                        <td style={{ padding: '12px' }}>{gasto.pagadoPor || 'ABRECAR'}</td>
                         <td style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold', color: theme.terminalVerde }}>
                           {formatearMoneda(gasto.monto)}
                         </td>
@@ -425,7 +482,7 @@ const StepGastosTable = forwardRef(({
                       </tr>
                     ))}
                     <tr style={{ background: theme.fondoOverlay, fontWeight: 'bold', borderTop: `2px solid ${theme.bordePrincipal}` }}>
-                      <td colSpan="3" style={{ padding: '12px', textAlign: 'right' }}>TOTAL GASTOS:</td>
+                      <td colSpan="4" style={{ padding: '12px', textAlign: 'right' }}>TOTAL GASTOS:</td>
                       <td style={{ padding: '12px', textAlign: 'right', color: theme.terminalVerde, fontSize: '1.1rem' }}>
                         {formatearMoneda(totalGastos)}
                       </td>

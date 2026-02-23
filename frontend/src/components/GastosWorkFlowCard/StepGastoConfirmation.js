@@ -57,6 +57,7 @@ const StepGastoConfirmation = ({
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Fecha</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Categoría</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Descripción</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold' }}>Pagado por</th>
                     <th style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold' }}>Valor</th>
                   </tr>
                 </thead>
@@ -72,6 +73,7 @@ const StepGastoConfirmation = ({
                       <td style={{ padding: '10px' }}>{gasto.fecha}</td>
                       <td style={{ padding: '10px' }}>{gasto.categoria}</td>
                       <td style={{ padding: '10px' }}>{gasto.descripcion}</td>
+                      <td style={{ padding: '10px' }}>{gasto.pagadoPor || 'ABRECAR'}</td>
                       <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600, color: theme.terminalRojo }}>
                         {formatearMoneda(gasto.monto)}
                       </td>
@@ -117,7 +119,7 @@ const StepGastoConfirmation = ({
                       }}
                     >
                       <td style={{ padding: '10px' }}>{cons.fecha}</td>
-                      <td style={{ padding: '10px' }}>{cons.entregadoPor}</td>
+                      <td style={{ padding: '10px' }}>{cons.entregadoPor.replace('OTROS:', '').trim()}</td>
                       <td style={{ padding: '10px' }}>{cons.descripcion}</td>
                       <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600, color: theme.terminalVerde }}>
                         {formatearMoneda(cons.monto)}

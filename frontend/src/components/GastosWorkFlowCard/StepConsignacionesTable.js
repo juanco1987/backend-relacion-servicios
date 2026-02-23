@@ -25,6 +25,7 @@ const StepConsignacionesTable = forwardRef(({
     fecha: '',
     monto: '',
     entregadoPor: '',
+    nombreOtros: '',
     descripcion: '',
   });
 
@@ -37,12 +38,14 @@ const StepConsignacionesTable = forwardRef(({
     onAgregarConsignacion({
       ...formData,
       monto: parseFloat(formData.monto),
+      entregadoPor: formData.entregadoPor === 'OTROS' ? `OTROS: ${formData.nombreOtros}` : formData.entregadoPor
     });
 
     setFormData({
       fecha: '',
       monto: '',
       entregadoPor: '',
+      nombreOtros: '',
       descripcion: '',
     });
   };
@@ -92,50 +95,50 @@ const StepConsignacionesTable = forwardRef(({
                     size="small"
                     fullWidth
                     sx={{
-                        
-                        "& .MuiOutlinedInput-root": {
-                            background: theme.fondoOverlay,
-                            borderRadius: "25px",
-                            transition: "all 0.3s ease",
-                            boxShadow: theme.sombraContenedor,
-                            "&:hover": {
-                            "& > fieldset": {
-                                borderColor: theme.bordeHover,
-                                borderWidth: "2px",
-                            },
-                            transform: "translateY(-2px)",
-                            boxShadow: theme.sombraHover,
-                            },
-                            "&.Mui-focused": {
-                            "& > fieldset": {
-                                borderColor: theme.bordeHover,
-                                borderWidth: "2px",
-                            },
-                            transform: "translateY(-2px)",
-                            boxShadow: theme.sombraHover,
-                            },
-                            "& > fieldset": {
-                            borderColor: theme.bordePrincipal,
-                            borderWidth: "1.5px",
-                            },
+
+                      "& .MuiOutlinedInput-root": {
+                        background: theme.fondoOverlay,
+                        borderRadius: "25px",
+                        transition: "all 0.3s ease",
+                        boxShadow: theme.sombraContenedor,
+                        "&:hover": {
+                          "& > fieldset": {
+                            borderColor: theme.bordeHover,
+                            borderWidth: "2px",
+                          },
+                          transform: "translateY(-2px)",
+                          boxShadow: theme.sombraHover,
                         },
-                        "& .MuiInputLabel-root": {
-                            color: theme.textoSecundario,
-                            fontWeight: 500,
-                            "&.Mui-focused": {
-                            color: theme.textoPrincipal,
-                            fontWeight: 600,
-                            },
+                        "&.Mui-focused": {
+                          "& > fieldset": {
+                            borderColor: theme.bordeHover,
+                            borderWidth: "2px",
+                          },
+                          transform: "translateY(-2px)",
+                          boxShadow: theme.sombraHover,
                         },
-                        "& .MuiInputBase-input": {
-                            color: theme.textoPrincipal,
-                            fontWeight: 500,
+                        "& > fieldset": {
+                          borderColor: theme.bordePrincipal,
+                          borderWidth: "1.5px",
                         },
-                        "& .MuiFormHelperText-root": {
-                            color: theme.textoSecundario,
-                            fontSize: "0.75rem",
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: theme.textoSecundario,
+                        fontWeight: 500,
+                        "&.Mui-focused": {
+                          color: theme.textoPrincipal,
+                          fontWeight: 600,
                         },
-                        }}
+                      },
+                      "& .MuiInputBase-input": {
+                        color: theme.textoPrincipal,
+                        fontWeight: 500,
+                      },
+                      "& .MuiFormHelperText-root": {
+                        color: theme.textoSecundario,
+                        fontSize: "0.75rem",
+                      },
+                    }}
                   />
                 </Grid>
 
@@ -151,50 +154,50 @@ const StepConsignacionesTable = forwardRef(({
                     size="small"
                     fullWidth
                     sx={{
-                        minWidth: '210px',
-                        "& .MuiOutlinedInput-root": {
-                            background: theme.fondoOverlay,
-                            borderRadius: "25px",
-                            transition: "all 0.3s ease",
-                            boxShadow: theme.sombraContenedor,
-                            "&:hover": {
-                            "& > fieldset": {
-                                borderColor: theme.bordeHover,
-                                borderWidth: "2px",
-                            },
-                            transform: "translateY(-2px)",
-                            boxShadow: theme.sombraHover,
-                            },
-                            "&.Mui-focused": {
-                            "& > fieldset": {
-                                borderColor: theme.bordeHover,
-                                borderWidth: "2px",
-                            },
-                            transform: "translateY(-2px)",
-                            boxShadow: theme.sombraHover,
-                            },
-                            "& > fieldset": {
-                            borderColor: theme.bordePrincipal,
-                            borderWidth: "1.5px",
-                            },
+                      minWidth: '210px',
+                      "& .MuiOutlinedInput-root": {
+                        background: theme.fondoOverlay,
+                        borderRadius: "25px",
+                        transition: "all 0.3s ease",
+                        boxShadow: theme.sombraContenedor,
+                        "&:hover": {
+                          "& > fieldset": {
+                            borderColor: theme.bordeHover,
+                            borderWidth: "2px",
+                          },
+                          transform: "translateY(-2px)",
+                          boxShadow: theme.sombraHover,
                         },
-                        "& .MuiInputLabel-root": {
-                            color: theme.textoSecundario,
-                            fontWeight: 500,
-                            "&.Mui-focused": {
-                            color: theme.textoPrincipal,
-                            fontWeight: 600,
-                            },
+                        "&.Mui-focused": {
+                          "& > fieldset": {
+                            borderColor: theme.bordeHover,
+                            borderWidth: "2px",
+                          },
+                          transform: "translateY(-2px)",
+                          boxShadow: theme.sombraHover,
                         },
-                        "& .MuiInputBase-input": {
-                            color: theme.textoPrincipal,
-                            fontWeight: 500,
+                        "& > fieldset": {
+                          borderColor: theme.bordePrincipal,
+                          borderWidth: "1.5px",
                         },
-                        "& .MuiFormHelperText-root": {
-                            color: theme.textoSecundario,
-                            fontSize: "0.75rem",
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: theme.textoSecundario,
+                        fontWeight: 500,
+                        "&.Mui-focused": {
+                          color: theme.textoPrincipal,
+                          fontWeight: 600,
                         },
-                        }}
+                      },
+                      "& .MuiInputBase-input": {
+                        color: theme.textoPrincipal,
+                        fontWeight: 500,
+                      },
+                      "& .MuiFormHelperText-root": {
+                        color: theme.textoSecundario,
+                        fontSize: "0.75rem",
+                      },
+                    }}
                   >
                     {MEDIOS_ENTREGA.map((medio) => (
                       <MenuItem key={medio} value={medio}>
@@ -203,6 +206,53 @@ const StepConsignacionesTable = forwardRef(({
                     ))}
                   </TextField>
                 </Grid>
+
+                {/* Nombre si es OTROS */}
+                {formData.entregadoPor === 'OTROS' && (
+                  <Grid item xs={12} sm={6} md={3}>
+                    <TextField
+                      label="Nombre del Aportante"
+                      value={formData.nombreOtros}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nombreOtros: e.target.value })
+                      }
+                      size="small"
+                      fullWidth
+                      required
+                      placeholder="Ej: Pepito Pérez"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          background: theme.fondoOverlay,
+                          borderRadius: "25px",
+                          transition: "all 0.3s ease",
+                          boxShadow: theme.sombraContenedor,
+                          "&:hover": {
+                            "& > fieldset": {
+                              borderColor: theme.terminalNaranja,
+                              borderWidth: "2px",
+                            },
+                          },
+                          "&.Mui-focused": {
+                            "& > fieldset": {
+                              borderColor: theme.terminalNaranja,
+                              borderWidth: "2px",
+                            },
+                          },
+                          "& > fieldset": {
+                            borderColor: theme.bordePrincipal,
+                            borderWidth: "1.5px",
+                          },
+                        },
+                        "& .MuiInputLabel-root": {
+                          color: theme.textoSecundario,
+                          "&.Mui-focused": {
+                            color: theme.textoPrincipal,
+                          },
+                        },
+                      }}
+                    />
+                  </Grid>
+                )}
 
                 {/* Monto */}
                 <Grid item xs={12} sm={6} md={3}>
@@ -216,50 +266,50 @@ const StepConsignacionesTable = forwardRef(({
                     size="small"
                     placeholder="0"
                     sx={{
-                        maxWidth: '120px',
-                        "& .MuiOutlinedInput-root": {
-                            background: theme.fondoOverlay,
-                            borderRadius: "25px",
-                            transition: "all 0.3s ease",
-                            boxShadow: theme.sombraContenedor,
-                            "&:hover": {
-                            "& > fieldset": {
-                                borderColor: theme.bordeHover,
-                                borderWidth: "2px",
-                            },
-                            transform: "translateY(-2px)",
-                            boxShadow: theme.sombraHover,
-                            },
-                            "&.Mui-focused": {
-                            "& > fieldset": {
-                                borderColor: theme.bordeHover,
-                                borderWidth: "2px",
-                            },
-                            transform: "translateY(-2px)",
-                            boxShadow: theme.sombraHover,
-                            },
-                            "& > fieldset": {
-                            borderColor: theme.bordePrincipal,
-                            borderWidth: "1.5px",
-                            },
+                      maxWidth: '120px',
+                      "& .MuiOutlinedInput-root": {
+                        background: theme.fondoOverlay,
+                        borderRadius: "25px",
+                        transition: "all 0.3s ease",
+                        boxShadow: theme.sombraContenedor,
+                        "&:hover": {
+                          "& > fieldset": {
+                            borderColor: theme.bordeHover,
+                            borderWidth: "2px",
+                          },
+                          transform: "translateY(-2px)",
+                          boxShadow: theme.sombraHover,
                         },
-                        "& .MuiInputLabel-root": {
-                            color: theme.textoSecundario,
-                            fontWeight: 500,
-                            "&.Mui-focused": {
-                            color: theme.textoPrincipal,
-                            fontWeight: 600,
-                            },
+                        "&.Mui-focused": {
+                          "& > fieldset": {
+                            borderColor: theme.bordeHover,
+                            borderWidth: "2px",
+                          },
+                          transform: "translateY(-2px)",
+                          boxShadow: theme.sombraHover,
                         },
-                        "& .MuiInputBase-input": {
-                            color: theme.textoPrincipal,
-                            fontWeight: 500,
+                        "& > fieldset": {
+                          borderColor: theme.bordePrincipal,
+                          borderWidth: "1.5px",
                         },
-                        "& .MuiFormHelperText-root": {
-                            color: theme.textoSecundario,
-                            fontSize: "0.75rem",
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: theme.textoSecundario,
+                        fontWeight: 500,
+                        "&.Mui-focused": {
+                          color: theme.textoPrincipal,
+                          fontWeight: 600,
                         },
-                        }}
+                      },
+                      "& .MuiInputBase-input": {
+                        color: theme.textoPrincipal,
+                        fontWeight: 500,
+                      },
+                      "& .MuiFormHelperText-root": {
+                        color: theme.textoSecundario,
+                        fontSize: "0.75rem",
+                      },
+                    }}
                   />
                 </Grid>
 
@@ -279,50 +329,50 @@ const StepConsignacionesTable = forwardRef(({
                     fullWidth
                     size="small"
                     sx={{
-                        
-                        "& .MuiOutlinedInput-root": {
-                            background: theme.fondoOverlay,
-                            borderRadius: "12px",
-                            transition: "all 0.3s ease",
-                            boxShadow: theme.sombraContenedor,
-                            "&:hover": {
-                            "& > fieldset": {
-                                borderColor: theme.bordeHover,
-                                borderWidth: "2px",
-                            },
-                            transform: "translateY(-2px)",
-                            boxShadow: theme.sombraHover,
-                            },
-                            "&.Mui-focused": {
-                            "& > fieldset": {
-                                borderColor: theme.bordeHover,
-                                borderWidth: "2px",
-                            },
-                            transform: "translateY(-2px)",
-                            boxShadow: theme.sombraHover,
-                            },
-                            "& > fieldset": {
-                            borderColor: theme.bordePrincipal,
-                            borderWidth: "1.5px",
-                            },
+
+                      "& .MuiOutlinedInput-root": {
+                        background: theme.fondoOverlay,
+                        borderRadius: "12px",
+                        transition: "all 0.3s ease",
+                        boxShadow: theme.sombraContenedor,
+                        "&:hover": {
+                          "& > fieldset": {
+                            borderColor: theme.bordeHover,
+                            borderWidth: "2px",
+                          },
+                          transform: "translateY(-2px)",
+                          boxShadow: theme.sombraHover,
                         },
-                        "& .MuiInputLabel-root": {
-                            color: theme.textoSecundario,
-                            fontWeight: 500,
-                            "&.Mui-focused": {
-                            color: theme.textoPrincipal,
-                            fontWeight: 600,
-                            },
+                        "&.Mui-focused": {
+                          "& > fieldset": {
+                            borderColor: theme.bordeHover,
+                            borderWidth: "2px",
+                          },
+                          transform: "translateY(-2px)",
+                          boxShadow: theme.sombraHover,
                         },
-                        "& .MuiInputBase-input": {
-                            color: theme.textoPrincipal,
-                            fontWeight: 500,
+                        "& > fieldset": {
+                          borderColor: theme.bordePrincipal,
+                          borderWidth: "1.5px",
                         },
-                        "& .MuiFormHelperText-root": {
-                            color: theme.textoSecundario,
-                            fontSize: "0.75rem",
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: theme.textoSecundario,
+                        fontWeight: 500,
+                        "&.Mui-focused": {
+                          color: theme.textoPrincipal,
+                          fontWeight: 600,
                         },
-                        }}
+                      },
+                      "& .MuiInputBase-input": {
+                        color: theme.textoPrincipal,
+                        fontWeight: 500,
+                      },
+                      "& .MuiFormHelperText-root": {
+                        color: theme.textoSecundario,
+                        fontSize: "0.75rem",
+                      },
+                    }}
                   />
                 </Grid>
               </Grid>

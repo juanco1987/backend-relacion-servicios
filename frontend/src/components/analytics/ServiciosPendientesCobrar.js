@@ -122,6 +122,7 @@ const ServiciosPendientesCobrar = ({ file }) => {
     // Definir headers para CustomTable
     const tableHeaders = [
         { label: 'Fecha' },
+        { label: 'Dirección' },
         { label: 'Estado' },
         { label: 'Servicio Realizado' },
         { label: 'Días de Retraso', style: { textAlign: 'center', minWidth: '100px' } },
@@ -132,6 +133,7 @@ const ServiciosPendientesCobrar = ({ file }) => {
     const renderRow = (servicio, tdStyles) => (
         <>
             <td style={tdStyles}>{servicio.fecha}</td>
+            <td style={tdStyles}>{servicio.direccion || 'N/A'}</td>
             <td style={tdStyles}>{servicio.estado}</td>
             <td style={tdStyles}>{servicio.servicio_realizado}</td>
             <td style={{

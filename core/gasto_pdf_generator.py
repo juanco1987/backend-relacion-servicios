@@ -190,7 +190,11 @@ class PDFGastoSideBySide:
             
             # Envolver la descripción en Paragraph para que haga salto de línea automático
             descripcion_paragraph = Paragraph(descripcion, self.estilo_normal)
-            data.append([fecha, entregado_por, descripcion_paragraph, self.formatear_moneda(monto)])
+            
+            # Limpiar nombre de aportante para visualización
+            entregado_por_view = entregado_por.replace('OTROS:', '').strip()
+            
+            data.append([fecha, entregado_por_view, descripcion_paragraph, self.formatear_moneda(monto)])
 
         data.append([
             "", "", 
@@ -223,7 +227,7 @@ class PDFGastoSideBySide:
         """Tabla con gastos"""
         self.elements.append(Paragraph("GASTOS REGISTRADOS", self.estilo_subtitulo))
         
-        data = [["Fecha", "Categoría", "Descripción", "Valor"]]
+        data = [["Fecha", "Categoría", "Descripción", "Pagado por", "Valor"]]
         total_gastos = 0
         
         for g in gastos:
@@ -231,13 +235,14 @@ class PDFGastoSideBySide:
             categoria = g.get("categoria", "")
             descripcion = g.get("descripcion", "")
             monto = float(g.get("monto", 0))
+            pagado_por = g.get("pagadoPor", "ABRECAR")
             total_gastos += monto
             # Envolver la descripción en Paragraph para que haga salto de línea automático
             descripcion_paragraph = Paragraph(descripcion, self.estilo_normal)
-            data.append([fecha, categoria, descripcion_paragraph, self.formatear_moneda(monto)])
+            data.append([fecha, categoria, descripcion_paragraph, pagado_por, self.formatear_moneda(monto)])
 
         data.append([ 
-            "", "",
+            "", "", "",
             Paragraph("<b>TOTAL GASTOS</b>", self.estilo_normal),
             Paragraph(
                 f"<b>{self.formatear_moneda(total_gastos)}</b>",
@@ -246,7 +251,7 @@ class PDFGastoSideBySide:
             ),
         ])
 
-        tabla = Table(data, colWidths=[1.2*inch, 1.5*inch, 3.5*inch, 1.2*inch])
+        tabla = Table(data, colWidths=[1.1*inch, 1.2*inch, 3*inch, 1.1*inch, 1.1*inch])
         tabla.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E3F2FD")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0D47A1")),
@@ -263,50 +268,57 @@ class PDFGastoSideBySide:
         self.elements.append(Spacer(1, 15))
         return total_gastos
 
-    def tabla_balance(self, gastos, consignaciones):
-        """Tabla de balance"""
-        total_gastos = sum(float(g.get("monto", 0)) for g in gastos)
-        total_consignaciones = sum(float(c.get("monto", 0)) for c in consignaciones)
+    def tabla_balance(self, gastos, consignaciones, calculos=None):
+        """Tabla de balance mejorada con desglose por aportante"""
+        self.elements.append(Paragraph("BALANCE FINAL", self.estilo_subtitulo))
         
-        # Separar consignaciones por origen del dinero
-        consignaciones_empresa = [c for c in consignaciones if c.get("entregadoPor", "") != "DINERO DE JG (TÉCNICO)"]
-        consignaciones_jg = [c for c in consignaciones if c.get("entregadoPor", "") == "DINERO DE JG (TÉCNICO)"]
-        
-        total_consignaciones_empresa = sum(float(c.get("monto", 0)) for c in consignaciones_empresa)
-        total_consignaciones_jg = sum(float(c.get("monto", 0)) for c in consignaciones_jg)
-        
-        # Calcular balance para dinero de la empresa
-        if total_gastos < total_consignaciones_empresa:
-            vueltas_abrecar = total_consignaciones_empresa - total_gastos
-            excedente_jg_empresa = 0
+        if not calculos or not calculos.get('detallado'):
+            # Fallback a lógica original si no vienen cálculos detallados
+            total_gastos = sum(float(g.get("monto", 0)) for g in gastos)
+            total_consignaciones = sum(float(c.get("monto", 0)) for c in consignaciones)
+            
+            data = [
+                ["RESUMEN GENERAL", "MONTO"],
+                ["Total consignado", self.formatear_moneda(total_consignaciones)],
+                ["Total gastos", self.formatear_moneda(total_gastos)],
+                ["Saldo Global", self.formatear_moneda(total_consignaciones - total_gastos)]
+            ]
         else:
-            vueltas_abrecar = 0
-            excedente_jg_empresa = total_gastos - total_consignaciones_empresa
-        
-        # El dinero de JG siempre va a favor de JG
-        excedente_jg_total = excedente_jg_empresa + total_consignaciones_jg
-
-        data = [
-            ["RESUMEN", "MONTO"],
-            ["Total consignado", self.formatear_moneda(total_consignaciones)],
-            ["Total gastos", self.formatear_moneda(total_gastos)],
-            [
-                "Vueltas a favor de ABRECAR",
-                Paragraph(
-                    f"<b>{self.formatear_moneda(vueltas_abrecar)}</b>",
-                    ParagraphStyle("Abrecar", parent=self.estilo_normal,
-                        textColor=colors.HexColor("#1565C0"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), 
-                ),
-            ],
-            [
-                "Excedente a favor de JG",
-                Paragraph(
-                    f"<b>{self.formatear_moneda(excedente_jg_total)}</b>",
-                    ParagraphStyle("JG", parent=self.estilo_normal,
-                        textColor=colors.HexColor("#C62828"), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), 
-                ),
-            ],
-        ]
+            # Lógica detallada usando los cálculos del service
+            saldos_otros = calculos.get('saldosOtros', {})
+            balance_jg = calculos.get('balanceJG', 0)
+            
+            data = [
+                [Paragraph("<b>RESUMEN POR APORTANTE</b>", self.estilo_normal), "MONTO"],
+                ["Total consignado", self.formatear_moneda(calculos.get('totalConsignado', 0))],
+                ["Total gastos", self.formatear_moneda(calculos.get('totalGastos', 0))],
+                ["", ""], # Espacio
+                [Paragraph("<b>Saldos Individuales:</b>", self.estilo_normal), ""],
+                [
+                    "Abrecar (Vueltas a favor)", 
+                    self.formatear_moneda(calculos.get('vueltasAFavorDeAbrecar', 0))
+                ]
+            ]
+            
+            # Agregar JG si tiene saldo
+            if balance_jg != 0:
+                label = "JG (Excedente a favor)" if balance_jg < 0 else "JG (Saldo a devolver)"
+                data.append([label, self.formatear_moneda(abs(balance_jg))])
+            
+            # Agregar Otros
+            for nombre, datos in saldos_otros.items():
+                balance = datos['balance']
+                label = f"{nombre} (Excedente a favor)" if balance < 0 else f"{nombre} (Saldo a devolver)"
+                color = "#C62828" if balance < 0 else "#1565C0"
+                
+                data.append([
+                    label,
+                    Paragraph(
+                        f"<b>{self.formatear_moneda(abs(balance))}</b>",
+                        ParagraphStyle("Saldo", parent=self.estilo_normal,
+                            textColor=colors.HexColor(color), alignment=2, fontName=FONTE_PRINCIPAL_REGULAR), 
+                    )
+                ])
 
         tabla = Table(data, colWidths=[4*inch, 2*inch])
         tabla.setStyle(TableStyle([
@@ -319,7 +331,6 @@ class PDFGastoSideBySide:
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ]))
 
-        self.elements.append(Paragraph("BALANCE FINAL", self.estilo_subtitulo))
         self.elements.append(tabla)
         self.elements.append(Spacer(1, 20))
 
@@ -564,7 +575,7 @@ class PDFGastoSideBySide:
         self.header()
         self.tabla_consignaciones(consignaciones)
         self.tabla_gastos(gastos)
-        self.tabla_balance(gastos, consignaciones)
+        self.tabla_balance(gastos, consignaciones, data.get('calculos'))
         
         # Agregar notas si existen
         if notas and notas.strip():
@@ -662,6 +673,7 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf, not
             "imagenesConsignaciones": imagenes_consignaciones,
             "imagenesDevoluciones": imagenes_devoluciones,
             "notas": notas,  # Agregar notas a los datos
+            "calculos": calculos, # Pasar cálculos detallados
         }
 
         # Generar PDF

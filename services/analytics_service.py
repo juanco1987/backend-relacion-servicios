@@ -533,6 +533,17 @@ class AnalyticsService:
                     'mas_comun': servicio_mas_comun,
                     'valor_promedio': valor_promedio
                 }
+        else:
+            # Fallback si no se encuentra columna de servicio: Calcular promedio global con todos los datos válidos
+            df_valido = df[df[col_fecha].notna()]
+            if not df_valido.empty:
+                total_valor = df_valido[col_para_jg].sum()
+                total_cantidad = len(df_valido)
+                valor_promedio = total_valor / total_cantidad if total_cantidad > 0 else 0
+                kpis_servicios = {
+                    'mas_comun': None,
+                    'valor_promedio': valor_promedio
+                }
         # Actualizar el diccionario de retorno
         return {
             'resumen': resumen, 
@@ -560,9 +571,22 @@ class AnalyticsService:
             'kpis_servicios': kpis_servicios,
             'success': True
         }
+    @staticmethod
+    def _format_date_es(date_obj):
+        """Formatea una fecha como '16 de enero de 2026'."""
+        if pd.isna(date_obj):
+            return 'N/A'
+        meses = {
+            1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
+            5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
+            9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
+        }
+        return f"{date_obj.day} de {meses[date_obj.month]} de {date_obj.year}"
+
     @classmethod
     def get_pending_cash_analytics(cls, file_path):
         df = cls._read_excel_robust(file_path)
+        # ... logic continues ...
         columnas_variantes = ColumnMapper.get_column_variants()
         col_estado = ColumnMapper.find_column(df, columnas_variantes['ESTADO DEL SERVICIO'])
         col_xporc = ColumnMapper.find_column(df, columnas_variantes['X50_PORCIENTO'])
@@ -572,12 +596,16 @@ class AnalyticsService:
         col_iva = ColumnMapper.find_column(df, columnas_variantes['IVA'])
         col_forma_pago = ColumnMapper.find_column(df, columnas_variantes[EXCEL_COLUMNS['FORMA_PAGO']])
         col_servicio = ColumnMapper.find_column(df, columnas_variantes[EXCEL_COLUMNS['SERVICIO_REALIZADO']])
+        col_direccion = ColumnMapper.find_column(df, columnas_variantes.get('DIRECCION', ['DIRECCION', 'DIRECCIÓN', 'UBICACION', 'LUGAR']))
+        
         if not col_estado or not col_xporc or not col_fecha or not col_para_jg or not col_forma_pago:
             raise ValueError(f'No se encontraron columnas requeridas. Estado: {col_estado}, X50%/X25%: {col_xporc}, Fecha: {col_fecha}, PARA JG: {col_para_jg}, Forma Pago: {col_forma_pago}')
         # Limpiar valores
         df[col_estado] = df[col_estado].astype(str).str.strip().str.upper().apply(unidecode)
         df[col_xporc] = df[col_xporc].astype(str).str.strip()
         df[col_fecha] = pd.to_datetime(df[col_fecha], errors='coerce')
+        if col_direccion:
+            df[col_direccion] = df[col_direccion].astype(str).str.strip()
         
         try:
             df[col_para_jg] = cls._clean_money_vectorized(df[col_para_jg])
@@ -634,7 +662,7 @@ class AnalyticsService:
             
             if not grupo_mes.empty:
                  fecha_mas_antigua = grupo_mes[col_fecha].min()
-                 fecha_mas_antigua_str = fecha_mas_antigua.strftime('%Y-%m-%d') if pd.notna(fecha_mas_antigua) else 'N/A'
+                 fecha_mas_antigua_str = cls._format_date_es(fecha_mas_antigua)
             else:
                  fecha_mas_antigua_str = '9999-12-31'
             servicios_antiguos = grupo_mes[grupo_mes['dias_sin_relacionar'] > 30]
@@ -681,8 +709,14 @@ class AnalyticsService:
                 valor_abrecar = row[col_para_jg] if pd.notna(row[col_para_jg]) else 0
                 valor_subtotal = valor_abrecar
             
+            
+            direccion = row[col_direccion] if col_direccion and pd.notna(row[col_direccion]) else 'N/A'
+            if pd.isna(direccion) or str(direccion).strip() in ['nan', 'None', '']:
+                direccion = 'N/A'
+
             detalle.append({
-                'fecha': row[col_fecha].strftime('%Y-%m-%d') if pd.notna(row[col_fecha]) else 'N/A',
+                'fecha': cls._format_date_es(row[col_fecha]),
+                'direccion': direccion,
                 'estado': estado_display,
                 'servicio_realizado': servicio_realizado,
                 'subtotal': valor_subtotal,
@@ -704,11 +738,15 @@ class AnalyticsService:
         col_estado = ColumnMapper.find_column(df, columnas_variantes['ESTADO DEL SERVICIO'])
         col_fecha = ColumnMapper.find_column(df, columnas_variantes[EXCEL_COLUMNS['FECHA']])
         col_servicio = ColumnMapper.find_column(df, columnas_variantes[EXCEL_COLUMNS['SERVICIO_REALIZADO']])
+        col_direccion = ColumnMapper.find_column(df, columnas_variantes.get('DIRECCION', ['DIRECCION', 'DIRECCIÓN', 'UBICACION', 'LUGAR']))
+
         if not col_estado or not col_fecha or not col_servicio:
             raise ValueError(f'No se encontraron columnas requeridas. Estado: {col_estado}, Fecha: {col_fecha}, Servicio: {col_servicio}')
         df[col_estado] = df[col_estado].astype(str).str.strip().str.upper().apply(unidecode)
         df[col_fecha] = pd.to_datetime(df[col_fecha], errors='coerce')
         df[col_servicio] = df[col_servicio].astype(str).str.strip()
+        if col_direccion:
+            df[col_direccion] = df[col_direccion].astype(str).str.strip()
         mask_fecha = df[col_fecha].notna()
         mask_estado = df[col_estado] == 'PENDIENTE COBRAR'
         df_filtrado = df[mask_fecha & mask_estado].copy()
@@ -730,7 +768,7 @@ class AnalyticsService:
             total_servicios = len(grupo_mes)
             servicios_retraso = len(grupo_mes[grupo_mes['dias_de_retraso'] > 30])
             max_dias_retraso = int(grupo_mes['dias_de_retraso'].max()) if not grupo_mes.empty else 0
-            fecha_mas_antigua = grupo_mes[col_fecha].min().strftime('%Y-%m-%d') if not grupo_mes.empty else 'N/A'
+            fecha_mas_antigua = cls._format_date_es(grupo_mes[col_fecha].min()) if not grupo_mes.empty else 'N/A'
             resumen[mes] = {
                 'total_servicios': total_servicios,
                 'servicios_retraso': servicios_retraso,
@@ -738,7 +776,8 @@ class AnalyticsService:
                 'fecha_mas_antigua': fecha_mas_antigua
             }
         detalle = df_filtrado.apply(lambda row: {
-            'fecha': row['fecha_fmt'],
+            'fecha': cls._format_date_es(row[col_fecha]),
+            'direccion': row[col_direccion] if col_direccion and pd.notna(row[col_direccion]) else 'N/A',
             'estado': row[col_estado],
             'servicio_realizado': row[col_servicio],
             'dias_de_retraso': int(row['dias_de_retraso']),

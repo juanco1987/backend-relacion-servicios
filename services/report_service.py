@@ -293,20 +293,105 @@ class ReportService:
             if not gastos and not consignaciones:
                 return False, {'error': 'No se proporcionaron gastos ni consignaciones'}, 400
             
-            # 4. Cálculos
-            total_gastos = sum(float(g.get('monto', 0)) for g in gastos)
-            total_consignado = sum(float(c.get('monto', 0)) for c in consignaciones)
+            # 4. Cálculos Detallados
+            
+            # 4.1. Agrupar Consignaciones por Aportante
+            aportes_abrecar = 0
+            aportes_jg = 0
+            aportes_otros = {} # {nombre: monto}
+            
+            for c in consignaciones:
+                monto = float(c.get('monto', 0))
+                entregador = c.get('entregadoPor', '').upper()
+                
+                if 'JG' in entregador:
+                    aportes_jg += monto
+                elif 'OTROS:' in entregador:
+                    nombre = entregador.replace('OTROS:', '').strip()
+                    aportes_otros[nombre] = aportes_otros.get(nombre, 0) + monto
+                else:
+                    # CUENTA BANCOLOMBIA, NEQUI, DAVIPLATA, EFECTIVO -> ABRECAR
+                    aportes_abrecar += monto
             
             if not consignaciones and monto_consignado_unico > 0:
-                 total_consignado = monto_consignado_unico
-                 
-            diferencia = total_consignado - total_gastos
+                aportes_abrecar = monto_consignado_unico
+
+            # 4.2. Agrupar Gastos por Responsable
+            gastos_abrecar = 0
+            gastos_jg = 0
+            gastos_otros = 0 # Gastos marcados como OTROS se restan del fondo de OTROS o Abrecar?
+            # Según el requerimiento: "se descuenta a lo que haya aportado abrecar los gastos que se le reporten a el 
+            # y los gastos que se determinen como otros en el balance final aparezca como abrecar le deba a pepito perez"
             
+            # Reinterpreto: 
+            # Si un gasto es de 'OTROS' (Pepito), y Pepito NO puso dinero, Abrecar le debe a Pepito.
+            # Si Pepito puso dinero, se gasta de ahí primero.
+            
+            total_gastos_otros_por_nombre = {} # {nombre: monto}
+            
+            for g in gastos:
+                monto = float(g.get('monto', 0))
+                pagado_por = g.get('pagadoPor', 'ABRECAR').upper()
+                
+                if 'JG' in pagado_por:
+                    gastos_jg += monto
+                elif 'OTROS' in pagado_por:
+                    # Si hay varios "Otros", por ahora los agrupamos o intentamos machear con el primer aportante "Otro"
+                    # El front actual solo manda "OTROS". Si hay varios, es complejo.
+                    # Asumiremos que si hay aportes de "Pepito", los gastos "OTROS" son de él.
+                    nombre_otro = "OTROS"
+                    if aportes_otros:
+                        nombre_otro = list(aportes_otros.keys())[0] # Tomamos el primero por simplicidad si no hay match
+                    
+                    total_gastos_otros_por_nombre[nombre_otro] = total_gastos_otros_por_nombre.get(nombre_otro, 0) + monto
+                    gastos_otros += monto
+                else:
+                    gastos_abrecar += monto
+
+            total_gastos = gastos_abrecar + gastos_jg + gastos_otros
+            total_consignado = aportes_abrecar + aportes_jg + sum(aportes_otros.values())
+            
+            # 4.3. Balances Individuales
+            # Abrecar tiene su propia "caja" y el usuario tiene el dinero físico.
+            vueltas_abrecar = aportes_abrecar - gastos_abrecar
+            
+            # Para JG y Otros: Son deudas que Abrecar debe cubrir / reintegrar.
+            # Se usa el máximo entre lo aportado y lo gastado para evitar doble conteo 
+            # si reportaron el mismo dinero en ambos pasos (aporte y gasto).
+            
+            # Para JG:
+            balance_jg = max(aportes_jg, gastos_jg)
+            
+            # Para Otros:
+            saldos_otros = {}
+            for nombre, aporte in aportes_otros.items():
+                gasto = total_gastos_otros_por_nombre.get(nombre, 0)
+                balance = max(aporte, gasto)
+                saldos_otros[nombre] = {
+                    'aporte': aporte,
+                    'gasto': gasto,
+                    'balance': balance 
+                }
+            
+            # Si hay gastos OTROS sin nombre (anonimos)
+            gastos_otros_identificados = sum(v['gasto'] for v in saldos_otros.values())
+            gastos_otros_anonimos = max(0, gastos_otros - gastos_otros_identificados)
+            if gastos_otros_anonimos > 0:
+                saldos_otros['OTROS'] = {
+                    'aporte': 0,
+                    'gasto': gastos_otros_anonimos,
+                    'balance': gastos_otros_anonimos
+                }
+
+            # 4.4. Resultados finales
             calculos = {
                 'totalGastos': total_gastos,
                 'totalConsignado': total_consignado,
-                'vueltasAFavorDeAbrecar': diferencia if diferencia > 0 else 0,
-                'excedenteAFavorDeJG': abs(diferencia) if diferencia < 0 else 0,
+                'vueltasAFavorDeAbrecar': vueltas_abrecar if vueltas_abrecar > 0 else 0,
+                'excedenteAFavorDeJG': balance_jg, 
+                'balanceJG': balance_jg,
+                'saldosOtros': saldos_otros,
+                'detallado': True
             }
             
             # 5. Estructura data
