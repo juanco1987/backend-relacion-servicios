@@ -15,13 +15,15 @@ const Header = React.memo(() => {
     <Box
       sx={{
         background: 'none',
-        p: { xs: 2, md: 3 }, // Más aire arriba y a los lados
+        p: { xs: 1, md: 2 },
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: { xs: 90, md: 110 },
         position: 'relative',
         width: '100%',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
       }}
     >
       {/* Botón de tema - Más estilizado */}
@@ -29,7 +31,8 @@ const Header = React.memo(() => {
         sx={{
           position: 'absolute',
           top: { xs: 10, md: 15 },
-          right: { xs: 10, md: 15 },
+          left: { xs: 'auto', md: '80px' },
+          right: { xs: '12px', md: 'auto' },
           zIndex: 10,
         }}
       >

@@ -14,7 +14,7 @@ function DashboardLayout({ children, onNavigation, currentRoute }) {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden', width: '100vw' }}>
       {/* Sidebar */}
       <Sidebar
         onNavigation={onNavigation}
@@ -28,17 +28,22 @@ function DashboardLayout({ children, onNavigation, currentRoute }) {
         sx={{
           flex: 1,
           overflowY: 'auto',
+          overflowX: 'hidden',
           background: theme.fondoContenedor,
           height: '100vh',
           pl: { xs: 0, md: `${SIDEBAR_WIDTH}px` },
+          boxSizing: 'border-box',
         }}
       >
         {/* Header con botón hamburguesa */}
         <Box
           sx={{
             position: 'relative',
-            px: { xs: 2, md: 4 },
-            pt: { xs: 2, md: 4 },
+            px: { xs: 1.5, md: 3 },
+            pt: { xs: 1.5, md: 3 },
+            boxSizing: 'border-box',
+            width: '100%',
+            overflow: 'hidden',
           }}
         >
           {/* Botón menú hamburguesa visible solo en móviles */}
@@ -61,7 +66,7 @@ function DashboardLayout({ children, onNavigation, currentRoute }) {
         </Box>
 
         {/* Contenido de la ruta */}
-        <Box sx={{ px: { xs: 2, md: 4 }, pb: 4 }}>
+        <Box sx={{ px: { xs: 1.5, md: 3 }, pb: 4, boxSizing: 'border-box', width: '100%' }}>
           {children}
         </Box>
       </Box>
