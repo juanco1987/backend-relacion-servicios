@@ -17,6 +17,7 @@ const CATEGORIAS_PRESET = [
 const PAGADO_POR_OPTIONS = [
   'ABRECAR',
   'JG (TÉCNICO)',
+  'EFECTIVO DEL SERVICIO',
   'OTROS'
 ];
 

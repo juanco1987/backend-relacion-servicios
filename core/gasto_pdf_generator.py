@@ -141,8 +141,9 @@ class PDFGastoSideBySide:
             alignment=1,
             textColor=colors.HexColor("#0D47A1"),
             fontName=FONTE_PRINCIPAL_BOLD, 
-            fontSize=12,
-            spaceAfter=8,
+            fontSize=14,
+            spaceAfter=10,
+            spaceBefore=8,
         )
         self.estilo_normal = ParagraphStyle(
             "Normal",
@@ -157,8 +158,8 @@ class PDFGastoSideBySide:
             alignment=1,
             textColor=colors.HexColor("#0D47A1"),
             fontName=FONTE_PRINCIPAL_BOLD, 
-            fontSize=10,
-            spaceAfter=4,
+            fontSize=11,
+            spaceAfter=6,
         )
         # ------------------------------------------------
 
@@ -178,7 +179,7 @@ class PDFGastoSideBySide:
         """Tabla con consignaciones"""
         self.elements.append(Paragraph("DETALLE DE CONSIGNACIONES", self.estilo_subtitulo))
 
-        data = [["Fecha", "Entregado Por", "Descripción", "Valor"]]
+        data: list = [["Fecha", "Entregado Por", "Descripción", "Valor"]]
         total_consignaciones = 0
         
         for c in consignaciones:
@@ -206,7 +207,7 @@ class PDFGastoSideBySide:
             ),
         ])
 
-        tabla = Table(data, colWidths=[1.2*inch, 1.8*inch, 3*inch, 1.2*inch])
+        tabla = Table(data, colWidths=[0.95*inch, 2*inch, 2.7*inch, 1.2*inch])
         tabla.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E3F2FD")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0D47A1")),
@@ -214,20 +215,26 @@ class PDFGastoSideBySide:
             ("FONTNAME", (0, 1), (-1, -2), FONTE_PRINCIPAL_REGULAR), 
             ("ALIGN", (-1, 1), (-1, -1), "RIGHT"),
             ("ALIGN", (1, 1), (1, -1), "CENTER"),
-            ("LINEABOVE", (0, -1), (-1, -1), 1, colors.HexColor("#90CAF9")),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("LINEABOVE", (0, -1), (-1, -1), 1.5, colors.HexColor("#1976D2")),
+            ("LINEBELOW", (0, -1), (-1, -1), 1.5, colors.HexColor("#1976D2")),
             ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("ROWHEIGHT", (0, 0), (-1, -1), 20),
+            ("LEFTPADDING", (0,0), (-1,-1), 6),
+            ("RIGHTPADDING", (0,0), (-1,-1), 6),
         ]))
 
         self.elements.append(tabla)
-        self.elements.append(Spacer(1, 15))
+        self.elements.append(Spacer(1, 8))
         return total_consignaciones
 
     def tabla_gastos(self, gastos):
         """Tabla con gastos"""
         self.elements.append(Paragraph("GASTOS REGISTRADOS", self.estilo_subtitulo))
         
-        data = [["Fecha", "Categoría", "Descripción", "Pagado por", "Valor"]]
+        data: list = [["Fecha", "Categoría", "Descripción", "Pagado por", "Valor"]]
         total_gastos = 0
         
         for g in gastos:
@@ -251,21 +258,27 @@ class PDFGastoSideBySide:
             ),
         ])
 
-        tabla = Table(data, colWidths=[1.1*inch, 1.2*inch, 3*inch, 1.1*inch, 1.1*inch])
+        tabla = Table(data, colWidths=[0.95*inch, 1*inch, 2.7*inch, 1.7*inch, 1.1*inch])
         tabla.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E3F2FD")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0D47A1")),
             ("FONTNAME", (0, 0), (-1, 0), FONTE_PRINCIPAL_BOLD), 
             ("FONTNAME", (0, 1), (-1, -2), FONTE_PRINCIPAL_REGULAR), 
-            ("ALIGN", (3, 1), (3, -1), "RIGHT"),
+            ("ALIGN", (3, 1), (3, -1), "CENTER"),
             ("ALIGN", (0, 0), (1, -1), "LEFT"),
-            ("LINEABOVE", (0, -1), (-1, -1), 1, colors.HexColor("#90CAF9")),
+            ("ALIGN", (-1, 0), (-1, -1), "RIGHT"),
+            ("LINEABOVE", (0, -1), (-1, -1), 1.5, colors.HexColor("#C62828")),
+            ("LINEBELOW", (0, -1), (-1, -1), 1.5, colors.HexColor("#C62828")),
             ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("ROWHEIGHT", (0, 0), (-1, -1), 20),
+            ("LEFTPADDING", (0,0), (-1,-1), 6),
+            ("RIGHTPADDING", (0,0), (-1,-1), 6),
         ]))
 
         self.elements.append(tabla)
-        self.elements.append(Spacer(1, 15))
+        self.elements.append(Spacer(1, 8))
         return total_gastos
 
     def tabla_balance(self, gastos, consignaciones, calculos=None):
@@ -277,7 +290,7 @@ class PDFGastoSideBySide:
             total_gastos = sum(float(g.get("monto", 0)) for g in gastos)
             total_consignaciones = sum(float(c.get("monto", 0)) for c in consignaciones)
             
-            data = [
+            data: list = [
                 ["RESUMEN GENERAL", "MONTO"],
                 ["Total consignado", self.formatear_moneda(total_consignaciones)],
                 ["Total gastos", self.formatear_moneda(total_gastos)],
@@ -320,31 +333,47 @@ class PDFGastoSideBySide:
                     )
                 ])
 
-        tabla = Table(data, colWidths=[4*inch, 2*inch])
+        tabla = Table(data, colWidths=[5.5*inch, 2.5*inch])
         tabla.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E3F2FD")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#0D47A1")),
             ("FONTNAME", (0, 0), (-1, 0), FONTE_PRINCIPAL_BOLD), 
             ("FONTNAME", (0, 1), (0, -1), FONTE_PRINCIPAL_REGULAR), 
-            ("ALIGN", (1, 1), (1, -1), "RIGHT"),
-            ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+            ("ALIGN", (0, 0), (0, -1), "LEFT"),
+            ("ALIGN", (1, 0), (1, -1), "RIGHT"),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E8F5E9")),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("ROWHEIGHT", (0, 0), (-1, -1), 22),
+            ("LEFTPADDING", (0,0), (-1,-1), 8),
+            ("RIGHTPADDING", (0,0), (-1,-1), 8),
+            ("TOPPADDING", (0,0), (-1,-1), 6),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 6),
         ]))
 
         self.elements.append(tabla)
-        self.elements.append(Spacer(1, 20))
+        self.elements.append(Spacer(1, 8))
 
     def seccion_imagenes_sidebyside(self, imagenes_gastos, imagenes_consignaciones, imagenes_devoluciones):
         """
         Posiciona imágenes lado a lado.
         """
         
+        # Verificar si hay AL MENOS una imagen en cualquier sección
+        total_imagenes = len(imagenes_gastos or []) + len(imagenes_consignaciones or []) + len(imagenes_devoluciones or [])
+        
+        # Si no hay imágenes, no generar nada
+        if total_imagenes == 0:
+            return
+        
         # Agregar página si es necesario
         if self.elements:
             self.elements.append(PageBreak())
         
+        self.elements.append(Spacer(1, 2))
         self.elements.append(Paragraph("ARCHIVOS ADJUNTOS", self.estilo_subtitulo))
-        self.elements.append(Spacer(1, 10))
+        self.elements.append(Spacer(1, 8))
         
         img_width = 0.95 * inch  # reducido para imágenes más angostas
         img_height = 1.6 * inch
@@ -402,11 +431,14 @@ class PDFGastoSideBySide:
                 for img in gastos_row:
                     fila_actual.append(img)
                     if len(fila_actual) == 3:
-                        # construir nested table para 3 imágenes con gutters
-                        row = [fila_actual[0], Spacer(gap, img_height), fila_actual[1], Spacer(gap, img_height), fila_actual[2]]
-                        nested = Table([row], colWidths=[image_col_w, gap, image_col_w, gap, image_col_w], hAlign='CENTER')
-                        nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
-                        # envolver en una celda de ancho máximo para que quede centrado en la columna
+                        # construir nested table para 3 imágenes SIN Spacer
+                        nested = Table([fila_actual], colWidths=[image_col_w, image_col_w, image_col_w], hAlign='CENTER')
+                        nested.setStyle(TableStyle([
+                            ("ALIGN", (0,0), (-1,-1), "CENTER"), 
+                            ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+                            ("LEFTPADDING", (0,0), (-1,-1), 3),
+                            ("RIGHTPADDING", (0,0), (-1,-1), 3),
+                        ]))
                         wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
                         wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
                         filas_gastos_nested.append([wrapper])
@@ -415,14 +447,16 @@ class PDFGastoSideBySide:
                 if fila_actual:
                     k = len(fila_actual)
                     if k == 1:
-                        row = [fila_actual[0]]
-                        nested = Table([row], colWidths=[image_col_w], hAlign='CENTER')
+                        nested = Table([fila_actual], colWidths=[image_col_w], hAlign='CENTER')
                     else:  # k == 2
-                        # colocar las dos imágenes juntas (adjuntas) y centrar este bloque
-                        row = [fila_actual[0], Spacer(gap, img_height), fila_actual[1]]
-                        nested = Table([row], colWidths=[image_col_w, gap, image_col_w], hAlign='CENTER')
+                        nested = Table([fila_actual], colWidths=[image_col_w, image_col_w], hAlign='CENTER')
 
-                    nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                    nested.setStyle(TableStyle([
+                        ("ALIGN", (0,0), (-1,-1), "CENTER"), 
+                        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+                        ("LEFTPADDING", (0,0), (-1,-1), 3),
+                        ("RIGHTPADDING", (0,0), (-1,-1), 3),
+                    ]))
                     wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
                     wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
                     filas_gastos_nested.append([wrapper])
@@ -447,9 +481,8 @@ class PDFGastoSideBySide:
                 for img in consignaciones_row:
                     fila_actual.append(img)
                     if len(fila_actual) == 3:
-                        row = [fila_actual[0], Spacer(gap, img_height), fila_actual[1], Spacer(gap, img_height), fila_actual[2]]
-                        nested = Table([row], colWidths=[image_col_w, gap, image_col_w, gap, image_col_w], hAlign='CENTER')
-                        nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                        nested = Table([fila_actual], colWidths=[image_col_w, image_col_w, image_col_w], hAlign='CENTER')
+                        nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE"), ("LEFTPADDING", (0,0), (-1,-1), 3), ("RIGHTPADDING", (0,0), (-1,-1), 3)]))
                         wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
                         wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
                         filas_consig_nested.append([wrapper])
@@ -458,13 +491,11 @@ class PDFGastoSideBySide:
                 if fila_actual:
                     k = len(fila_actual)
                     if k == 1:
-                        row = [fila_actual[0]]
-                        nested = Table([row], colWidths=[image_col_w], hAlign='CENTER')
+                        nested = Table([fila_actual], colWidths=[image_col_w], hAlign='CENTER')
                     else:  # k == 2
-                        row = [fila_actual[0], Spacer(gap, img_height), fila_actual[1]]
-                        nested = Table([row], colWidths=[image_col_w, gap, image_col_w], hAlign='CENTER')
+                        nested = Table([fila_actual], colWidths=[image_col_w, image_col_w], hAlign='CENTER')
 
-                    nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                    nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE"), ("LEFTPADDING", (0,0), (-1,-1), 3), ("RIGHTPADDING", (0,0), (-1,-1), 3)]))
                     wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
                     wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
                     filas_consig_nested.append([wrapper])
@@ -525,9 +556,8 @@ class PDFGastoSideBySide:
                 for img in devoluciones_row:
                     fila_actual.append(img)
                     if len(fila_actual) == 3:
-                        row = [fila_actual[0], Spacer(gap, img_height), fila_actual[1], Spacer(gap, img_height), fila_actual[2]]
-                        nested = Table([row], colWidths=[image_col_w, gap, image_col_w, gap, image_col_w], hAlign='CENTER')
-                        nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                        nested = Table([fila_actual], colWidths=[image_col_w, image_col_w, image_col_w], hAlign='CENTER')
+                        nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE"), ("LEFTPADDING", (0,0), (-1,-1), 3), ("RIGHTPADDING", (0,0), (-1,-1), 3)]))
                         wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
                         wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
                         filas_dev_nested.append([wrapper])
@@ -536,11 +566,11 @@ class PDFGastoSideBySide:
                 if fila_actual:
                     k = len(fila_actual)
                     if k == 1:
-                        nested = Table([[fila_actual[0]]], colWidths=[image_col_w], hAlign='CENTER')
+                        nested = Table([fila_actual], colWidths=[image_col_w], hAlign='CENTER')
                     else:  # k == 2
-                        nested = Table([[fila_actual[0], Spacer(gap, img_height), fila_actual[1]]], colWidths=[image_col_w, gap, image_col_w], hAlign='CENTER')
+                        nested = Table([fila_actual], colWidths=[image_col_w, image_col_w], hAlign='CENTER')
 
-                    nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE")]))
+                    nested.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER"), ("VALIGN", (0,0), (-1,-1), "MIDDLE"), ("LEFTPADDING", (0,0), (-1,-1), 3), ("RIGHTPADDING", (0,0), (-1,-1), 3)]))
                     wrapper = Table([[nested]], colWidths=[max_row_width], hAlign='CENTER')
                     wrapper.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
                     filas_dev_nested.append([wrapper])
@@ -579,8 +609,9 @@ class PDFGastoSideBySide:
         
         # Agregar notas si existen
         if notas and notas.strip():
+            self.elements.append(PageBreak())
             self.elements.append(Paragraph("NOTAS DEL REPORTE", self.estilo_subtitulo))
-            self.elements.append(Spacer(1, 5))
+            self.elements.append(Spacer(1, 1))
             
             # Crear un párrafo con las notas
             notas_paragraph = Paragraph(notas.strip().replace('\n', '<br/>'), self.estilo_normal)
@@ -616,9 +647,6 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf, not
     Función principal llamada desde routes_excel.py
     Retorna (exito, pdf_bytes)
     """
-    logger.info(f"Iniciando generar_pdf_gasto con: gastos={len(gasto_data_formateado.get('gastos', []))}, consignaciones={len(gasto_data_formateado.get('consignaciones', []))}")
-    logger.info(f"Imágenes recibidas: {imagenes}")
-    logger.info(f"Notas recibidas: {notas}")
     rutas_temp_generadas = [] 
 
     try:
@@ -634,6 +662,10 @@ def generar_pdf_gasto(gasto_data_formateado, calculos, imagenes, nombre_pdf, not
         else:
             gastos = gasto_data_formateado.get("gastos", [])
             consignaciones = gasto_data_formateado.get("consignaciones", [])
+        
+        logger.info(f"Iniciando generar_pdf_gasto con: gastos={len(gastos)}, consignaciones={len(consignaciones)}")
+        logger.info(f"Imágenes recibidas: {imagenes}")
+        logger.info(f"Notas recibidas: {notas}")
 
         # --- Funciones de Manejo de Imágenes ---
         def decodificar_y_guardar(lista_base64):

@@ -299,12 +299,16 @@ class ReportService:
             aportes_abrecar = 0
             aportes_jg = 0
             aportes_otros = {} # {nombre: monto}
+            aportes_efectivo_del_servicio = 0  # Nuevo: Dinero no contabilizado del servicio
             
             for c in consignaciones:
                 monto = float(c.get('monto', 0))
                 entregador = c.get('entregadoPor', '').upper()
                 
-                if 'JG' in entregador:
+                if 'EFECTIVO DEL SERVICIO' in entregador:
+                    # Dinero del servicio - no se contabiliza como aporte
+                    aportes_efectivo_del_servicio += monto
+                elif 'JG' in entregador:
                     aportes_jg += monto
                 elif 'OTROS:' in entregador:
                     nombre = entregador.replace('OTROS:', '').strip()
@@ -320,12 +324,14 @@ class ReportService:
             gastos_abrecar = 0
             gastos_jg = 0
             gastos_otros = 0 # Gastos marcados como OTROS se restan del fondo de OTROS o Abrecar?
+            gastos_efectivo_del_servicio = 0  # Nuevo: Gastos pagados del efectivo del servicio (no se deben)
             # Según el requerimiento: "se descuenta a lo que haya aportado abrecar los gastos que se le reporten a el 
             # y los gastos que se determinen como otros en el balance final aparezca como abrecar le deba a pepito perez"
             
             # Reinterpreto: 
             # Si un gasto es de 'OTROS' (Pepito), y Pepito NO puso dinero, Abrecar le debe a Pepito.
             # Si Pepito puso dinero, se gasta de ahí primero.
+            # Si un gasto es de 'EFECTIVO DEL SERVICIO', se toma del pago del servicio y NO se debe contar como pendiente
             
             total_gastos_otros_por_nombre = {} # {nombre: monto}
             
@@ -333,7 +339,10 @@ class ReportService:
                 monto = float(g.get('monto', 0))
                 pagado_por = g.get('pagadoPor', 'ABRECAR').upper()
                 
-                if 'JG' in pagado_por:
+                if 'EFECTIVO DEL SERVICIO' in pagado_por:
+                    # Gastos pagados del efectivo del servicio - no se consideran en balance
+                    gastos_efectivo_del_servicio += monto
+                elif 'JG' in pagado_por:
                     gastos_jg += monto
                 elif 'OTROS' in pagado_por:
                     # Si hay varios "Otros", por ahora los agrupamos o intentamos machear con el primer aportante "Otro"
@@ -348,7 +357,7 @@ class ReportService:
                 else:
                     gastos_abrecar += monto
 
-            total_gastos = gastos_abrecar + gastos_jg + gastos_otros
+            total_gastos = gastos_abrecar + gastos_jg + gastos_otros  # NO incluye gastos_efectivo_del_servicio
             total_consignado = aportes_abrecar + aportes_jg + sum(aportes_otros.values())
             
             # 4.3. Balances Individuales
